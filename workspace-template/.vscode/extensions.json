@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "anthropic.claude-code",
+    "bierner.markdown-mermaid",
+    "mechatroner.rainbow-csv"
+  ]
+}
