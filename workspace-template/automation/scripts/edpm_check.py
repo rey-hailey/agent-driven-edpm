@@ -39,7 +39,9 @@ LIB = Path(os.environ.get("EDPM_LIBRARY") or (ROOT / ".edpm" / "library" if (ROO
 TODAY = dt.date.today()
 STALE_DAYS = 180
 DONE = {"done", "n/a"}
-PRD_OK = {"review", "done"}      # PRD는 review 이상이면 다른 산출물의 전제 충족 (판을 올리며 계속 다듬는 문서)
+PRD_OK = {"review", "done"}
+# PRD의 입력이 되는 리서치·진단 문서: PRD보다 먼저 쓰고 완료할 수 있다 (G-PRD 예외)
+PRE_PRD = {"E00", "PRD", "E01", "E02", "E03", "E04", "N01", "F00", "D01"}      # PRD는 review 이상이면 다른 산출물의 전제 충족 (판을 올리며 계속 다듬는 문서)
 REQ_ID = re.compile(r"[A-Z]\d{2}|PRD")
 
 # 게이트: 대상 문서 → [(게이트, [필요 문서], 조건)]. 조건 "present"는 그 문서가 있고 n/a가 아닐 때만 요구.
@@ -195,7 +197,7 @@ def gimpact_unresolved(f02_text: str) -> int:
 def gate_check(doc: dict, docs: list[dict], content: bool = True) -> list[str]:
     """done 전환을 막는 사유 목록. 비어 있으면 통과. content=False면 본문 게이트(G-MEASURE·G-IMPACT)는 건너뛴다(착수 가능 판정용)."""
     reasons = []
-    if doc["id"] not in {"E00", "PRD"}:
+    if doc["id"] not in PRE_PRD:
         prd = find(docs, "PRD")
         if prd is None:
             reasons.append("G-PRD: PRD.md 없음 — 모든 산출물은 PRD에서 출발합니다 (/edpm-prd)")
@@ -243,7 +245,7 @@ def start_check(doc: dict, docs: list[dict]) -> list[str]:
     """생성 게이트: 이 산출물의 본문을 지금 써도 되는가. A(전제)가 끝나야 B를 쓴다.
     done 게이트(gate_check)와 달리 본문·출시 게이트(G-SAFE 등)는 보지 않고 G-PRD와 전제조건만 본다."""
     reasons = []
-    if doc["id"] not in {"E00", "PRD"}:
+    if doc["id"] not in PRE_PRD:
         prd = find(docs, "PRD")
         if prd is None or prd["status"] not in PRD_OK:
             reasons.append("G-PRD: PRD가 review 이상이어야 다른 산출물을 씁니다 (/edpm-prd)")
@@ -388,7 +390,7 @@ def next_docs(docs: list[dict]) -> list[dict]:
     """착수 가능한 산출물. PRD가 준비되기 전에는 E00·PRD만. 전제가 모두 n/a·없음뿐인 문서는 제외
     (예: E19가 n/a라서 E20 회고가 시작 시점부터 뜨는 문제)."""
     if not prd_ready(docs):
-        return [d for d in docs if d["id"] in {"E00", "PRD"} and d["status"] not in DONE | PRD_OK]
+        return [d for d in docs if d["id"] in PRE_PRD and d["status"] not in DONE | PRD_OK and not start_check(d, docs)]
     out = []
     for d in docs:
         if d["status"] in DONE or (d["id"] == "PRD" and d["status"] in PRD_OK):
@@ -461,8 +463,14 @@ def phase(docs: list[dict]) -> dict:
         return {"step": "0 시작", "why": "회사·제품 프로필(E00)이 아직 없습니다", "do": ["/edpm-start — 무엇을 하려는지 묻고 길을 안내", "/edpm-start init — 회사·제품 인터뷰"]}
     if not prd_ready(docs):
         why = "PRD.md가 없습니다" if st("PRD") is None else f"PRD가 {st('PRD')}입니다"
-        return {"step": "1 PRD", "why": why + ". 모든 산출물·프로토타입·코드는 PRD에서 출발합니다 (만들 제품 전체를 정의)",
-                "do": ["/edpm-prd — 인터뷰로 작성하거나 기존 기획서를 PRD로 정리", "검토 후 PRD status를 review로"]}
+        do = ["/edpm-prd — 리서치·자료를 근거로 작성하거나 기존 기획서를 PRD로 정리", "검토 후 PRD status를 review로"]
+        if "N" in mode and open_("N01"):
+            do.insert(0, "/edpm-doc venture opportunity — N01 사업기회 (PRD 1·2절의 근거, PRD보다 먼저 써도 됨)")
+        if "F" in mode and open_("F00"):
+            do.insert(0, "/edpm-doc feature baseline — F00 서비스 현황 진단 (PRD 근거, PRD보다 먼저 써도 됨)")
+        do.append("/edpm-wiki ingest — 인터뷰·시장·경쟁 자료를 위키로 (리서치 문서 E03·E04는 /edpm-doc으로 꺼내 PRD 전에 써도 됨)")
+        return {"step": "1 PRD", "why": why + ". 리서치는 PRD의 근거가 되고, 그 뒤 모든 산출물·프로토타입·코드는 PRD에서 출발합니다",
+                "do": do}
     prd = find(docs, "PRD")
     if prd is not None and not prd["fm"].get("path"):
         return {"step": "1.5 경로 정하기", "why": "PRD를 읽고 이 제품에 필요한 산출물만 보관함에서 꺼냅니다 (미성년 → E13, AI → E14·A10·A14·A06, 유료 → P01 …). 해당 없으면 핵심 경로로 충분합니다",

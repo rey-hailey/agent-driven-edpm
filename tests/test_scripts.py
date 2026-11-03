@@ -173,8 +173,14 @@ class FlowTests(WorkspaceCase):
         self.assertIn("처음 오셨군요", self.check("brief").stdout)
         self.set_status("0.온보딩/E00_회사사업프로필.md", "done")
         self.assertIn("1 PRD", self.check("phase").stdout)
-        self.assertEqual([x.split()[0] for x in self.check("next").stdout.split("\n") if x], ["PRD"],
-                         "PRD 전에는 PRD만 착수 가능")
+        nxt = {x.split()[0] for x in self.check("next").stdout.split("\n") if x}
+        self.assertTrue(nxt <= {"PRD", "E01", "E02", "E04", "N01", "F00", "D01"} and "PRD" in nxt,
+                        f"PRD 전에는 PRD와 그 입력(리서치·진단)만 착수 가능: {nxt}")
+        self.assertNotIn("E06", nxt)
+        # 리서치는 PRD보다 먼저 완료할 수 있다 (G-PRD 예외), 제품 문서는 아니다
+        self.set_status("N.신사업/N01_사업기회검토서.md", "done")
+        self.assertEqual(self.check("gate", str(self.doc("N.신사업/N01_사업기회검토서.md"))).returncode, 0)
+        self.assertIn("G-PRD", self.check("start", str(self.doc("2.정의/E06_상세요구사항서.md"))).stdout)
         self.set_prd("review")
         self.assertIn("2 착수·근거", self.check("phase").stdout)
         for rel in ("M.관리/M01_착수보고서.md",):

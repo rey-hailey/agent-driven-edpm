@@ -8,6 +8,12 @@ Agent Driven EdPM 변경 이력입니다. 형식은 [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Changed — 리서치가 먼저, 기능 고도화도 스펙으로 넘김
+- **리서치는 PRD보다 먼저**: PRD의 입력인 E01~E04(발견)·N01(사업기회)·F00(현황 진단)·D01(연구 이관)은 G-PRD 예외 — PRD 전에 착수·완료 가능. 단계 "1 PRD"가 N01·F00·위키 수집을 먼저 안내하고, `/edpm-prd`가 그 결과를 1·2절에 담음
+- **F02 기능기획서 = 기능 단위 스펙**: 2.1 상태 흐름, 5.1 입출력 계약과 작업 분해(T)·테스트 추가. 개발팀이 프로토타입이 아니라 F02를 기준으로 구현. `/edpm-spec check·tasks·build`가 F02 경로를 받음, 화면 구조가 바뀌면 E10(IA) 갱신
+- `/edpm-prd path`에 보고 체계(착수·중간·완료 보고 → M01·M02·M03)와 개발 연동(B01) 행 추가
+- README·AGENTS 흐름도에 리서치 → PRD, 보고·위키가 함께 도는 것을 표시
+
 ### Added — 작업 환경: Antigravity + Claude Code 확장
 - 권장 작업 환경을 **Antigravity(에디터) + Claude Code 확장(에이전트)** 으로: 산출물을 탐색기에서 바로 열고 마크다운·Mermaid 미리보기로 확인하면서 작업. 스킬·훅은 Claude Code 기능이므로 에디터 내장 에이전트가 아니라 Claude Code 패널에서 작업하도록 안내
 - 워크스페이스 `.vscode/` 기본 포함(Antigravity·Cursor·VS Code 공통): 권장 확장(Claude Code, Markdown Mermaid, Rainbow CSV), 마크다운 줄바꿈, 검색에서 보관함·지식그래프 제외. `--upgrade`가 없으면 추가

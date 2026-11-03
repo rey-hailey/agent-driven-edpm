@@ -10,6 +10,8 @@ argument-hint: "<write | check | tasks | build <T-ID> | status | qa <plan | run 
 
 게이트: **G-SPEC** — E09가 `done`이기 전에는 제품 코드(`src/`)를 쓰지 않습니다 (PreToolUse 훅이 막음). 검증용 spike는 `06.prototypes/`에 V01과 함께만.
 
+운영 개선 과제의 **F02(기능 기획서)도 기능 단위 스펙**입니다. `check`·`tasks`·`build`는 대상으로 F02 경로를 받으면 F02의 US·AC·상태 흐름(2.1)·계약과 작업(5.1)에 같은 규칙을 적용합니다. 승인된 F02는 G-SPEC에서 E09와 같이 취급됩니다.
+
 `qa` 하위 명령은 같은 폴더의 `qa.md`를 읽고 따릅니다 (B06 테스트 시나리오 → 실행 → 결함 → B07 결과 보고).
 
 ## write — E09 스펙 작성
