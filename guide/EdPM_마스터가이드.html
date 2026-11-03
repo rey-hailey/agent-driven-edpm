@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EdPM Framework 마스터 가이드 — 에듀테크 PM A to Z</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#f6f7fb; --surface2:#eef0f8; --text:#191c24; --muted:#5a6072;
+  --border:#e3e5ef; --primary:#3a4ba3; --primary-weak:#eceeffb0; --accent:#0e8a7d;
+  --warn:#b5610b; --warn-bg:#fdf3e5; --danger:#b23c43; --danger-bg:#fbecec;
+  --ok:#277a4b; --ok-bg:#e9f6ee; --code-bg:#f1f2f8; --chip:#e9ebf6;
+  --you:#eef3ff; --you-br:#c9d6f5; --doc-bg:#fbfcfe;
+  --radius:12px; --maxw:920px;
+  --sans:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,sans-serif;
+  --mono:"SF Mono",ui-monospace,Menlo,Consolas,"D2Coding",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#13151c; --surface:#1a1d27; --surface2:#20242f; --text:#e7e9f2; --muted:#9aa0b4;
+    --border:#2c3040; --primary:#8f9cf0; --primary-weak:#242a44; --accent:#4ecbbb;
+    --warn:#e0a35a; --warn-bg:#2c2416; --danger:#e58a8f; --danger-bg:#2c1b1d;
+    --ok:#6fcf97; --ok-bg:#16271d; --code-bg:#20242f; --chip:#262b3b;
+    --you:#1e2435; --you-br:#34406a; --doc-bg:#171b24;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+a{color:var(--primary);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);background:var(--code-bg);padding:.1em .4em;border-radius:6px;font-size:.88em}
+pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;overflow:auto;font-family:var(--mono);font-size:.84em;line-height:1.55}
+pre code{background:none;padding:0}
+.wrap{display:flex;max-width:1300px;margin:0 auto;gap:0}
+.toc{width:280px;flex:0 0 280px;position:sticky;top:0;height:100vh;overflow-y:auto;padding:22px 16px 60px;border-right:1px solid var(--border);background:var(--surface)}
+.toc h2{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+.toc a{display:block;padding:5px 10px;border-radius:8px;color:var(--muted);font-size:.89rem;border-left:2px solid transparent}
+.toc a:hover{background:var(--surface2);text-decoration:none;color:var(--text)}
+.toc a.active{color:var(--primary);background:var(--primary-weak);border-left-color:var(--primary);font-weight:600}
+.toc .brand{font-weight:800;font-size:1.05rem;color:var(--text);margin-bottom:2px}
+.toc .brand small{display:block;font-weight:500;color:var(--muted);font-size:.72rem;margin-top:3px}
+main{flex:1 1 auto;min-width:0;padding:40px 48px 120px;max-width:calc(var(--maxw) + 48px)}
+section{scroll-margin-top:16px;margin-bottom:54px}
+h1{font-size:2rem;line-height:1.25;margin:.2em 0 .1em}
+h2{font-size:1.5rem;margin:1.6em 0 .5em;padding-bottom:.25em;border-bottom:2px solid var(--border)}
+h3{font-size:1.16rem;margin:1.5em 0 .4em}
+h4{font-size:1rem;margin:1.2em 0 .3em;color:var(--muted)}
+p{margin:.5em 0}
+ul,ol{padding-left:1.3em;margin:.5em 0}
+li{margin:.3em 0}
+.lead{font-size:1.08rem;color:var(--muted);margin:.4em 0 1em}
+.kicker{display:inline-block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+table.g{width:100%;border-collapse:collapse;margin:14px 0;font-size:.9rem}
+table.g th,table.g td{border:1px solid var(--border);padding:8px 11px;text-align:left;vertical-align:top}
+table.g th{background:var(--surface2);font-weight:700}
+table.g tr:nth-child(even) td{background:var(--surface)}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.badge{display:inline-block;font-size:.74rem;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--text);white-space:nowrap}
+.b-pri{background:var(--primary-weak);color:var(--primary)}
+.b-ok{background:var(--ok-bg);color:var(--ok)}
+.chips .badge{margin:2px 4px 2px 0}
+.call{border-left:4px solid var(--primary);background:var(--surface);border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0}
+.call.tip{border-color:var(--accent)}
+.call.warn{border-color:var(--warn);background:var(--warn-bg)}
+.call.rule{border-color:var(--danger);background:var(--danger-bg)}
+.call b{display:block;margin-bottom:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.card h4{margin:.1em 0 .4em;color:var(--text);font-size:1rem}
+.card p{font-size:.88rem;color:var(--muted);margin:.2em 0}
+/* input→output→value */
+.io{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:16px 0}
+.io>div{padding:13px 15px;border-right:1px solid var(--border)}
+.io>div:last-child{border-right:0}
+.io .h{font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}
+.io .i .h{color:var(--primary)} .io .o .h{color:var(--accent)} .io .v .h{color:var(--ok)}
+.io .i{background:var(--you)} .io .v{background:var(--ok-bg)}
+.io p{font-size:.87rem;margin:.2em 0}
+/* conversation turn */
+.turn{margin:14px 0}
+.turn .you{background:var(--you);border:1px solid var(--you-br);border-radius:12px;padding:10px 14px;font-size:.92rem}
+.turn .you::before{content:"PM 입력";display:block;font-size:.68rem;font-weight:800;color:var(--primary);letter-spacing:.04em;margin-bottom:3px}
+.turn .ag{margin:8px 0 0 14px;padding:4px 0 4px 14px;border-left:3px solid var(--accent);font-size:.9rem;color:var(--muted)}
+.turn .ag b{color:var(--text)}
+/* document sample */
+.doc{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:14px 0;background:var(--doc-bg)}
+.doc .fn{background:var(--surface2);padding:7px 14px;font-family:var(--mono);font-size:.78rem;color:var(--muted);border-bottom:1px solid var(--border)}
+.doc .bd{padding:13px 16px;font-size:.87rem}
+.doc .bd table.g{margin:8px 0;font-size:.82rem}
+.doc .bd h5{margin:.6em 0 .2em;font-size:.86rem;color:var(--primary)}
+.doc .bd p{margin:.3em 0}
+.doc .ex{color:var(--muted);font-size:.78rem;font-style:italic;margin-top:8px}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin:16px 0}
+.flow .node{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:.84rem;min-width:88px;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.flow .node b{font-size:.88rem}
+.flow .node small{color:var(--muted);font-size:.72rem}
+.flow .arr{display:flex;align-items:center;color:var(--muted);font-weight:700;font-size:1.1rem}
+.stage-row{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}
+.stage{flex:1 1 118px;background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--primary);border-radius:8px;padding:10px 12px;font-size:.82rem}
+.stage b{display:block;color:var(--primary);font-size:.82rem}
+.hero{background:linear-gradient(135deg,var(--primary-weak),var(--surface));border:1px solid var(--border);border-radius:16px;padding:28px 30px;margin-bottom:10px}
+.pill-row{margin-top:10px}
+.pill-row .badge{margin:3px 6px 3px 0;font-size:.78rem}
+.foot{color:var(--muted);font-size:.84rem;border-top:1px solid var(--border);padding-top:20px;margin-top:40px}
+.tag-track{font-family:var(--mono);font-weight:700}
+.step{counter-reset:none;margin:16px 0}
+.step h4{display:flex;align-items:center;gap:9px;color:var(--text);font-size:1.02rem;margin:1.2em 0 .3em}
+.step h4 .n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;font-size:.82rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+.menubtn{display:none;position:fixed;top:12px;right:12px;z-index:50;background:var(--primary);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:700;font-size:.9rem;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+@media (max-width:880px){
+  main{padding:66px 18px 100px}
+  .toc{position:fixed;top:0;left:0;z-index:40;transform:translateX(-100%);transition:transform .25s;box-shadow:4px 0 20px rgba(0,0,0,.25);width:84vw;max-width:320px}
+  .toc.open{transform:translateX(0)}
+  .menubtn{display:block}
+  h1{font-size:1.6rem}
+  .hero{padding:20px}
+  .io{grid-template-columns:1fr}
+  .io>div{border-right:0;border-bottom:1px solid var(--border)}
+  .io>div:last-child{border-bottom:0}
+}
+</style>
+</head>
+<body>
+<button class="menubtn" id="menubtn" aria-label="목차 열기">☰ 목차</button>
+<div class="wrap">
+<nav class="toc" id="toc">
+  <div class="brand">EdPM Framework<small>에듀테크 PM A to Z 마스터 가이드 · v0.6</small></div>
+  <h2>이해</h2>
+  <a href="#intro">1. EdPM이란</a>
+  <a href="#howuse">2. 어떻게 쓰나 — 입력→산출물→활용</a>
+  <a href="#moments">3. PM을 돕는 순간</a>
+  <a href="#bigpicture">4. 큰 그림</a>
+  <a href="#install">5. 설치·1일차</a>
+  <h2>구성</h2>
+  <a href="#concepts">6. 핵심 개념</a>
+  <a href="#deliverables">7. 산출물 지도</a>
+  <a href="#skills">8. 스킬 표</a>
+  <a href="#archetypes">9. 아키타입 15종</a>
+  <h2>실제 흐름(워크스루)</h2>
+  <a href="#walkE">10. 제품 정의 흐름 (E체인)</a>
+  <a href="#walkF">11. 운영 개선 과제 하나</a>
+  <a href="#walkN">12. 신사업 0→1</a>
+  <a href="#proto">13. 프로토타입·MVP</a>
+  <a href="#ai">14. AI 설계</a>
+  <h2>규율</h2>
+  <a href="#gates">15. 게이트·하네스</a>
+  <a href="#protect">16. 데이터·교육과정</a>
+  <a href="#collab">17. 협업·보고·자산화</a>
+  <a href="#faq">18. FAQ·명령 레퍼런스</a>
+</nav>
+
+<main>
+<section id="intro">
+  <div class="hero">
+    <span class="kicker">에듀테크 PM을 위한 에이전트 프레임워크</span>
+    <h1>EdPM Framework 마스터 가이드</h1>
+    <p class="lead">설치 후 <b>무엇을 입력하면 → 어떤 산출물이 생기고 → 그것을 어떻게 쓰는지</b>를 실제 흐름과 산출물 예시로 보여줍니다. 이러닝 마켓플레이스부터 기업교육 LMS·K-12·AI 튜터까지, 어느 에듀테크 회사로 옮겨도 같은 방식으로 일합니다.</p>
+    <div class="pill-row chips">
+      <span class="badge b-pri">업무 모드 2종</span>
+      <span class="badge b-pri">서비스 유형 15종</span>
+      <span class="badge b-pri">산출물 83종</span>
+      <span class="badge b-pri">스킬 32 + 외부 2</span>
+      <span class="badge b-pri">게이트 12종</span>
+    </div>
+  </div>
+  <p>EdPM은 단순한 "AI에게 문서 써달라고 하기"가 아닙니다. <b>에듀테크 PM이 실제로 하는 일</b>(문제 정의 → 학습 성과 설계 → 기능·화면 → 정책·정산 → 파일럿 → 효과 측정 → 영업·제안)을 순서·게이트·근거가 있는 산출물 체계로 만들고, 반복 업무는 스킬이, 규칙은 장치(훅·스크립트)가 지키게 합니다.</p>
+  <div class="call tip"><b>이 가이드가 쓰는 가상 제품</b>설명을 구체적으로 하려고 가상 제품 <b>매스핏</b>(중학생 수학 오답 코칭 앱 · 학원 B2B2C + 학부모 결제 · AI 오답 해설)과 신사업 <b>리딩버디</b>(만 5~9세 영어 읽기 음성 피드백)를 예시로 씁니다. 모든 수치는 가상입니다.</div>
+</section>
+
+<section id="howuse">
+  <h2>2. 어떻게 쓰나 — 입력 한 줄이 산출물이 되기까지</h2>
+  <p>워크스페이스 폴더에서 Claude를 열고 <b>평소 말하듯 입력</b>하면 됩니다. 슬래시 명령을 몰라도 됩니다. 핵심은 "스킬을 연다"가 아니라, <b>입력 → 에이전트가 근거를 모아 산출물 초안을 만들고 → 게이트·추적성을 챙기고 → PM이 판단·승인 → 파일로 남는다</b>는 흐름입니다.</p>
+
+  <div class="turn">
+    <div class="you">매스핏에서 중학생이 오답을 그냥 베껴 적고 같은 유형을 또 틀려. 이걸 교육 문제로 정의해줘.</div>
+    <div class="ag"><b>에이전트가 하는 일:</b> E00 회사 프로필과 <code>02.wiki/</code>의 현장 인터뷰·오답 데이터를 읽고 → 해법("AI 해설이 없다")을 <b>학습자에게 일어나는 문제</b>로 바꾸고 → 증거 2건 이상을 자료실 경로와 함께 달고 → <code>03.docs/1.발견/E01_교육문제정의서.md</code> 초안을 만든 뒤, 근거가 약한 곳을 알려줍니다.</div>
+  </div>
+
+  <p>그 결과로 생기는 산출물은 이런 모양입니다 (실제 템플릿 구조):</p>
+  <div class="doc">
+    <div class="fn">03.docs/1.발견/E01_교육문제정의서.md</div>
+    <div class="bd">
+      <h5>1. 문제 진술</h5>
+      <p><b>PB-01</b> · 중학생이 수학 문제를 틀린 뒤 오답 원인을 확인하지 않고 정답만 베껴, 같은 유형을 시험에서 다시 틀린다 <span style="color:var(--muted)">(대상: 중2 수학 중하위권 · 영역: 일차함수·연립방정식)</span></p>
+      <h5>4. 증거</h5>
+      <p>① 직전 시험 오답 유형 재오답률이 높음 — 로그(집계) · <code>automation/sql/재오답률.sql</code><br>② 학생들이 오답 노트를 "정답 옮겨 적기"로 처리 — 관찰 · <code>01.자료실/현장/2026-09-25_학원참관_B.md</code></p>
+      <h5>7. 학습 변화 가설</h5>
+      <p><b>PB-01-H1</b> · 오답마다 원인을 진단하고 3·7일 뒤 유사 문항을 다시 풀면, 한 학기 안에 같은 유형 재오답률이 의미 있게 준다. 근거: <code>[[domain/인출연습]]</code>, <code>[[domain/간격반복]]</code></p>
+      <p class="ex">— "AI 해설을 만든다"가 아니라 "학생이 원인을 진단 못 한다"로 정의되고, 모든 주장에 출처가 붙습니다. 이 문서가 done이 되어야 다음(E05)으로 갑니다.</p>
+    </div>
+  </div>
+
+  <p><b>PM이 이것으로 하는 일:</b> 강사·학습과학 자문에게 이 한 장을 보여 "우리가 풀 문제가 이게 맞나"를 합의하고, 증거가 약한 칸은 현장 확인 과제로 돌립니다. 다음 턴에 "이제 학습 성과를 설계해줘"라고 하면 E01을 근거로 E05가 이어집니다 — 문서끼리 ID로 연결되어, 나중에 "이 기능이 어떤 학습 목표에서 나왔지?"를 되짚을 수 있습니다.</p>
+
+  <div class="call tip"><b>핵심 감각</b>EdPM은 <b>한 번의 거대한 출력</b>이 아니라, 작은 입력이 쌓여 서로 연결된 산출물 체계가 되는 방식입니다. 각 산출물은 ① 이전 산출물을 전제로 하고 ② 모든 수치·주장에 출처가 있고 ③ 게이트를 통과해야 done이 됩니다.</div>
+</section>
+
+<section id="moments">
+  <h2>3. EdPM이 에듀테크 PM을 돕는 순간</h2>
+  <p>"AI에게 글 써달라기"와 다른 점은, <b>에듀테크 PM이 늘 막히는 지점</b>마다 산출물·게이트가 준비되어 있다는 것입니다.</p>
+  <div class="scroll"><table class="g"><thead><tr><th>PM의 실제 고충</th><th>이렇게 입력</th><th>생기는 산출물</th><th>어떻게 도움</th></tr></thead>
+  <tbody>
+    <tr><td>"기능은 많은데 성적은 왜 안 오르지?"</td><td>"학습 성과부터 설계해줘"</td><td>E05 학습성과설계서 (LO + 평가 증거)</td><td>기능보다 "무엇을 할 수 있게 되나 + 무엇으로 확인하나"를 먼저 못 박아, 있으면 좋은 기능만 쌓이는 걸 막음</td></tr>
+    <tr><td>"작은 기능 하나 바꿨는데 환불·정산이 깨졌다"</td><td>"이 개선안 영향 점검해줘"</td><td>F02 영향 점검표</td><td>개인정보·AI·환불·진도·교육과정·접근성·시즌을 한 행씩 판정 — 미처리면 출시(F03) 자체가 막힘</td></tr>
+    <tr><td>경영진이 "효과 있어?"</td><td>"효과크기 계산해줘"</td><td>지표 결과표 (효과크기·신뢰구간)</td><td>LLM 추정이 아니라 SQL로 계산. 신뢰구간이 0을 포함하면 단정하지 않음</td></tr>
+    <tr><td>영업이 "효과 40% 향상" 쓰고 싶어함</td><td>"제안서 효과 문장 점검해줘"</td><td>S02 제안서 (근거 연결 점검)</td><td>E19·E17 근거 없는 효과 문장을 찾아 삭제·정성 표현 제안 — 과장 리스크 차단</td></tr>
+    <tr><td>"이 결정, 나중에 맞았는지 어떻게 알지?"</td><td>"이 결정 기록하고 예측도 붙여줘"</td><td>ADR (예측 + 재검토일)</td><td>재검토일이 지나면 상황판이 알림 → 예측을 SQL로 채점해 판단 적중률을 봄</td></tr>
+    <tr><td>"회사 바꾸면 쌓은 지식이 다 사라져"</td><td>"일반 지식만 개인 Brain으로 승격해줘"</td><td>개인 EdTech Brain (공개 지식)</td><td>기밀·개인정보를 뺀 도메인 지식만 이식 → 다음 회사에서 다시 씨앗</td></tr>
+    <tr><td>"성취기준을 기억으로 쓰다 틀림"</td><td>"일차방정식 성취기준 찾아줘"</td><td>교육과정 매핑 (KG 조회)</td><td>기억이 아니라 지식그래프에서 코드와 함께 조회. 공식 선수관계와 권장순서를 구분</td></tr>
+    <tr><td>"학기 중간에 출시해서 아무도 안 씀"</td><td>"출시 일정 시즌 충돌 봐줘"</td><td>E18 도입·출시계획 (G-CAL)</td><td>학사일정·시험기·기업 예산 시기와 충돌을 검토 — 시험 2주 전 배포 동결 등</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="bigpicture">
+  <h2>4. 큰 그림 — 자료가 지식이 되고, 지식이 산출물이 된다</h2>
+  <div class="call tip"><b>한 문장</b>자료를 넣으면(01) 위키가 자라고(02), 위키를 근거로 산출물을 쓰며(03), 산출물은 게이트로 순서가 지켜지고, 수치는 스크립트가, 규칙은 훅이 지킵니다.</div>
+  <div class="flow">
+    <div class="node"><b>00.inbox</b><small>새 자료</small></div><div class="arr">→</div>
+    <div class="node"><b>01.자료실</b><small>비식별 원본<br>수정 금지</small></div><div class="arr">→</div>
+    <div class="node"><b>02.wiki</b><small>LLM이 정리<br>출처 필수</small></div><div class="arr">→</div>
+    <div class="node"><b>03.docs</b><small>산출물<br>게이트 준수</small></div><div class="arr">→</div>
+    <div class="node"><b>04·05</b><small>보고·분석</small></div>
+  </div>
+  <table class="g"><thead><tr><th>폴더</th><th>무엇이 있나</th><th>지켜지는 규칙</th></tr></thead>
+  <tbody>
+    <tr><td><code>00.inbox/</code></td><td>새로 받은 자료 (git 제외)</td><td>처리 후 비움</td></tr>
+    <tr><td><code>01.자료실/</code></td><td>비식별화된 근거 원본 (9분류)</td><td><b>추가만, 수정 차단</b> (훅)</td></tr>
+    <tr><td><code>02.wiki/</code></td><td>도메인·회사·학습자·인사이트·시장·결정 지식</td><td>모든 주장에 출처, <b>식별정보 저장 차단</b> (훅)</td></tr>
+    <tr><td><code>03.docs/</code></td><td>산출물 (E·M·B·A·S·L·P·N·F·V 트랙)</td><td><b>게이트 미충족이면 done 차단</b> (훅)</td></tr>
+    <tr><td><code>automation/</code></td><td>점검기·훅·지표·WBS·AI 평가 스크립트</td><td>사람 승인 후 수정</td></tr>
+    <tr><td><code>AGENTS.md</code></td><td>이 워크스페이스의 헌법(스키마)</td><td><b>사람만</b> 수정</td></tr>
+  </tbody></table>
+  <p style="font-size:.86rem;color:var(--muted)">교육과정 지식그래프(KG)와 회사 DB·CSV는 위키·산출물로 들어오고, 일반화 가능한 지식은 개인 <b>EdTech Brain</b>으로 승격되어 다음 회사에서 다시 씨앗이 됩니다.</p>
+</section>
+
+<section id="install">
+  <h2>5. 설치와 1일차 — 반나절이면 일할 준비 끝</h2>
+  <pre><code># 1) 내려받고 점검
+git clone https://github.com/rey-hailey/agent-driven-edpm.git ~/agent-driven-edpm && cd ~/agent-driven-edpm
+./install.sh --check
+
+# 2) 워크스페이스 만들기 — 인자 없이 실행하면 회사 이름·업무 모드·개발 체계·서비스 유형을 묻습니다
+./install.sh
+#    (직접 지정: ./install.sh ~/Work/우리회사-edpm --mode NF --dev team --archetype AT07,AT09 --with-extras)
+
+# 3) 그 폴더에서 Claude Code를 열면 상황판이 "지금 단계"를 알려줍니다. 처음이면
+cd ~/Work/우리회사-edpm && claude
+/edpm-start      # → /edpm-init → /edpm-prd</code></pre>
+  <p>설치하면 워크스페이스 폴더, 개인 Brain, 위키 도메인 지식 ~91종, 서비스 유형 프로필이 생깁니다. 1일차에 하는 일과 그 결과:</p>
+  <div class="io">
+    <div class="i"><div class="h">입력</div><p><code>/edpm-init</code> → 회사·제품·학습자·모드·유형을 3~4개씩 묻는 인터뷰에 답</p></div>
+    <div class="o"><div class="h">생기는 산출물</div><p>E00 회사·사업 프로필, AGENTS.md 회사 컨텍스트, <code>02.wiki/company/</code> 시드</p></div>
+    <div class="v"><div class="h">활용</div><p>이후 모든 산출물이 "우리 회사는 누구에게 무엇을 파는가"를 전제로 자동 반영</p></div>
+  </div>
+  <div class="io">
+    <div class="i"><div class="h">입력</div><p><code>/edpm-prd</code> → 만들 제품 전체(목표·사용자·기능·비기능·릴리스·<b>프로토타입으로 보여줄 정수</b>·개발 체계)를 묻는 인터뷰. 기획서가 있으면 <code>/edpm-prd import</code></p></div>
+    <div class="o"><div class="h">생기는 산출물</div><p>루트 <code>PRD.md</code> — 워크스페이스의 <b>원점</b>. review가 되어야 다른 산출물을 완료할 수 있음(G-PRD)</p></div>
+    <div class="v"><div class="h">활용</div><p>상세 요구사항(E06) → 스펙(E09) → 프로토타입·구현이 모두 PRD에서 출발. 범위를 바꾸려면 PRD 판을 올림</p></div>
+  </div>
+  <div class="io">
+    <div class="i"><div class="h">입력</div><p>회사 자료(기획서·VOC·지표·약관)를 <code>00.inbox/</code>에 넣고 "자료 반영해줘"</p></div>
+    <div class="o"><div class="h">생기는 산출물</div><p>가명 처리된 자료실 원본 + 위키 페이지 5~15개 갱신, index·log</p></div>
+    <div class="v"><div class="h">활용</div><p>"매스핏 환불 규정 요약하고 근거 알려줘" → 출처 달린 답. 위키가 회사 지식의 단일 소스가 됨</p></div>
+  </div>
+  <p style="font-size:.88rem;color:var(--muted)">그 밖에 <code>/edpm-blueprint apply</code>(유형별 필요 산출물 켜기)·<code>/edpm-metrics connect</code>(데이터 연결)·<code>/edpm-wbs setup</code>(일정 도구)·<code>/edpm-curriculum setup</code>(교육과정, 해당 시)을 1일차에 연결합니다. 세션을 다시 열면 <b>상황판</b>이 자동으로 떠 <b>지금 단계와 다음 할 일</b>(PRD → 착수·근거 → 상세 요구사항 → 스펙 → 프로토타입·구현 → 출시), 주의할 점을 보여줍니다.</p>
+</section>
+
+<section id="concepts">
+  <h2>6. 핵심 개념 — 모드·트랙·게이트·하네스</h2>
+  <h3>업무 모드: 내가 하는 일은 어느 쪽인가</h3>
+  <div class="grid">
+    <div class="card"><h4>N 신사업 (0 → 1)</h4><p>새 서비스·사업을 맡았다. N01 기회 → N02 투자심의 → N03 MVP·PMF → N04 단계 심사.</p><p><span class="badge b-pri">/edpm-venture</span></p></div>
+    <div class="card"><h4>F 운영 개선 (1 → n)</h4><p>운영 중 서비스를 맡았다. F00 진단 → 백로그 → 과제마다 F01~F04.</p><p><span class="badge b-pri">/edpm-feature</span></p></div>
+  </div>
+  <h3>트랙: 같은 기간에 함께 도는 묶음</h3>
+  <table class="g"><thead><tr><th>트랙</th><th>답하는 질문</th><th>산출물</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge b-pri tag-track">E</span> 제품</td><td>학습 문제 → 성과 → 설계 → 검증 → 출시 → 측정</td><td>E00~E20 (0~7단계)</td></tr>
+    <tr><td><span class="badge tag-track">M</span> 관리</td><td>일정·자원·위험을 관리·보고</td><td>M01~M05, 주간보고</td></tr>
+    <tr><td><span class="badge tag-track">B</span> 구현</td><td>개발팀이 무엇을 어떻게 만드나</td><td>B01~B07</td></tr>
+    <tr><td><span class="badge tag-track">A</span> AI</td><td>어디에 AI를 쓰고 안전을 어떻게 증명하나</td><td>A00~A14</td></tr>
+    <tr><td><span class="badge tag-track">S</span> 사업</td><td>어떻게 팔고 수익·정산을 어떻게 하나</td><td>S01~S07</td></tr>
+    <tr><td><span class="badge tag-track">L</span> 학습운영</td><td>과정·진도·평가·수료 규칙</td><td>L01~L06</td></tr>
+    <tr><td><span class="badge tag-track">P</span> 정책</td><td>환불·권리·부정이용·품질·CS·AI 정책</td><td>P01~P09</td></tr>
+    <tr><td><span class="badge tag-track">N</span> 신사업 · <span class="badge tag-track">F</span> 기능개선 · <span class="badge tag-track">V</span> 프로토타입</td><td>투자 판단 / 개선 과제 / 가정 검증</td><td>N01~N04 · F00~F04 · V01~V03</td></tr>
+  </tbody></table>
+  <div class="grid">
+    <div class="card"><h4>게이트 (12종)</h4><p>산출물을 <code>done</code>으로 바꿀 때 전제조건·에듀테크 규칙을 확인하는 관문. §15.</p></div>
+    <div class="card"><h4>하네스</h4><p>상황판·자료실 보호·done 차단·PII 차단을 훅과 결정적 점검기로 강제.</p></div>
+    <div class="card"><h4>LLM 위키</h4><p>자료를 ingest하면 LLM이 정리·교차참조, query로 근거 달린 답.</p></div>
+    <div class="card"><h4>개인 Brain</h4><p>회사가 바뀌어도 가져가는 공개·일반 지식팩.</p></div>
+  </div>
+</section>
+
+<section id="deliverables">
+  <h2>7. 산출물 전체 지도</h2>
+  <p>제품 트랙(E)은 학기·분기마다 한 바퀴 도는 <b>사이클</b>입니다. E20의 다음 후보가 다시 E01로 들어갑니다. 서비스 유형·업무 모드가 "이번에 어떤 산출물을 켤지"를 먼저 정하므로, 전부 쓰지 않습니다.</p>
+  <div class="stage-row">
+    <div class="stage"><b>0 온보딩</b>E00</div>
+    <div class="stage"><b>원점</b>PRD.md 만들 제품 전체</div>
+    <div class="stage"><b>1 발견</b>E01~E04 문제·이해관계자·현장·시장</div>
+    <div class="stage"><b>2 정의</b>E05~E07 성과·상세 요구사항·지표</div>
+    <div class="stage"><b>3 설계</b>E08~E14 경험·<b>스펙(E09)</b>·화면·콘텐츠·데이터·안전·AI</div>
+    <div class="stage"><b>4 구축</b>E15</div>
+    <div class="stage"><b>5 검증</b>E16·E17</div>
+    <div class="stage"><b>6 출시</b>E18</div>
+    <div class="stage"><b>7 측정</b>E19·E20</div>
+  </div>
+  <table class="g"><thead><tr><th>트랙</th><th>산출물 흐름</th></tr></thead>
+  <tbody>
+    <tr><td><b>A AI</b></td><td>A00 기회맵 → A10 방식선택 → A11 라우팅 → A12 비용 → A13 운영 → A14 가드레일 (+ A01~A09 튜터·평가·자막·문항·이탈예측)</td></tr>
+    <tr><td><b>L 학습운영</b></td><td>L01 과정구조 → L02 제작 → L03 진도·수료 → L04 과제·평가 → L05 표준연동 → L06 수료증</td></tr>
+    <tr><td><b>P 정책</b></td><td>P01 환불 · P02 권리 · P03 부정이용 · P04 품질 · P05 CS · P06 강사 · P07~P09 AI 윤리·품질·운영</td></tr>
+    <tr><td><b>S 사업</b></td><td>S01 RFP → S02 제안 → S03 가격 → S06 수익모델 → S07 강사정산</td></tr>
+    <tr><td><b>F 기능개선</b></td><td>F00 진단 → 백로그 → F01 문제 → F02 기획(영향 점검) → F03 실험·출시 → F04 효과</td></tr>
+  </tbody></table>
+  <div class="call tip"><b>상태는 frontmatter 하나로</b>모든 산출물은 <code>status: draft | review | done | n/a</code>로 진행을 표시합니다. 해당 없는 트랙은 <code>n/a</code> + 사유를 적으면 충족으로 봅니다. 별도 진행표가 필요 없습니다.</div>
+</section>
+
+<section id="skills">
+  <h2>8. 스킬 전체 표</h2>
+  <p>"주간보고 써줘"처럼 말해도 맞는 스킬이 돕습니다. 슬래시는 그 스킬을 직접 부르는 지름길일 뿐입니다.</p>
+  <div class="scroll"><table class="g"><thead><tr><th>스킬</th><th>하는 일</th></tr></thead>
+  <tbody>
+    <tr><td><code>/edpm-start</code></td><td>처음 쓰는 사람 안내: 하려는 일·개발 체계를 묻고 순서와 첫 명령으로 바로 진행</td></tr>
+    <tr><td><code>/edpm-init</code></td><td>회사 프로필 인터뷰 → E00·AGENTS·위키 시드</td></tr>
+    <tr><td><code>/edpm-prd</code></td><td><b>원점</b> PRD 작성·기획서 정리·판 관리 (제품 전체, 릴리스, 보여줄 정수)</td></tr>
+    <tr><td><code>/edpm-template</code></td><td>회사 문서 양식 가져오기·매핑·적용 — 산출물은 템플릿에서 출발한 초안, 회사 양식 구조로 쓰거나(A) 회사 양식으로 옮겨 냄(B)</td></tr>
+    <tr><td><code>/edpm-spec</code></td><td>E09 스펙(기능·인수조건·계약·작업·테스트) 작성·추적 점검·작업 내보내기, 바이브코딩이면 작업 단위 구현</td></tr>
+    <tr><td><code>/edpm-blueprint</code></td><td>서비스 유형(AT01~AT15) 판정·적용, 영역별 빈칸 점검</td></tr>
+    <tr><td><code>/edpm-brief</code></td><td>상황판 → 오늘 할 일</td></tr>
+    <tr><td><code>/edpm-ingest</code> · <code>/edpm-query</code> · <code>/edpm-lint</code> · <code>/edpm-library</code></td><td>자료 투입·가명화·위키 / 근거 답 / 점검 / 자료실 관리</td></tr>
+    <tr><td><code>/edpm-collect</code> · <code>/edpm-promote</code></td><td>웹 수집 레시피 / 일반 지식 → 개인 Brain</td></tr>
+    <tr><td><code>/edpm-feature</code> · <code>/edpm-venture</code> · <code>/edpm-proto</code></td><td>운영개선 F / 신사업 N / 프로토타입 V</td></tr>
+    <tr><td><code>/edpm-doc</code></td><td>모든 트랙 산출물 공통 작성·게이트 체크</td></tr>
+    <tr><td><code>/edpm-review</code> · <code>/edpm-decide</code> · <code>/edpm-meeting</code></td><td>이해관계자 패널 비평 / ADR·예측 채점 / 회의록</td></tr>
+    <tr><td><code>/edpm-handoff</code></td><td>개발·디자인·영업·경영진·CS 언어로 전달 패키지</td></tr>
+    <tr><td><code>/edpm-metrics</code> · <code>/edpm-wbs</code> · <code>/edpm-weekly</code> · <code>/edpm-report</code></td><td>지표 계산 / WBS·일정 / 주간보고 / 관리 보고서</td></tr>
+    <tr><td><code>/edpm-policy</code> · <code>/edpm-ai-design</code> · <code>/edpm-eval</code> · <code>/edpm-curriculum</code></td><td>정책 P01~P09 / AI 설계 / AI 평가 / 교육과정 지식그래프</td></tr>
+    <tr><td><code>/edpm-qa</code> · <code>/edpm-proposal</code> · <code>/edpm-content</code></td><td>테스트·결함 / RFP·제안·견적 / 세일즈·마케팅</td></tr>
+  </tbody></table></div>
+  <p class="chips" style="margin-top:12px"><b style="font-size:.9rem">외부 스킬 2종 (<code>--extras</code>, rey-hailey/sb-lowfi):</b>
+    <span class="badge">sb-lowfi-pptx</span><span class="badge">sb-lowfi-figma</span>
+    <b style="font-size:.9rem">Word·PDF:</b> <span class="badge">edpm_export.py</span>
+  </p>
+</section>
+
+<section id="archetypes">
+  <h2>9. 서비스 유형(아키타입) 15종 — 어느 회사든</h2>
+  <p>먼저 유형을 1~2개 고르면 그 유형에 맞는 트랙·플레이북·지표·규제만 켜집니다. <code>/edpm-blueprint detect</code>가 질문 10개로 제안합니다.</p>
+  <div class="scroll"><table class="g"><thead><tr><th>ID</th><th>유형</th><th>특히 강한 부분</th></tr></thead>
+  <tbody>
+    <tr><td>AT01</td><td>이러닝 마켓플레이스</td><td>과정 구조·제작·가격·강사 정산·환불</td></tr>
+    <tr><td>AT02</td><td>기업교육 LMS</td><td>배정·증빙·환급 과정·SCORM·xAPI·수료증</td></tr>
+    <tr><td>AT03</td><td>부트캠프·직무교육</td><td>코딩 IDE·과제·라이브·취업 성과</td></tr>
+    <tr><td>AT04</td><td>라이브 클래스·튜터링</td><td>라이브 화면·출석·튜터 운영·미성년 안전</td></tr>
+    <tr><td>AT05</td><td>K-12 코스웨어</td><td>학습 성과·교육과정 KG·아동 개인정보·조달</td></tr>
+    <tr><td>AT06</td><td>학원·사교육</td><td>성취기준 매핑·학부모 리포트·원장 영업</td></tr>
+    <tr><td>AT07</td><td>소비자 학습앱</td><td>동기 설계·구독 수익·이탈 예측</td></tr>
+    <tr><td>AT08</td><td>고등·평생교육</td><td>표준 연동·크레덴셜·학습 데이터</td></tr>
+    <tr><td>AT09</td><td>자격증·시험대비</td><td>평가 설계·문항 자동 생성·합격 예측</td></tr>
+    <tr><td>AT10</td><td>AI 튜터·학습 에이전트</td><td>AI 기회맵·튜터 설계·RAG·메모리·평가</td></tr>
+    <tr><td class="b-ok">AT11</td><td>온라인학위 위탁운영(OPM)</td><td>모집·학생지원·등록금 수익배분·품질인증</td></tr>
+    <tr><td class="b-ok">AT12</td><td>평가·원격감독 벤더</td><td>출제·채점·원격감독·타당도·신뢰도</td></tr>
+    <tr><td class="b-ok">AT13</td><td>LXP·스킬 인텔리전스</td><td>추천·스킬 택소노미·개인화 학습경로·HRIS</td></tr>
+    <tr><td class="b-ok">AT14</td><td>특수교육·학습지원</td><td>IEP·보조공학·접근성·개별 목표</td></tr>
+    <tr><td class="b-ok">AT15</td><td>영유아 교육 플랫폼</td><td>놀이중심·아동 안전·학부모 소통·가정연계</td></tr>
+  </tbody></table></div>
+  <p style="font-size:.84rem;color:var(--muted)">혼합형(예: AT07+AT09 수학 풀이앱)이 흔합니다. 주 1 + 보조 1을 권장하며, 두 유형의 트랙 표를 겹쳐 더 강한 요구를 택합니다. AT11~15는 최근 추가되었습니다.</p>
+</section>
+
+<section id="walkE">
+  <h2>10. 워크스루 ① — 제품을 정의하는 흐름 (E 체인)</h2>
+  <p>매스핏을 예로, <b>문제에서 출발해 학습 성과·결정까지</b> 어떻게 이어지는지입니다. 각 단계는 "무엇을 입력 → 무엇이 생김 → 어떻게 씀"으로 봅니다.</p>
+
+  <div class="step">
+    <h4><span class="n">1</span>문제 정의 (E01)</h4>
+    <div class="io">
+      <div class="i"><div class="h">입력</div><p>"오답을 베껴 적고 또 틀리는 문제를 정의해줘"</p></div>
+      <div class="o"><div class="h">산출물</div><p>E01: PB-01 문제 진술 + 증거 2건 + 학습 변화 가설(PB-01-H1)</p></div>
+      <div class="v"><div class="h">활용</div><p>강사·자문과 "풀 문제" 합의, 약한 증거는 현장 확인 과제로</p></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h4><span class="n">2</span>학습 성과 설계 (E05) — 역방향 설계</h4>
+    <div class="io">
+      <div class="i"><div class="h">입력</div><p>"이 문제로 학습 성과를 설계해줘"</p></div>
+      <div class="o"><div class="h">산출물</div><p>E05: 학습 목표(LO) + <b>LO마다 평가 증거·달성 기준</b></p></div>
+      <div class="v"><div class="h">활용</div><p>"무엇을 할 수 있게 되나 + 무엇으로 확인하나"를 못 박아 기능 설계의 기준이 됨</p></div>
+    </div>
+    <div class="doc">
+      <div class="fn">03.docs/2.정의/E05_학습성과설계서.md</div>
+      <div class="bd">
+        <table class="g"><thead><tr><th>LO</th><th>학습 목표</th><th>평가 증거 · 달성 기준</th></tr></thead>
+        <tbody>
+          <tr><td>LO-01</td><td>오답을 보고 오류 원인을 개념/계산/해석 중 하나로 분류하고 근거를 한 문장으로 설명한다</td><td>원인 분류가 교사 판정과 일치 · 최근 10건 중 8건 이상</td></tr>
+          <tr><td>LO-03</td><td>한 번 틀린 유형의 유사 문항을 7일 뒤 힌트 없이 푼다</td><td>7일 재풀이 정답률 · 70% 이상</td></tr>
+        </tbody></table>
+        <p class="ex">— 평가 증거가 없는 LO는 완료할 수 없습니다. "학습 동기를 높인다" 같은 측정 불가 목표를 거릅니다. 이 문서가 done이어야 기능명세(E09)를 완료할 수 있습니다 (<span class="tag-track">G-LEARN</span>).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h4><span class="n">3</span>중요한 결정은 예측과 함께 (ADR)</h4>
+    <div class="doc">
+      <div class="fn">02.wiki/decisions/ADR-007_AI힌트_조건부확대.md</div>
+      <div class="bd">
+        <p><b>결정</b> · 분수 계수 오류 수정 후 학원 15곳 조건부 확대 (신학기 시점 확보)</p>
+        <h5>6. 예측과 채점</h5>
+        <p>예측: 확대 4주 후 "힌트 후 재도전 정답률 ≥ 55%, 부적절 응답 신고 0건"<br>확인일: 2026-04-01 · 확인 방법: <code>automation/sql/재도전정답률.sql</code></p>
+        <p class="ex">— 재검토일이 지나면 상황판이 알립니다. <code>/edpm-decide review</code>로 예측을 SQL로 채점해 "적중/빗나감"을 기록 → 판단 적중률이 쌓입니다. 틀린 건 흠이 아니고, 틀린 줄 모르는 게 흠입니다.</p>
+      </div>
+    </div>
+  </div>
+  <p>이렇게 E00 → E01 → E05 → … 로 이어지며, <code>LO-03 → REQ → F-012 → SCR → EV → M-13</code>처럼 ID가 연결됩니다. 나중에 <code>/edpm-lint</code>가 "기능 없는 학습 목표"나 "성과 없는 기능"을 잡아냅니다.</p>
+</section>
+
+<section id="walkF">
+  <h2>11. 워크스루 ② — 운영 개선 과제 하나 끝내기 (F)</h2>
+  <p>운영 중인 매스핏에 강사 요청이 쌓입니다: <i>"반별로 오답 미확인 학생을 한 번에 보고 싶다."</i> 이 요청이 과제로 정의·검증·출시·효과 확인까지 가는 전 과정입니다.</p>
+  <div class="flow">
+    <div class="node"><b>F00</b><small>현황 진단</small></div><div class="arr">→</div>
+    <div class="node"><b>백로그</b><small>접수·우선순위</small></div><div class="arr">→</div>
+    <div class="node"><b>F01</b><small>문제 정의</small></div><div class="arr">→</div>
+    <div class="node"><b>(V)</b><small>프로토타입</small></div><div class="arr">→</div>
+    <div class="node"><b>F02</b><small>기획·영향점검</small></div><div class="arr">→</div>
+    <div class="node"><b>F03</b><small>실험·출시</small></div><div class="arr">→</div>
+    <div class="node"><b>F04</b><small>효과 리뷰</small></div>
+  </div>
+
+  <div class="step">
+    <h4><span class="n">1</span>요청을 문제로</h4>
+    <div class="turn">
+      <div class="you">강사들이 "반별 미확인 학생 목록"을 원해. 과제로 만들어줘.</div>
+      <div class="ag"><b>에이전트:</b> 요청을 "누가 어떤 상황에서 무엇을 못 하나"로 바꿔 F01에 기록 → 같은 문제의 요청을 합치고 근거 건수를 셈. <b>근거가 요청 1건뿐이면 다음 단계로 넘어가지 않고</b> "강사 3명 통화"를 제안합니다.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h4><span class="n">2</span>불확실하면 프로토타입으로 (개발 3주 절약)</h4>
+    <p>"목록이 맞나, 알림이 맞나"가 불확실하면 클릭 프로토타입(1~2일)을 강사 5명에게 보여 결정합니다. 결과가 "목록보다 수업 직전 알림이 핵심"이면 F02 범위가 바뀝니다.</p>
+  </div>
+
+  <div class="step">
+    <h4><span class="n">3</span>기획 — 목표 지표 + 영향 점검 (<span class="tag-track">G-MEASURE</span> · <span class="tag-track">G-IMPACT</span>)</h4>
+    <div class="doc">
+      <div class="fn">03.docs/F.개선/202610_반별미제출현황/F02_기능기획서.md</div>
+      <div class="bd">
+        <h5>1. 목표 지표</h5>
+        <table class="g"><thead><tr><th>지표</th><th>기준선</th><th>목표</th><th>SQL</th></tr></thead>
+        <tbody><tr><td>과제 확인까지 걸리는 시간(중앙값)</td><td>52시간 [가정]</td><td>24시간 이하</td><td><code>automation/sql/확인소요.sql</code></td></tr></tbody></table>
+        <h5>5. 영향 점검표</h5>
+        <table class="g"><thead><tr><th>영역</th><th>판정</th><th>조치</th></tr></thead>
+        <tbody>
+          <tr><td>개인정보·미성년 (E13)</td><td>해당</td><td>학부모 알림 문구는 민감정보 최소화, E13 갱신</td></tr>
+          <tr><td>진도·수료 규칙 (L03)</td><td>해당없음</td><td>—</td></tr>
+          <tr><td>시즌 타이밍 (G-CAL)</td><td>해당</td><td>기말 2주 전 배포 금지</td></tr>
+        </tbody></table>
+        <p class="ex">— <b>영향 점검표의 모든 행이 처리되지 않으면 F03(출시)을 완료할 수 없습니다</b>(코드가 강제). 목표 지표에 기준선·목표·SQL이 없으면 애초에 이 문서가 done이 안 됩니다. "작은 기능"이 환불·정산·개인정보를 조용히 깨는 걸 막는 장치입니다.</p>
+      </div>
+    </div>
+    <p style="font-size:.88rem;color:var(--muted)">개발팀에 넘길 때는 "개발용으로 넘겨줘" → <code>/edpm-handoff dev</code>가 사용자 스토리·인수조건·엣지 케이스·측정 이벤트를 GitHub 이슈로 만듭니다.</p>
+  </div>
+
+  <div class="step">
+    <h4><span class="n">4</span>출시 후 효과 리뷰 (F04) — 같은 SQL로</h4>
+    <div class="doc">
+      <div class="fn">/edpm-metrics compare 결과</div>
+      <div class="bd">
+        <table class="g"><thead><tr><th>지표</th><th>기준선</th><th>목표</th><th>실제</th><th>목표 달성</th></tr></thead>
+        <tbody><tr><td>확인 소요(중앙값)</td><td>52h</td><td>24h</td><td>21h</td><td><span class="badge b-ok">예</span></td></tr></tbody></table>
+        <p class="ex">— F02와 <b>같은 SQL</b>로 계산합니다. 숫자는 LLM이 추정하지 않습니다. 결과·가드레일·VOC로 유지/개선/롤백을 결정하고, 배운 것은 위키·ADR로 남깁니다. 출시하고 끝나는 개선을 막습니다(<span class="tag-track">G-MEASURE</span>).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="walkN">
+  <h2>12. 워크스루 ③ — 신사업 0→1 (N)</h2>
+  <p>신사업 <b>리딩버디</b>(만 5~9세가 영어책을 소리 내 읽으면 AI가 단어별 피드백): 경영진은 6개월 뒤 확장 여부를 판단하고 싶어 합니다.</p>
+  <div class="flow">
+    <div class="node"><b>N01</b><small>사업기회</small></div><div class="arr">→</div>
+    <div class="node"><b>PT-01</b><small>가치 검증</small></div><div class="arr">→</div>
+    <div class="node"><b>N02</b><small>투자심의</small></div><div class="arr">→</div>
+    <div class="node"><b>N03</b><small>MVP·PMF</small></div><div class="arr">→</div>
+    <div class="node"><b>파일럿</b><small>E16·E17</small></div><div class="arr">→</div>
+    <div class="node"><b>N04</b><small>단계 심사</small></div>
+  </div>
+  <ul>
+    <li><b>N01 사업기회</b> — "리딩버디 사업기회 검토해줘" → 기회 가설·시장·경쟁·핵심 가설(HY)·<b>중단 기준</b>. 근거가 부족하면 앱 리뷰 수집과 보호자 인터뷰 3건 ingest를 먼저 제안.</li>
+    <li><b>가장 위험한 가정부터</b> — "아이가 피드백을 보고 다시 읽는가"는 계획서로 답이 안 나오니, AI를 만들기 전에 <b>오즈의 마법사</b>(교사가 녹음 듣고 손으로 피드백)로 10가구에 2주 테스트. 미성년이라 <b>보호자 동의서</b>를 먼저 만들고 가상 데이터만.</li>
+    <li><b>N02 투자심의</b> — 손익 시나리오(기본·낙관·비관, 스크립트로 재현), 리스크·대안, 결정 요청. 투자 결정은 ADR + 예측("6개월 뒤 주 3회 읽기 가구 50% 이상") + 사전 부검.</li>
+    <li><b>N03 MVP·PMF + 파일럿</b> — MVP 범위와 "지금 안 할 것", PMF·<b>학습 효과</b> 신호 기준. 미성년 대상이라 E13은 MVP에서도 필수(<span class="tag-track">G-SAFE</span>). 파일럿은 E16→E17로 기록.</li>
+    <li><b>N04 단계 심사</b> — 기준 대비 증거로 확장·전환·중단. <b>"확장 진행" 전에는 정식 출시(E18)가 막힘</b>(<span class="tag-track">G-STAGE</span>). 중단도 성과로 기록하고 교훈은 개인 Brain으로.</li>
+  </ul>
+  <div class="call tip"><b>효용</b>경영진 보고가 "느낌"이 아니라 <b>사전에 정한 기준 + 실제 증거 + 예측 채점</b>으로 이뤄집니다. 검증 없이 확장 투자하는 것을 게이트가 구조적으로 막습니다.</div>
+</section>
+
+<section id="proto">
+  <h2>13. 프로토타입·MVP — 가장 위험한 가정부터 싸게</h2>
+  <p>프로토타입은 축소판 PRD가 아니라 <b>PRD가 정의한 제품의 정수</b>(PRD 9절: 핵심 경험, 가장 위험한 가정)를 보여주는 것입니다. <b>가장 낮은 충실도</b>부터 만들어, 결과 전에 정한 기준으로 판정합니다. 기준은 빌드 전에(<span class="tag-track">G-PROTO</span>). 프로토타입 코드는 <code>06.prototypes/</code>에만 두고, 제품은 스펙에서 다시 시작합니다.</p>
+  <div class="scroll"><table class="g"><thead><tr><th>묻고 싶은 것</th><th>단계</th><th>기간</th></tr></thead>
+  <tbody>
+    <tr><td>흐름을 이해하나</td><td>P0 종이</td><td>반나절</td></tr>
+    <tr><td>화면을 쓸 수 있나·원하나</td><td>P1 클릭 프로토타입</td><td>1~2일</td></tr>
+    <tr><td>진짜 결과를 받으면 행동이 바뀌나</td><td>P2 오즈의 마법사</td><td>2~5일</td></tr>
+    <tr><td>AI 답이 쓸 만한가</td><td>P3 노코드·골든셋</td><td>1~3일</td></tr>
+    <tr><td>실제로 계속 쓰나·배우나</td><td>P4 코드 MVP</td><td>1~3주</td></tr>
+  </tbody></table></div>
+  <p style="font-size:.86rem;color:var(--muted)">흐름: "프로토타입 새로 만들어줘" → <code>new → build → test → decide(폐기·재검증·MVP확장·개발이관) → handoff</code>. 검증용 코드는 V03 이관 패키지와 B 트랙 검토 없이 운영에 넣지 않습니다.</p>
+</section>
+
+<section id="ai">
+  <h2>14. AI 설계 — LLM에만 의존하지 않기</h2>
+  <p>기능마다 가장 단순하면서 요구를 충족하는 방식을 고르고, 근거는 A10에 남깁니다.</p>
+  <div class="flow" style="font-size:.8rem">
+    <div class="node"><b>규칙·SQL</b><small>정답 있는 일</small></div><div class="arr">→</div>
+    <div class="node"><b>고전 NLP</b></div><div class="arr">→</div>
+    <div class="node"><b>검색·FAQ</b></div><div class="arr">→</div>
+    <div class="node"><b>RAG</b><small>근거 필요</small></div><div class="arr">→</div>
+    <div class="node"><b>소형·파인튜닝</b></div><div class="arr">→</div>
+    <div class="node"><b>로컬 LLM</b><small>학생 데이터</small></div><div class="arr">→</div>
+    <div class="node"><b>클라우드 LLM</b></div>
+  </div>
+  <ul>
+    <li>정답·점수·출결·진도처럼 정해진 답이 있는 일은 규칙·SQL로. LLM은 설명·생성에.</li>
+    <li>학생 원문·음성·식별 정보가 외부 API로 나가면 E13·P07 검토, 필요하면 가명화·로컬 모델.</li>
+    <li>방식·모델·프롬프트 변경은 같은 평가셋 결과(<code>/edpm-eval</code>)로 판단, 비용은 <code>ai_cost.py</code>로 계산.</li>
+  </ul>
+  <div class="call warn"><b>출시 게이트 (<span class="tag-track">G-AI</span>)</b>AI 기능이면 E14·A10(방식)·A14(가드레일) done, A 트랙을 쓰면 A06 평가 합격, 유료·대량이면 A12(비용)도 done이어야 출시. 한국에서 초·중등 학생 평가용 AI는 AI 기본법(2026.1.22. 시행)의 고영향 AI입니다.</div>
+</section>
+
+<section id="gates">
+  <h2>15. 게이트·하네스 — 규칙을 장치로</h2>
+  <p>게이트는 산출물을 <code>done</code>으로 바꿀 때 확인하는 관문입니다. "게이트 무시"를 명시하면 경고 후 진행하고 <code>gate_skip</code> 사유가 상황판·린트에 계속 보입니다. <span class="badge b-ok">코드 강제</span> 표시는 점검기가 결정적으로 막는 것, 나머지는 LLM이 보완합니다.</p>
+  <div class="scroll"><table class="g"><thead><tr><th>게이트</th><th>막는 것</th></tr></thead>
+  <tbody>
+    <tr><td><span class="tag-track">생성 게이트</span></td><td>A가 끝나야 B: 전제 산출물이 끝나기 전 다음 문서 본문 쓰기 차단 (진행표 <code>edpm_check.py progress</code>로 한 장에) <span class="badge b-ok">코드 강제</span></td></tr>
+    <tr><td><span class="tag-track">G-PRD</span></td><td>PRD가 review 이상이어야 다른 산출물 완료·제품 코드 가능 — 모든 일은 PRD에서 출발 <span class="badge b-ok">코드 강제</span></td></tr>
+    <tr><td><span class="tag-track">G-SPEC</span></td><td>스펙(E09) done 전에는 제품 코드(<code>src/</code>) 쓰기 불가, 개발팀 체계면 PM은 제품 코드를 쓰지 않고 넘김 <span class="badge b-ok">코드 강제</span></td></tr>
+    <tr><td><span class="tag-track">G-LEARN</span></td><td>E05 없이 E08·E09 완료 불가 — 성과 없는 기능 방지</td></tr>
+    <tr><td><span class="tag-track">G-SAFE</span></td><td>미성년·학생 데이터면 E13 통과 전 E15 완료 불가</td></tr>
+    <tr><td><span class="tag-track">G-AI</span></td><td>AI 기능이면 E14·A10·A14 done, A06 합격, 유료·대량이면 A12 done</td></tr>
+    <tr><td><span class="tag-track">G-EVIDENCE</span></td><td>실제 파일럿 없이 E18 완료 불가</td></tr>
+    <tr><td><span class="tag-track">G-CAL</span></td><td>시즌 캘린더 충돌 검토(학사일정·기업 예산·성수기)</td></tr>
+    <tr><td><span class="tag-track">G-POLICY</span></td><td>유료 판매면 P01, 강사 수익배분이면 S07 done</td></tr>
+    <tr><td><span class="tag-track">G-STAGE</span></td><td>신사업이면 N04 "확장 진행" 전 정식 출시 불가</td></tr>
+    <tr><td><span class="tag-track">G-IMPACT</span></td><td>F02 영향 점검표 전 행 처리돼야 F03 완료 <span class="badge b-ok">코드 강제</span></td></tr>
+    <tr><td><span class="tag-track">G-MEASURE</span></td><td>F02 목표 지표 기준선·목표·SQL, F04 같은 SQL 결과 <span class="badge b-ok">코드 강제</span></td></tr>
+    <tr><td><span class="tag-track">G-PII</span></td><td>자료실·위키에 식별 정보 금지 <span class="badge b-ok">코드 강제</span></td></tr>
+    <tr><td><span class="tag-track">G-PROTO</span></td><td>P3·P4 빌드 전 성공·중단 기준·timebox 확정, 가상 데이터만</td></tr>
+    <tr><td><span class="tag-track">G-CURRIC</span></td><td>국가 교육과정 기반이면 E05 LO가 KG 성취기준에 정렬</td></tr>
+  </tbody></table></div>
+  <table class="g"><thead><tr><th>하네스: 언제</th><th>무엇이</th></tr></thead>
+  <tbody>
+    <tr><td>세션을 열 때</td><td>처음이면 시작 안내, <b>지금 단계와 다음 할 일</b>, 상황판(막힌 게이트·검토 대기·지연·결정·회의록·개인정보)</td></tr>
+    <tr><td>파일을 저장할 때</td><td>자료실 원본 수정·게이트 미충족 done·PII 패턴·스펙 승인 전 제품 코드 → 차단·사유 표시</td></tr>
+    <tr><td>외부로 나가는 명령</td><td>GitHub 쓰기·클라우드 AI 평가·<code>git push</code>는 매번 확인</td></tr>
+  </tbody></table>
+</section>
+
+<section id="protect">
+  <h2>16. 데이터 보호·교육과정 규칙 (항상 적용)</h2>
+  <div class="call rule"><b>데이터 보호 (핵심)</b>
+    <ul style="margin:.3em 0 0">
+      <li>실명·연락처·학번·얼굴·음성은 자료실에 넣기 전 가명(<code>학생A</code>, <code>OO중</code>)으로. 전화·주민번호·이메일은 훅이 저장을 막음.</li>
+      <li>비식별화 전 자료를 외부 AI·브라우저 에이전트로 보내지 않는다.</li>
+      <li>실제 아동·학생 데이터로 프로토타입을 테스트하지 않는다 (가상 페르소나·가명 샘플).</li>
+      <li>조회·계산(점수·정답률·효과크기)은 SQL·스크립트로. LLM이 수치를 추정하지 않는다.</li>
+    </ul>
+  </div>
+  <div class="call warn"><b>교육과정 데이터 (국가 교육과정 기반)</b>성취기준·선수 관계는 지식그래프에서 코드와 함께 조회(기억으로 쓰지 않음). 공식 선수 관계와 권장 순서를 구분하고, KG는 공식 자료가 아니므로 제출 문서 원문은 공식 고시로 확인하며 출처 고지를 남긴다. 전환기 격차를 개인의 '뒤처짐'으로 표현하지 않는다.</div>
+</section>
+
+<section id="collab">
+  <h2>17. 협업·보고·지식 자산화</h2>
+  <p><b>같은 근거를 여러 언어로</b>(<code>/edpm-handoff</code>): 개발(스토리·인수조건·이슈) · 디자인(문제·맥락·연령 규칙) · 영업(말할 수 있는 것·없는 것) · 경영진(결정 요청 한 장) · CS·법무. 피드백은 다시 백로그·WBS·ADR로 되돌립니다.</p>
+  <div class="grid">
+    <div class="card"><h4>보고</h4><p><code>/edpm-report</code> M01 착수·M04 중간·M05 완료·경영진 한 쪽. <code>--format docx|pdf|pptx</code>.</p></div>
+    <div class="card"><h4>결정 채점</h4><p><code>/edpm-decide review</code> 재검토일 지난 ADR 예측을 SQL로 채점.</p></div>
+    <div class="card"><h4>회고</h4><p>사이클 끝에 <code>/edpm-doc E20</code> — 다음 후보가 다시 E01로.</p></div>
+    <div class="card"><h4>개인 Brain 승격</h4><p><code>/edpm-promote</code> 기밀·개인정보 뺀 일반 지식만. 다음 회사의 씨앗.</p></div>
+  </div>
+  <p style="font-size:.88rem;color:var(--muted)">워크스페이스 자체가 인수인계 문서입니다. 후임은 상황판 → 대시보드 → 최근 주간보고 → decisions 순으로 읽습니다.</p>
+</section>
+
+<section id="faq">
+  <h2>18. 막혔을 때 FAQ · 명령 레퍼런스</h2>
+  <table class="g"><thead><tr><th>상황</th><th>이렇게</th></tr></thead>
+  <tbody>
+    <tr><td>"다음에 뭐 써야 해?"</td><td><code>/edpm-brief next</code> — 전제조건 충족된 산출물을 알려줌</td></tr>
+    <tr><td><code>차단: E09 done 불가 - G-LEARN</code></td><td>먼저 E05 완료. 정당한 사유면 "게이트 무시하고 완료, 사유: …"</td></tr>
+    <tr><td><code>차단 (G-PII): 휴대전화…</code></td><td>가명으로 바꿔 저장. 예시면 <code>example.com</code>·<code>{…}</code></td></tr>
+    <tr><td>경영진이 "효과 있어?"</td><td>"효과크기 계산해줘" → 신뢰구간·표본 함께. 0 포함하면 단정 않음</td></tr>
+    <tr><td>"버튼 하나만 추가인데 급함"</td><td>그래도 F02 영향 점검은 생략 안 함 — 작은 기능이 환불·진도를 깸</td></tr>
+    <tr><td>상황판이 안 뜸</td><td><code>python3 automation/scripts/edpm_check.py brief</code> 직접 실행</td></tr>
+  </tbody></table>
+  <div class="scroll"><table class="g"><thead><tr><th>스킬</th><th>하위 명령</th></tr></thead>
+  <tbody>
+    <tr><td><code>/edpm-feature</code></td><td>baseline · intake · prioritize · new · spec · launch · review · status</td></tr>
+    <tr><td><code>/edpm-venture</code></td><td>opportunity · case · mvp · gate · plan</td></tr>
+    <tr><td><code>/edpm-proto</code></td><td>new · plan · build · test · decide · handoff · list</td></tr>
+    <tr><td><code>/edpm-metrics</code></td><td>connect · define · sql · run · effect · compare · baseline</td></tr>
+    <tr><td><code>/edpm-ai-design</code></td><td>opportunity · method · route · cost · ops · guardrail · goldenset · nocode · prompt-export</td></tr>
+    <tr><td><code>/edpm-curriculum</code></td><td>setup · search · standard · path · seed · map · coverage · gaps · wiki · update</td></tr>
+    <tr><td><code>/edpm-decide</code></td><td>new · premortem · review · stats · list</td></tr>
+    <tr><td><code>/edpm-handoff</code></td><td>dev · design · sales · exec · cs · content · legal · feedback</td></tr>
+  </tbody></table></div>
+  <div class="foot">
+    <p><b>EdPM Framework v0.6</b> · 에듀테크 PM A to Z 마스터 가이드 · 범위: 한국 에듀테크. 서비스 유형 15종·게이트 12종 반영.</p>
+    <p>프레임워크의 README·AGENTS.md·guide/·archetypes/·실제 산출물 템플릿을 근거로 작성했습니다. 매스핏·리딩버디와 모든 수치는 가상 예시입니다. 법령·세금·조달 내용은 법률 자문이 아니며 최종본은 법무 검토를 받으세요. 가상 회사로 따라 하는 더 상세한 실전 워크스루는 리포의 <code>guide/14.AtoZ사용가이드.md</code>에 있습니다.</p>
+  </div>
+</section>
+</main>
+</div>
+<script>
+(function(){
+  var toc=document.getElementById('toc'), btn=document.getElementById('menubtn');
+  btn.addEventListener('click',function(){toc.classList.toggle('open');});
+  var links=[].slice.call(toc.querySelectorAll('a'));
+  links.forEach(function(a){a.addEventListener('click',function(){toc.classList.remove('open');});});
+  var secs=[].slice.call(document.querySelectorAll('main section'));
+  function onScroll(){
+    var y=window.scrollY+120, cur=secs[0];
+    for(var i=0;i<secs.length;i++){ if(secs[i].offsetTop<=y) cur=secs[i]; }
+    links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href')==='#'+cur.id); });
+  }
+  window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+})();
+</script>
+</body>
+</html>

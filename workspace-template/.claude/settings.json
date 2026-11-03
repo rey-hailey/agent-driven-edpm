@@ -1,0 +1,50 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/automation/scripts/edpm_check.py\" brief"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/automation/hooks/pre_write.py\""
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(python3 automation/scripts/edpm_check.py:*)",
+      "Bash(python3 automation/scripts/wbs_sync.py status:*)",
+      "Bash(python3 automation/scripts/wbs_sync.py export:*)",
+      "Bash(python3 automation/scripts/wbs_sync.py pull:*)",
+      "Bash(python3 automation/scripts/metrics.py:*)",
+      "Bash(python3 automation/scripts/edpm_export.py:*)",
+      "Bash(python3 automation/scripts/ai_cost.py:*)",
+      "Bash(python3 automation/kg/kg_query.py:*)",
+      "Bash(git log:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(grep:*)"
+    ],
+    "ask": [
+      "Bash(python3 automation/scripts/wbs_sync.py push:*)",
+      "Bash(python3 automation/scripts/wbs_sync.py setup:*)",
+      "Bash(gh issue:*)",
+      "Bash(gh project:*)",
+      "Bash(python3 automation/scripts/ai_eval.py:*)",
+      "Bash(automation/scripts/aside-run.sh:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+대상유형,대상ID,대상명,성취기준코드,standard_id,topic_id,관계,근거,검토상태,비고
+문항세트,CT-02,일차방정식 오답 코칭 문항 120개,[9수02-04],kr.standard.2022.middle.d93cd446a46ae98af0cc,,assesses,E11 3절 / kg_query standard [9수02-04],교과 검토 전,예시 (매스핏)
+기능,F-012,AI 오답 해설 (힌트 사다리),[9수02-04],kr.standard.2022.middle.d93cd446a46ae98af0cc,,supports,E09 F-012,검토 전,예시 (매스핏)
+진단,DG-01,중1 진입 진단 (비례식),[6수02-04],kr-2022-elem-math:[6수02-04],,assesses,kg_query coverage 빠진 선수 성취기준,검토 전,예시 (매스핏)

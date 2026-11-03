@@ -1,0 +1,34 @@
+# 수집함: 비식별화 전 자료가 섞일 수 있으므로 커밋하지 않음
+00.inbox/*
+!00.inbox/README.md
+
+# 비밀
+.env
+.env.*
+*.key
+*.pem
+secrets/
+.AP-key.md
+
+# Obsidian 개인 설정 (공유할 설정만 골라 추적하려면 이 줄을 조정)
+.obsidian/workspace*.json
+.obsidian/cache
+
+# 대용량·원본 미디어 (사진·음성은 비식별화가 어려워 워크스페이스에 두지 않음)
+*.mp3
+*.m4a
+*.wav
+*.mp4
+*.mov
+
+# 기타
+.DS_Store
+node_modules/
+.next/
+.vercel/
+dist/
+__pycache__/
+*.log
+
+# 교육과정 지식그래프 원천 저장소와 빌드 결과 (automation/kg/kg_sync.sh, kg_build.py가 다시 만듦)
+data/curriculum-kg/

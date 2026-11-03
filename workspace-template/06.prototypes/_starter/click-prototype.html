@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>PT-01 클릭 프로토타입</title>
+<!--
+  EdPM P1 클릭 프로토타입 시작 파일
+  - 화면은 <section class="screen" id="화면ID"> 하나씩. 첫 화면이 시작 화면입니다.
+  - 이동은 <a href="#화면ID"> 또는 <button data-go="화면ID">. 화면 ID는 E10의 SCR-ID를 쓰면 추적이 쉽습니다.
+  - 측정: 화면 이동과 data-event를 붙인 요소의 클릭을 이 브라우저에 기록합니다.
+    테스트가 끝나면 오른쪽 아래 "기록" → "CSV 내보내기"로 저장해 01.자료실/데이터/에 넣습니다 (/edpm-ingest).
+  - 가상 데이터만 씁니다. 외부 스크립트·폰트를 불러오지 않아 인터넷 없이 열립니다.
+-->
+<style>
+  :root {
+    --bg: #f4f4f5; --frame: #ffffff; --ink: #18181b; --muted: #71717a; --line: #e4e4e7;
+    --accent: #2563eb; --accent-ink: #ffffff; --ok: #15803d; --warn: #b45309; --soft: #eff6ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #18181b; --frame: #27272a; --ink: #f4f4f5; --muted: #a1a1aa; --line: #3f3f46;
+            --accent: #60a5fa; --accent-ink: #0b1220; --ok: #4ade80; --warn: #fbbf24; --soft: #1e293b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  .device { max-width: 390px; min-height: 100vh; margin: 0 auto; background: var(--frame);
+            display: flex; flex-direction: column; }
+  @media (min-width: 480px) { .device { min-height: 780px; margin: 24px auto; border-radius: 28px;
+            border: 1px solid var(--line); overflow: hidden; } }
+  .banner { font-size: 12px; text-align: center; padding: 4px; background: var(--soft); color: var(--muted); }
+  .screen { display: none; flex: 1; flex-direction: column; padding: 20px 16px; gap: 14px; }
+  .screen.active { display: flex; }
+  header.bar { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  header.bar a { color: var(--muted); text-decoration: none; font-size: 20px; }
+  h1 { font-size: 22px; margin: 4px 0; }
+  p.sub { color: var(--muted); margin: 0; }
+  .card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; gap: 12px;
+          align-items: center; color: inherit; text-decoration: none; }
+  .thumb { width: 52px; height: 52px; border-radius: 10px; background: var(--soft); flex: none; }
+  .btn { display: block; width: 100%; padding: 14px; border: 0; border-radius: 12px; font: inherit;
+         font-weight: 600; background: var(--accent); color: var(--accent-ink); text-align: center;
+         text-decoration: none; cursor: pointer; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+  .spacer { flex: 1; }
+  .word.ok { color: var(--ok); } .word.retry { color: var(--warn); text-decoration: underline dotted; }
+  .reading { font-size: 22px; line-height: 1.8; }
+  #log-toggle { position: fixed; right: 12px; bottom: 12px; font-size: 12px; padding: 6px 10px;
+                border-radius: 999px; border: 1px solid var(--line); background: var(--frame); color: var(--muted); }
+  #log-panel { position: fixed; right: 12px; bottom: 48px; width: min(320px, calc(100vw - 24px)); max-height: 50vh;
+               overflow: auto; background: var(--frame); border: 1px solid var(--line); border-radius: 12px;
+               padding: 10px; font-size: 12px; display: none; }
+  #log-panel.open { display: block; }
+  #log-panel button { font-size: 12px; margin: 0 4px 8px 0; }
+</style>
+</head>
+<body>
+<div class="device">
+  <div class="banner">프로토타입 · 가상 데이터</div>
+
+  <!-- 화면 예시: 리딩버디 PT-01 (가상). 아래 section들을 바꿔 쓰세요. -->
+  <section class="screen" id="SCR-001">
+    <h1>오늘 읽을 책</h1>
+    <p class="sub">책을 골라 소리 내어 읽어 보세요</p>
+    <a class="card" href="#SCR-002" data-event="책선택:The Big Cat">
+      <div class="thumb"></div><div><b>The Big Cat</b><br><span class="sub">레벨 1 · 8쪽</span></div>
+    </a>
+    <a class="card" href="#SCR-002" data-event="책선택:My Red Hat">
+      <div class="thumb"></div><div><b>My Red Hat</b><br><span class="sub">레벨 1 · 6쪽</span></div>
+    </a>
+  </section>
+
+  <section class="screen" id="SCR-002">
+    <header class="bar"><a href="#SCR-001" aria-label="뒤로">‹</a>The Big Cat · 1/8</header>
+    <p class="reading">The big cat sat on the mat.</p>
+    <div class="spacer"></div>
+    <button class="btn" data-go="SCR-003" data-event="녹음완료">● 읽기 녹음 (누르면 끝난 것으로 가정)</button>
+  </section>
+
+  <section class="screen" id="SCR-003">
+    <header class="bar"><a href="#SCR-002" aria-label="뒤로">‹</a>잘 읽었어요!</header>
+    <p class="reading">
+      <span class="word ok">The</span> <span class="word ok">big</span> <span class="word ok">cat</span>
+      <span class="word retry">sat</span> <span class="word ok">on</span> <span class="word ok">the</span>
+      <span class="word ok">mat.</span>
+    </p>
+    <p class="sub">밑줄 친 단어를 한 번 더 들어 볼까요?</p>
+    <div class="spacer"></div>
+    <button class="btn" data-go="SCR-002" data-event="다시읽기">다시 읽기</button>
+    <button class="btn ghost" data-go="SCR-001" data-event="다음으로">다음 책</button>
+  </section>
+</div>
+
+<button id="log-toggle" type="button">기록</button>
+<div id="log-panel" aria-live="polite">
+  <button type="button" id="log-export">CSV 내보내기</button>
+  <button type="button" id="log-clear">지우기</button>
+  <label>참여자 <input id="log-pid" size="6" placeholder="P01"></label>
+  <ol id="log-list"></ol>
+</div>
+
+<script>
+(function () {
+  var KEY = "edpm-proto-log:" + document.title;
+  var screens = Array.prototype.slice.call(document.querySelectorAll(".screen"));
+  function load() { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { return []; } }
+  function save(rows) { try { localStorage.setItem(KEY, JSON.stringify(rows)); } catch (e) {} }
+  var rows = load();
+  var pid = document.getElementById("log-pid");
+  try { pid.value = localStorage.getItem(KEY + ":pid") || ""; } catch (e) {}
+  pid.addEventListener("change", function () { try { localStorage.setItem(KEY + ":pid", pid.value); } catch (e) {} });
+
+  function record(type, detail) {
+    rows.push({ t: new Date().toISOString(), pid: pid.value, type: type, detail: detail });
+    save(rows); render();
+  }
+  function render() {
+    var list = document.getElementById("log-list");
+    list.innerHTML = "";
+    rows.slice(-30).forEach(function (r) {
+      var li = document.createElement("li");
+      li.textContent = r.t.slice(11, 19) + " " + (r.pid || "-") + " " + r.type + " " + r.detail;
+      list.appendChild(li);
+    });
+  }
+  function show(id) {
+    var target = document.getElementById(id) || screens[0];
+    screens.forEach(function (s) { s.classList.toggle("active", s === target); });
+    window.scrollTo(0, 0);
+    record("화면", target.id);
+  }
+  window.addEventListener("hashchange", function () { show(location.hash.slice(1)); });
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest("[data-event],[data-go]");
+    if (!el) return;
+    if (el.dataset.event) record("이벤트", el.dataset.event);
+    if (el.dataset.go) { location.hash = el.dataset.go; }
+  });
+  document.getElementById("log-toggle").addEventListener("click", function () {
+    document.getElementById("log-panel").classList.toggle("open");
+  });
+  document.getElementById("log-clear").addEventListener("click", function () {
+    if (confirm("기록을 모두 지울까요?")) { rows = []; save(rows); render(); }
+  });
+  document.getElementById("log-export").addEventListener("click", function () {
+    var csv = "시각,참여자,유형,내용\n" + rows.map(function (r) {
+      return [r.t, r.pid, r.type, r.detail].map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(",");
+    }).join("\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" }));
+    a.download = document.title.replace(/\s+/g, "_") + "_기록_" + new Date().toISOString().slice(0, 10) + ".csv";
+    a.click();
+  });
+  render();
+  show(location.hash.slice(1));
+})();
+</script>
+</body>
+</html>

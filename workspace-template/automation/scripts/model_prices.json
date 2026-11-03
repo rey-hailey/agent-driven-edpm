@@ -1,0 +1,32 @@
+{
+  "note": "USD per 1M tokens. 확인일 기준 참고값이며 공식 가격 페이지에서 다시 확인하세요. 로컬 모델은 토큰 가격 대신 GPU 시간 비용으로 계산합니다.",
+  "checked": "2026-10-12",
+  "models": {
+    "claude-opus-5-5": {
+      "type": "cloud",
+      "input": 4.0,
+      "output": 20.0,
+      "cached_input": 0.2
+    },
+    "claude-sonnet-5-5": {
+      "type": "cloud",
+      "input": 2.0,
+      "output": 10.0,
+      "cached_input": 0.1
+    },
+    "claude-haiku-5-5": {
+      "type": "cloud",
+      "input": 0.1,
+      "output": 0.5,
+      "cached_input": 0.01
+    },
+    "local-example": {
+      "type": "local",
+      "gpu_hourly_usd": 1.5,
+      "throughput_tokens_per_sec": 1500,
+      "utilization": 0.4,
+      "note": "예시값 [가정]. 실제 GPU 단가·처리량·가동률로 바꾸세요."
+    }
+  },
+  "source": "https://platform.claude.com/docs/en/about-claude/pricing (Haiku 5.5는 프롬프트 10만 토큰 이하 기준, 캐시 쓰기 비용은 별도)"
+}

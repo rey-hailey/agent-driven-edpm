@@ -1,0 +1,33 @@
+{
+  "note": "교육과정 지식그래프 원천 저장소 고정 버전. kg_sync.sh가 이 커밋을 받는다. 갱신은 kg_sync.sh --update 후 사람이 확인하고 커밋한다.",
+  "sources": [
+    {
+      "key": "elementary",
+      "repo": "https://github.com/DECK6/korean-elementary-learning-map",
+      "commit": "67539e3c9ad12db752d1fa69246cdace6049b434",
+      "commitDate": "2026-09-07",
+      "release": "kr-full-depth-v0.5",
+      "license": "MIT (c) 2026 DECK",
+      "scope": "2022 개정 초등 11개 교과, 성취기준 620, 세부 토픽 1,956"
+    },
+    {
+      "key": "secondary",
+      "repo": "https://github.com/DECK6/korean-secondary-learning-map",
+      "commit": "b57e5bb51bf58ccb3dc0bca132d4cd01552182ba",
+      "commitDate": "2026-09-07",
+      "release": "kr-2022-middle/high/bridge-v0.6.0-candidate",
+      "license": "MIT (c) 2026 DECK (ontology TBox metadata declares CC0 1.0)",
+      "scope": "2022 개정 중학교 24과목, 고등 일반 231과목(+직업계 528, 선택), 초-중·중-고 연결"
+    },
+    {
+      "key": "gap",
+      "repo": "https://github.com/DECK6/transition-gap-map",
+      "commit": "6ab6eb3650f00ce9fbf5e7d75b3b71ffe5a74276",
+      "commitDate": "2026-07-18",
+      "release": "0.1.0",
+      "license": "MIT (c) 2026 DECK",
+      "scope": "초→중 24과목, 중→고 공통 37과목 문서상 연계 격차, 신규 성취기준 1,046, 학부모용 쉬운 설명(AI 초안)",
+      "builtOn": "elementary kr-full-depth-v0.4, secondary v0.5.0-candidate (현재 고정 버전과 다름: kg_build가 연결 실패 건수를 보고)"
+    }
+  ]
+}
