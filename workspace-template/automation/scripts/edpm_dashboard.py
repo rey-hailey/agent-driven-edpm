@@ -496,11 +496,23 @@ def build() -> dict:
         "decisions": pf["decisions"][-6:], "prototypes": pf["prototypes"], "spec": pf["spec"],
         "attention": attention, "calendar": calendar(), "recent": recent_files(), "log": log_entries(),
         "skills": skills(), "graph": g, "board": board(docs, ck.progress_rows(docs, show_all=True), r["phase"]),
-        "trace": trace(docs),
+        "trace": trace(docs), "screens": _screens_summary(),
     }
 
 
+def _screens_summary() -> dict:
+    try:
+        import edpm_screens
+        d = edpm_screens.build()
+    except Exception as e:  # 화면설계서 오류가 대시보드를 막지 않게
+        return {"error": str(e), "screens": []}
+    return {"has_e10": bool(d["e10"]), "summary": d["summary"], "broken": d.get("broken", []),
+            "screens": [{k: s[k] for k in ("id", "name", "role", "priority", "warns", "has_layout", "out")} for s in d["screens"]]}
+
+
 def main() -> int:
+    import edpm_screens
+    edpm_screens.write(quiet=True)
     data = build()
     html = TEMPLATE.read_text(encoding="utf-8").replace(
         "/*__EDPM_DATA__*/null", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))

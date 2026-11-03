@@ -495,6 +495,32 @@ class DashboardTests(WorkspaceCase):
         self.assertIn("테스트 파일 없음: T-01", row["flags"])
 
 
+class ScreensTests(WorkspaceCase):
+    def test_screens_from_e10(self):
+        e10 = self.doc("3.설계/E10_화면정보구조설계서.md")
+        s = e10.read_text(encoding="utf-8")
+        s = s.replace("| {SCR-0NN} | {화면명} | {역할} | {한 문장} | {F-ID} | {LA-ID} | {웹/모바일/태블릿} | {P0~P2} |",
+                      "| SCR-001 | 홈 | 아이 | 시작 | F-101 | - | 태블릿 | P0 |\n| SCR-002 | 읽기 | 아이 | 읽기 | F-102 | - | 태블릿 | P0 |\n| SCR-009 | 설정 | 보호자 | 설정 | - | - | 모바일 | P2 |")
+        s = s.replace("| {SCR} | {상태} | {상태} | {상태} | {상태} | {상태} | {상태} |",
+                      "| SCR-001 | 빈 | 로딩 | 오류 | 동의 | 오프 | 해당없음 |")
+        s = s.replace("### {SCR-0NN} {화면명}", "### SCR-001 홈\n- 상단: 이름 · 별\n- 하단: [읽기 → SCR-002] · [없는 화면 → SCR-099] · (입력: 검색)\n- 연결: F-101 · AC-1\n\n### SCR-002 읽기\n- 본문: 문장\n\n### {SCR-0NN} {화면명}")
+        e10.write_text(s, encoding="utf-8")
+        r = run([self.ws / "automation/scripts/edpm_screens.py", "--json"], self.ws, self.env)
+        d = json.loads(r.stdout)
+        ids = [x["id"] for x in d["screens"]]
+        self.assertEqual(ids, ["SCR-001", "SCR-002", "SCR-009"])           # 예시 행·템플릿 블록 제외, 목록 순서
+        home = d["screens"][0]
+        self.assertEqual([i["t"] for i in home["areas"][1]["items"]], ["nav", "nav", "input"])
+        self.assertEqual(home["out"], ["SCR-002", "SCR-099"])
+        self.assertEqual(d["broken"], ["SCR-001 → SCR-099"])
+        self.assertEqual(home["missing_states"], [])
+        self.assertIn("SCR-001", d["screens"][1]["in"])
+        self.assertIn("화면별 구성 없음 (8절)", d["screens"][2]["warns"])
+        self.assertTrue(all("{" not in i["label"] for s in d["screens"] for a in s["areas"] for i in a["items"]))
+        run([self.ws / "automation/scripts/edpm_dashboard.py", "--quiet"], self.ws, self.env)
+        self.assertTrue((self.ws / ".edpm" / "screens.html").exists())
+
+
 class ExportTests(WorkspaceCase):
     def test_export_html_strips_guides_and_examples(self):
         out = self.tmp / "out"

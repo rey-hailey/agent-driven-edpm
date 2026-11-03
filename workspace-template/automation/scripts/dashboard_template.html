@@ -162,9 +162,10 @@ input.search:focus{outline:none;border-color:var(--muted)}
       <section class="card" id="recent"></section>
     </aside>
     <main class="center">
-      <div class="ctitle"><div class="tabs" id="tabs"><button data-t="board" class="on">여정</button><button data-t="trace">스펙 추적</button><button data-t="graph">지식</button></div><span class="sub" id="gcounts"></span></div>
+      <div class="ctitle"><div class="tabs" id="tabs"><button data-t="board" class="on">여정</button><button data-t="trace">스펙 추적</button><button data-t="screens">화면</button><button data-t="graph">지식</button></div><span class="sub" id="gcounts"></span></div>
       <div class="pane" id="pane-board"></div>
       <div class="pane" id="pane-trace" hidden></div>
+      <div class="pane" id="pane-screens" hidden></div>
       <div class="stage" id="stage" hidden>
         <canvas id="cv"></canvas>
         <div class="legend" id="legend"></div>
@@ -436,14 +437,28 @@ $("activity").innerHTML = `<h3>최근 활동 <span class="n">위키 log</span></
     <table class="trace"><thead><tr><th>기능</th><th>REQ</th><th>유저스토리</th><th>인수조건</th><th>상태 흐름</th><th>작업 완료</th><th>테스트</th><th>끊긴 곳</th></tr></thead><tbody>${rows}</tbody></table>`;
 })();
 
+// ---------- 화면 ----------
+(function(){
+  const X = D.screens || {};
+  if (!X.has_e10) { $("pane-screens").innerHTML = `<div class="empty" style="padding:30px 0">E10 화면·정보구조설계서가 아직 없습니다. <code style="color:var(--accent)">/edpm-doc E10</code>으로 꺼내 화면 목록·상태·화면별 구성을 쓰면, 모든 화면이 화면설계서(<a href="screens.html" style="color:var(--accent)">screens.html</a>)에 자동으로 그려집니다. 화면마다 프로토타입을 만들 필요는 없습니다.</div>`; return; }
+  const u = X.summary;
+  const rows = X.screens.map(s => `<tr class="link" data-url="screens.html#${esc(s.id)}"><td><b>${esc(s.id)}</b> ${esc(s.name)}</td><td>${esc(s.role)}</td><td>${esc(s.priority)}</td>
+      <td>${s.has_layout ? `<span class="ok">있음</span>` : `<span class="no">없음</span>`}</td><td>${s.out.length}</td>
+      <td>${s.warns.length ? s.warns.map(w => `<span class="flag">${esc(w)}</span>`).join("") : `<span class="ok">완성</span>`}</td></tr>`).join("");
+  $("pane-screens").innerHTML = `<div class="tsum"><span>화면 <b>${u.screens}</b></span><span>구성 있음 <b>${u.with_layout}</b></span><span>상태 빠진 화면 <b class="${u.missing_states ? "no" : "ok"}">${u.missing_states}</b></span>
+      <span>끊긴 이동 <b class="${u.broken ? "no" : "ok"}">${u.broken}</b></span><a href="screens.html" style="color:var(--accent)">화면설계서 열기 (모든 화면·상태·이동)</a></div>
+    <table class="trace"><thead><tr><th>화면</th><th>역할</th><th>우선순위</th><th>구성</th><th>이동</th><th>빠진 것</th></tr></thead><tbody>${rows}</tbody></table>`;
+})();
+
 // ---------- 탭 ----------
 (function(){
   const sub = {board: () => `지금: ${D.board.current} · 경로 문서 ${D.progress.length} · 프로토타입 ${D.board.protos.length} · 결정 ${D.decisions.length}`,
                trace: () => `기능 ${D.trace.summary.features} · 끊긴 곳 ${D.trace.summary.broken}`,
+               screens: () => D.screens && D.screens.has_e10 ? `화면 ${D.screens.summary.screens} · 구성 없음 ${D.screens.summary.screens - D.screens.summary.with_layout} · 상태 빠짐 ${D.screens.summary.missing_states}` : "E10 없음",
                graph: () => window.graphCounts || ""};
   const show = t => {
     document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.t === t));
-    $("pane-board").hidden = t !== "board"; $("pane-trace").hidden = t !== "trace"; $("stage").hidden = t !== "graph";
+    $("pane-board").hidden = t !== "board"; $("pane-trace").hidden = t !== "trace"; $("pane-screens").hidden = t !== "screens"; $("stage").hidden = t !== "graph";
     $("gcounts").textContent = sub[t]();
     if (t === "graph" && window.initGraph) window.initGraph();
     try { localStorage.setItem("edpm-tab", t); } catch (_) {}

@@ -34,3 +34,4 @@ data/curriculum-kg/
 
 # 대시보드 (훅이 다시 만듦)
 .edpm/dashboard.html
+.edpm/screens.html

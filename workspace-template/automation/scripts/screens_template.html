@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EdPM 화면설계서</title>
+<style>
+:root{--bg:#0c0e11;--panel:#13161b;--panel2:#181c22;--line:#252a32;--line2:#2f3540;--text:#ebe8e3;--muted:#8d929b;--faint:#5d636d;
+  --accent:#f0a43a;--ok:#4fbf8a;--bad:#e8675a;
+  --paper:#f3f2ef;--ink:#2a2d33;--ink2:#6b7079;--wire:#d9d8d3;--wire2:#c4c3bd}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:13px/1.5 "Pretendard","Apple SD Gothic Neo","Noto Sans KR",-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+.app{display:grid;grid-template-rows:50px 1fr;height:100vh}
+header{display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid var(--line);background:#0e1014;min-width:0}
+.brand{font-weight:800;font-size:15px;white-space:nowrap}.brand b{color:var(--accent)}
+.meta{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp{flex:1}
+.seg{display:flex;gap:3px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:2px}
+.seg button{border:0;background:transparent;color:var(--muted);padding:4px 11px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12.5px}
+.seg button.on{background:var(--line2);color:var(--text)}
+.tog{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px;cursor:pointer;user-select:none;white-space:nowrap}
+.tog input{accent-color:var(--accent)}
+.lnk{color:var(--muted);font-size:12px;text-decoration:none;border:1px solid var(--line2);border-radius:6px;padding:3px 9px;white-space:nowrap}
+.lnk:hover{color:var(--text)}
+.main{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:0}
+aside{border-right:1px solid var(--line);overflow-y:auto;padding:12px}
+input.search{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:6px 9px;color:var(--text);font:inherit;margin-bottom:8px}
+.grp{color:var(--faint);font-size:11px;font-weight:700;margin:12px 4px 4px}
+.it{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;cursor:pointer;font-size:12.5px}
+.it:hover{background:var(--panel2)}.it.on{background:var(--line2)}
+.it .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it .id{color:var(--muted);font-size:11px;font-weight:700}
+.wd{width:7px;height:7px;border-radius:50%;background:var(--bad);flex:none}
+.pr{font-size:10px;color:var(--faint);border:1px solid var(--line2);border-radius:4px;padding:0 4px}
+section.view{overflow:auto;min-height:0}
+.sum{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12.5px;padding:14px 20px 0}.sum b{color:var(--text)}.sum .bad{color:var(--bad)}
+.mapgrp{padding:10px 20px 4px;color:var(--muted);font-weight:700;font-size:12.5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:14px;padding:4px 20px 18px}
+.thumb{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer}
+.thumb:hover{border-color:var(--line2)}
+.mini{background:var(--paper);border-radius:7px;height:150px;padding:7px;display:flex;flex-direction:column;gap:5px;overflow:hidden}
+.mini .ma{background:var(--wire);border-radius:4px;padding:3px 5px;color:var(--ink2);font-size:8.5px;line-height:1.3;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.mini .ma.body{flex:1;white-space:normal}
+.mini.none{align-items:center;justify-content:center;color:#a5a49e;font-size:11px;border:1.5px dashed #c9c8c2;background:#e9e8e4}
+.thumb .t{margin-top:7px;display:flex;align-items:center;gap:6px;font-size:12.5px}
+.thumb .t b{font-size:11px;color:var(--muted)}
+.thumb .o{color:var(--faint);font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.screen{display:grid;grid-template-columns:minmax(0,1fr) 330px;min-height:100%}
+.stagewrap{padding:16px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+.shead{align-self:stretch;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.shead h2{margin:0;font-size:16px}.shead .m{color:var(--muted);font-size:12px}
+.tabs{align-self:stretch;display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:3px 10px;border-radius:7px;cursor:pointer;font-size:12px}
+.tabs button.on{border-color:var(--accent);color:var(--text)}
+.tabs button.miss{border-style:dashed;color:#d98a80}
+.frame{background:var(--paper);color:var(--ink);border-radius:18px;padding:12px;box-shadow:0 0 0 8px #1d2128,0 18px 40px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:9px;min-height:560px}
+.frame.web{border-radius:10px;box-shadow:0 0 0 1px #2a2f37,0 18px 40px rgba(0,0,0,.45)}
+.area{position:relative;border:1.5px solid var(--wire2);border-radius:8px;padding:9px 10px;display:flex;flex-wrap:wrap;gap:7px;align-items:center;background:#fbfaf8}
+.area.grow{flex:1;align-content:flex-start}
+.area .cap{display:none;position:absolute;top:-9px;left:8px;background:var(--accent);color:#1a1205;font-size:10px;font-weight:800;border-radius:9px;padding:0 7px}
+.annot .area .cap{display:block}
+.annot .area{border-color:rgba(240,164,58,.75)}
+.el{font-size:12.5px;color:var(--ink);background:var(--wire);border-radius:5px;padding:5px 8px;flex:1 1 100%}
+.btn{font-size:12.5px;border:1.5px solid var(--ink2);background:#fff;border-radius:7px;padding:5px 11px;color:var(--ink)}
+.btn.nav{background:var(--ink);color:#fff;border-color:var(--ink);cursor:pointer}
+.btn.nav:hover{background:#000}
+.btn.nav i{font-style:normal;opacity:.65;font-size:10.5px;margin-left:5px}
+.inp{flex:1 1 100%;border:1.5px solid var(--wire2);border-radius:7px;padding:6px 9px;color:#9a9a94;background:#fff;font-size:12.5px}
+.state{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;border:1.5px dashed var(--wire2);border-radius:10px;padding:18px;color:var(--ink);font-size:13.5px;line-height:1.6;background:#fbfaf8}
+.state.miss{border-color:#d98a80;color:#b2554b}
+.state small{display:block;color:var(--ink2);font-size:11px;margin-top:6px}
+.side{border-left:1px solid var(--line);padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.side h4{margin:0 0 6px;color:var(--muted);font-size:11.5px;font-weight:700}
+.side p{margin:0;font-size:12.5px;line-height:1.55}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--panel2);border:1px solid var(--line2);color:var(--muted);cursor:default}
+.chip.go{cursor:pointer;color:var(--text)}.chip.go:hover{border-color:var(--muted)}
+.warn{font-size:12px;color:#f09a90;background:rgba(232,103,90,.1);border-radius:6px;padding:5px 8px}
+.ann{font-size:12px;color:var(--muted);margin:3px 0}.ann b{color:var(--accent)}
+.empty{color:var(--faint);padding:40px 20px;font-size:13px;line-height:1.7}
+.empty code{color:var(--accent)}
+@media (max-width:1000px){.main{grid-template-columns:1fr}aside{display:none}.screen{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">Ed<b>PM</b> 화면설계서</div>
+    <div class="meta" id="meta"></div>
+    <div class="sp"></div>
+    <div class="seg" id="mode"><button data-m="map" class="on">지도</button><button data-m="screen">화면</button></div>
+    <label class="tog"><input type="checkbox" id="annot">설계 보기</label>
+    <a class="lnk" id="e10" href="#">E10 열기</a>
+    <a class="lnk" href="dashboard.html">대시보드</a>
+  </header>
+  <div class="main">
+    <aside><input class="search" id="q" placeholder="화면 검색 (ID, 이름, 기능)"><div id="list"></div></aside>
+    <section class="view" id="view"></section>
+  </div>
+</div>
+<script>
+const S = /*__EDPM_SCREENS__*/null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const STATES = ["빈 상태","로딩","오류","동의 없음","오프라인","권한 없음"];
+const by = Object.fromEntries((S.screens || []).map(s => [s.id, s]));
+let mode = "map", cur = null, st = "기본";
+
+$("meta").textContent = [S.product, S.e10 ? `E10 ${S.e10.status}` : "", `갱신 ${S.generated.slice(11)}`].filter(Boolean).join("  ·  ");
+if (S.e10) $("e10").href = S.e10.url; else $("e10").style.display = "none";
+
+function frameClass(p){ p = p || ""; return /모바일/.test(p) ? "mobile" : /태블릿/.test(p) ? "tablet" : "web"; }
+const WIDTH = {mobile: 360, tablet: 560, web: 780};
+
+function list(){
+  const q = $("q").value.trim();
+  const groups = {};
+  S.screens.filter(s => !q || (s.id + s.name + s.role + s.f.join(" ")).includes(q)).forEach(s => (groups[s.role || "역할 미정"] ||= []).push(s));
+  $("list").innerHTML = Object.entries(groups).map(([g, ss]) => `<div class="grp">${esc(g)}</div>` + ss.map(s =>
+    `<div class="it ${cur === s.id ? "on" : ""}" data-go="${s.id}"><span class="id">${s.id}</span><span class="n">${esc(s.name)}</span>${s.priority ? `<span class="pr">${esc(s.priority)}</span>` : ""}${s.warns.length ? `<i class="wd" title="${esc(s.warns.join(" / "))}"></i>` : ""}</div>`).join("")).join("") || `<div class="empty" style="padding:10px">없음</div>`;
+}
+
+function mini(s){
+  if (!s.has_layout) return `<div class="mini none">구성 없음</div>`;
+  return `<div class="mini">${s.areas.map((a, i) => `<div class="ma ${i === 1 || /본문/.test(a.key) ? "body" : ""}">${esc(a.items.map(x => x.label).join(" · "))}</div>`).join("")}</div>`;
+}
+
+function renderMap(){
+  if (!S.e10) { $("view").innerHTML = `<div class="empty">E10 화면·정보구조설계서가 워크스페이스에 아직 없습니다.<br><code>/edpm-doc E10</code>으로 꺼내 화면 목록(2절)·상태(3절)·화면별 구성(8절)을 쓰면 모든 화면이 여기에 자동으로 그려집니다.<br>화면마다 프로토타입을 만들 필요는 없습니다. 높은 충실도의 프로토타입은 PRD 9절의 정수에만 씁니다 (<code>/edpm-proto</code>).</div>`; return; }
+  if (!S.screens.length) { $("view").innerHTML = `<div class="empty">E10에 화면이 아직 없습니다. 2절 화면 목록과 8절 화면별 구성을 채우세요 (<code>/edpm-doc E10</code>).</div>`; return; }
+  const u = S.summary;
+  const groups = {};
+  S.screens.forEach(s => (groups[s.role || "역할 미정"] ||= []).push(s));
+  $("view").innerHTML = `<div class="sum"><span>화면 <b>${u.screens}</b></span><span>구성 있음 <b>${u.with_layout}</b></span>
+      <span>상태 빠진 화면 <b class="${u.missing_states ? "bad" : ""}">${u.missing_states}</b></span><span>끊긴 이동 <b class="${u.broken ? "bad" : ""}">${u.broken}</b></span>
+      ${S.broken.length ? `<span class="bad">${esc(S.broken.join(", "))}</span>` : ""}</div>` +
+    Object.entries(groups).map(([g, ss]) => `<div class="mapgrp">${esc(g)} · ${ss.length}</div><div class="grid">${ss.map(s =>
+      `<div class="thumb" data-go="${s.id}">${mini(s)}<div class="t"><b>${s.id}</b>${esc(s.name)}${s.warns.length ? `<i class="wd" title="${esc(s.warns.join(" / "))}"></i>` : ""}</div>
+       <div class="o">${s.out.length ? "→ " + s.out.map(x => esc((by[x] || {}).name || x)).join(", ") : "이동 없음"}</div></div>`).join("")}</div>`).join("");
+}
+
+function itemHTML(it){
+  if (it.t === "nav") return `<button class="btn nav" data-go="${it.to}" data-keep="1">${esc(it.label)}<i>${esc(it.to)}</i></button>`;
+  if (it.t === "btn") return `<span class="btn">${esc(it.label)}</span>`;
+  if (it.t === "input") return `<div class="inp">${esc(it.label)}</div>`;
+  return `<div class="el">${esc(it.label)}</div>`;
+}
+
+function renderScreen(){
+  const s = by[cur];
+  if (!s) { mode = "map"; return render(); }
+  const fc = frameClass(s.platform);
+  const tabs = ["기본", ...STATES].map(x => `<button data-st="${x}" class="${st === x ? "on" : ""} ${x !== "기본" && !s.states[x] ? "miss" : ""}">${x}</button>`).join("");
+  let inner;
+  if (st === "기본") {
+    inner = s.has_layout ? s.areas.map((a, i) => `<div class="area ${/본문|내용|목록/.test(a.key) || i === Math.floor(s.areas.length / 2) ? "grow" : ""}"><span class="cap">${i + 1} ${esc(a.key)}</span>${a.items.map(itemHTML).join("")}</div>`).join("")
+      : `<div class="state miss">화면별 구성이 아직 없습니다<small>E10 8절에 ### ${s.id} 블록을 쓰세요 (영역: 항목 · 항목 · [버튼 → SCR-ID])</small></div>`;
+  } else {
+    const head = s.areas.length ? `<div class="area"><span class="cap">1 ${esc(s.areas[0].key)}</span>${s.areas[0].items.map(itemHTML).join("")}</div>` : "";
+    inner = head + (s.states[st] ? `<div class="state">${esc(s.states[st])}<small>${esc(st)} · E10 3절</small></div>`
+      : `<div class="state miss">"${esc(st)}" 상태가 정의되지 않았습니다<small>E10 3절 ${s.id} 행에 적거나, 해당 없으면 "해당없음"</small></div>`);
+  }
+  const chips = (arr, go) => arr.length ? `<div class="chips">${arr.map(x => go && by[x] ? `<span class="chip go" data-go="${x}">${x} ${esc(by[x].name)}</span>` : `<span class="chip">${esc(x)}</span>`).join("")}</div>` : `<p style="color:var(--faint)">없음</p>`;
+  const ann = s.areas.map((a, i) => `<div class="ann"><b>${i + 1}</b> ${esc(a.key)}: ${esc(a.items.map(x => x.t === "nav" ? x.label + " → " + x.to : x.label).join(" · "))}</div>`).join("");
+  $("view").innerHTML = `<div class="screen ${$("annot").checked ? "annot" : ""}" id="scr">
+    <div class="stagewrap">
+      <div class="shead"><h2>${s.id} ${esc(s.name)}</h2><span class="m">${esc([s.role, s.platform, s.priority].filter(Boolean).join(" · "))}</span></div>
+      <div class="tabs" id="stabs">${tabs}</div>
+      <div class="frame ${fc}" style="width:${WIDTH[fc]}px;max-width:100%">${inner}</div>
+    </div>
+    <div class="side">
+      ${s.warns.length ? `<div>${s.warns.map(w => `<div class="warn">${esc(w)}</div>`).join("")}</div>` : ""}
+      <div><h4>목적</h4><p>${esc(s.purpose || "—")}</p></div>
+      ${s.desc ? `<div><h4>설명</h4><p>${esc(s.desc)}</p></div>` : ""}
+      ${$("annot").checked && ann ? `<div><h4>영역 주석</h4>${ann}</div>` : ""}
+      <div><h4>들어오는 곳</h4>${s.entry ? `<p style="margin-bottom:6px">${esc(s.entry)}</p>` : ""}${chips(s.in, true)}</div>
+      <div><h4>나가는 곳</h4>${chips(s.out, true)}</div>
+      <div><h4>연결 (기능·인수조건)</h4>${chips([...new Set([...s.f, ...s.links])], false)}</div>
+      <div><h4>상태</h4><div class="chips">${STATES.map(x => `<span class="chip" style="${s.states[x] ? "" : "color:#f09a90;border-style:dashed"}">${x}</span>`).join("")}</div></div>
+      ${s.a11y.length ? `<div><h4>접근성</h4>${s.a11y.map(a => `<p>· ${esc(a.item)}: ${esc(a.req)}</p>`).join("")}</div>` : ""}
+    </div></div>`;
+}
+
+function render(){
+  document.querySelectorAll("#mode button").forEach(b => b.classList.toggle("on", b.dataset.m === mode));
+  list();
+  mode === "screen" && cur ? renderScreen() : renderMap();
+}
+function go(id, keepState){ if (!by[id]) return; cur = id; mode = "screen"; if (!keepState) st = "기본"; history.replaceState(null, "", "#" + id); render(); $("view").scrollTop = 0; }
+
+document.addEventListener("click", e => {
+  const g = e.target.closest("[data-go]"); if (g) { go(g.dataset.go); return; }
+  const t = e.target.closest("[data-st]"); if (t) { st = t.dataset.st; render(); return; }
+  const m = e.target.closest("[data-m]"); if (m) { mode = m.dataset.m; if (mode === "screen" && !cur && S.screens.length) cur = S.screens[0].id; if (mode === "map") history.replaceState(null, "", "#"); render(); }
+});
+$("q").addEventListener("input", list);
+$("annot").addEventListener("change", () => { try { localStorage.setItem("edpm-annot", $("annot").checked ? "1" : ""); } catch (_) {} render(); });
+try { $("annot").checked = localStorage.getItem("edpm-annot") === "1"; } catch (_) {}
+const h = location.hash.slice(1);
+if (h && by[h]) go(h); else render();
+
+let idle = 0; ["mousemove", "keydown", "wheel", "click"].forEach(ev => addEventListener(ev, () => idle = 0));
+setInterval(() => { idle += 5; if (idle >= 60 && !document.hidden) location.reload(); }, 5000);
+</script>
+</body>
+</html>
