@@ -24,6 +24,7 @@ E00 회사·제품 → 리서치(N01·F00·E01~E04, 위키) → PRD(제품 전�
 
 - **PRD에는 만들 제품 전체**를 적습니다. 범위를 프로토타입 수준으로 줄여 쓰지 않고, 단계는 릴리스 계획으로 나눕니다.
 - **프로토타입은 PRD의 정수**(PRD 9절)를 보여주는 것입니다. 축소판 PRD가 아닙니다.
+- **출시 전에는 스펙이 기준, 출시 후에는 코드가 기준.** 출시하면 배포된 코드와 문서(E10 화면·B02 API·E09 기능)를 대조해 차이마다 판정(문서 갱신 / 결함 / 의도된 차이)하고 문서를 따라가게 합니다 (`/edpm-change asbuilt`, G-ASBUILT).
 - **제품 코드는 스펙(E09) 승인 후.** 개발 체계가 "개발팀"이면 PM은 스펙까지 만들고 넘깁니다(`/edpm-handoff dev`). "바이브코딩"이면 PM이 스펙의 작업 단위로 구현합니다(`/edpm-spec build`).
 - 사용자가 순서를 건너뛰자고 하면 왜 순서가 그런지 한 줄로 말하고, 그래도 원하면 `gate_skip` 사유를 남깁니다. 처음 쓰는 사용자에게는 `/edpm-start`를 안내합니다.
 
@@ -46,6 +47,7 @@ E00 회사·제품 → 리서치(N01·F00·E01~E04, 위키) → PRD(제품 전�
 | 일의 형태 | {제품 개발 / 고객사 구축 / 정부·교육청 과제 / 영업 지원} |
 | 회사 도구 | {예: Jira, Confluence, Slack, Figma, Amplitude} |
 | 개발 체계 | {개발팀 / 바이브코딩(개발자 없이 PM이 LLM과 구현)} — 개발팀이면 PM은 스펙까지·제품 코드는 개발팀 몫, 바이브코딩이면 스펙 승인 후 `src/`에 구현 (G-SPEC) |
+| 제품 코드 위치 | {바이브코딩: src/ / 개발팀: 읽을 수 있는 저장소 경로 (예: ~/work/product-web)} — 출시 후 현행화 대조용, 읽기만 (`edpm_asbuilt.py`) |
 | 일정 관리 도구 | {GitHub (owner/repo, 기본) / 스프레드시트 / Notion / Jira / Linear} — 설정 `automation/wbs.json`, `/edpm-wbs setup` |
 | 데이터 연결 | {PostgreSQL `DATABASE_URL` 환경변수 / 추출 CSV → sqlite / 아직 없음(sample-db)} — 집계·가명 키 테이블만, `/edpm-metrics connect` |
 | 프로토타입 스택 | {회사 스택 / 기본: Next.js + Tailwind + Supabase + Vercel} — P4 코드 MVP에 사용 (`/edpm-proto`) |
@@ -129,6 +131,7 @@ tags: []
 | `/edpm-brief` | (없음) · `week` · `next` · `progress` · `gates` · `dashboard` · `notify` · `weekly` · `report` · `meeting` | 상황판, 진행표, 대시보드, 팀 채널 알림(미리보기 후 확인), 주간보고, M01~M05·경영진 요약, 회의 준비·회의록 |
 | `/edpm-wiki` | `research` · `ingest` · `query` · `lint` · `library` · `collect` · `promote` | 질문 하나로 웹 리서치(출처 등급·자료실·위키, PRD 근거), 자료 → 비식별화 → 자료실 → 위키, 근거 답, 점검, 자료실 관리, Aside 수집, 개인 Brain 승격 |
 | `/edpm-wbs` | `create` · `push` · `pull` · `status` · `update` · `impact` · `export` | M02 WBS·일정, GitHub 동기화, 다른 도구로 내보내기 |
+| `/edpm-change` | (없음) · `<문서>` · `screen <SCR-ID>` · `asbuilt <릴리스>` · `archive <릴리스>` | 변경 전파(하위 산출물·같은 ID·테스트·WBS를 차례로 갱신하거나 사유와 함께 닫음), 코드에서 먼저 바뀐 화면을 E10·스펙으로 역반영, 출시 후 현행화(코드↔문서 대조·판정), 릴리스 화면 아카이브 |
 | `/edpm-template` | `import` · `map` · `apply` · `list` | 회사 문서 양식 연결 (방식 A 회사 양식 구조로 작성 / 방식 B 회사 양식 출력본). EdPM 필수 항목 보존 |
 | `/edpm-curriculum` | `setup` · `search` · `standard` · `path` · `map` · `coverage` … | 교육과정 지식그래프 |
 | `/edpm-portfolio` | `new` · `build` · `check` · `list` | 한 사이클 → 포트폴리오 한 장. 사실은 `edpm_check.py portfolio`·`metrics.py`에서만, 기밀 점검 후 HTML |
@@ -152,7 +155,7 @@ tags: []
 - **A가 끝나야 B**: 산출물은 전제조건이 끝난 뒤에 씁니다. 쓰기 전에 `python3 automation/scripts/edpm_check.py start <문서>`로 확인하고, 전체는 `progress`(진행표 한 장)로 봅니다. 훅이 전제 전 본문 쓰기를 막습니다(생성 게이트). 사용자가 "미리 초안만"을 명시하면 frontmatter에 `early_draft: [사유]`를 남기고 씁니다.
 - 명확도 게이트: **G-CLEAR**(PRD를 review로 올리거나 F01을 완료할 때 모호도 0.3 이하 — 목표·근거·대상·성공 기준·핵심 개념·제약, 운영 개선은 맥락. `edpm_check.py clarity`). 흐린 채 스펙·코드로 가지 않기 위한 관문입니다.
 - 흐름 게이트: **G-PRD**(PRD가 review 이상이어야 산출물 완료·제품 코드 가능. 예외: E00과 PRD의 입력인 E01~E04·N01·F00·D01), **G-SPEC**(E09 스펙 done 전에는 `src/` 제품 코드 쓰기 불가, 개발 체계가 개발팀이면 PM은 제품 코드를 쓰지 않음).
-- 에듀테크 게이트: **G-LEARN**(E05 전 E08·E09 완료 불가), **G-SAFE**(미성년·학생 데이터면 E13 통과 전 E15 완료 불가), **G-AI**(AI 기능이면 E14·A10·A14 done, A 트랙을 쓰면 A06 합격, 유료·대량 사용이면 A12 done 전 E15 완료 불가), **G-EVIDENCE**(실제 파일럿 없이 E18 완료 불가), **G-CAL**(시즌 캘린더 충돌 검토: 학사일정·기업 예산·소비자 성수기), **G-POLICY**(유료 판매면 P01, 강사 수익배분이 있으면 S07이 done이어야 E18 완료), **G-STAGE**(신사업이면 N04 "확장 진행" 전 E18 완료 불가), **G-IMPACT**(기능개선 F02 영향 점검 항목이 처리돼야 F03 완료), **G-MEASURE**(F02 목표 지표 기준선·목표, F04 같은 SQL 결과), **G-PII**(raw·wiki에 식별 정보 금지), **G-PROTO**(P3·P4 빌드 전 V01 성공·중단 기준·timebox 확정, 프로토타입은 가상 데이터만·미성년 참여는 보호자 동의, 프로토타입 코드는 V03 이관과 B 트랙 검토 없이 E15에 포함 불가), **G-CURRIC**(국가 교육과정 기반이면 E05 LO가 KG 성취기준 코드에 정렬되고 E11 매핑·커버리지가 있어야 E15 완료).
+- 에듀테크 게이트: **G-LEARN**(E05 전 E08·E09 완료 불가), **G-SAFE**(미성년·학생 데이터면 E13 통과 전 E15 완료 불가), **G-AI**(AI 기능이면 E14·A10·A14 done, A 트랙을 쓰면 A06 합격, 유료·대량 사용이면 A12 done 전 E15 완료 불가), **G-EVIDENCE**(실제 파일럿 없이 E18 완료 불가), **G-CAL**(시즌 캘린더 충돌 검토: 학사일정·기업 예산·소비자 성수기), **G-POLICY**(유료 판매면 P01, 강사 수익배분이 있으면 S07이 done이어야 E18 완료), **G-STAGE**(신사업이면 N04 "확장 진행" 전 E18 완료 불가), **G-IMPACT**(기능개선 F02 영향 점검 항목이 처리돼야 F03 완료), **G-MEASURE**(F01 과제 유형 `task_type` 학습·사용성·운영, F02 목표 지표 기준선·목표 — 학습 과제는 학습 지표 필수, F04 같은 SQL 결과), **G-PII**(raw·wiki에 식별 정보 금지), **G-PROTO**(P3·P4 빌드 전 V01 성공·중단 기준·timebox 확정, 프로토타입은 가상 데이터만·미성년 참여는 보호자 동의, 프로토타입 코드는 V03 이관과 B 트랙 검토 없이 E15에 포함 불가), **G-CURRIC**(국가 교육과정 기반이면 E05 LO가 KG 성취기준 코드에 정렬되고 E11 매핑·커버리지가 있어야 E15 완료), **G-ASBUILT**(E15가 done이면 그 뒤 현행화 기록이 있고 모든 차이가 판정돼야 M05·E20 완료).
 - 사용자가 "게이트 무시"를 명시하면 경고 후 진행하고 `gate_skip`에 사유를 남깁니다.
 
 ## 7. 데이터 보호 규칙 (항상 적용)
@@ -187,6 +190,7 @@ tags: []
 - 조회·계산(점수, 정답률, 출결, 효과크기, 지표 집계)은 SQL·스크립트로 하고, 계산 경로를 산출물에 적습니다. LLM이 수치를 추정하지 않습니다.
 - 근거 없는 문장은 `[가정]`, 확인이 필요한 사실은 `[확인 필요]`로 표시합니다.
 - 표를 적극 쓰고, 흐름은 Mermaid로 그립니다.
+- **고친 곳 하나로 끝내지 않습니다.** 산출물을 고친 뒤 훅이 "변경 전파"를 알리면 사용자에게 알리고 `/edpm-change`로 연결된 문서·테스트·WBS를 차례로 갱신하거나 사유와 함께 닫습니다. 화면을 코드에서 먼저 고쳤으면 `/edpm-change screen`으로 E10·스펙에 역반영합니다.
 - 개념은 PRD 5.1절의 정의를 그대로 씁니다. 스펙·데이터·보고서에서 같은 말을 다르게 쓰지 않습니다. 정의를 바꾸려면 PRD부터.
 - V03·F04·E20의 "아직 모르는 것"은 넘긴 곳(PRD 12절·다음 가설·백로그·ADR)을 채워야 끝납니다.
 - 교육적 주장(예: "간격 반복이 장기 기억에 효과적")은 `02.wiki/domain/` 페이지에 연결합니다.
@@ -202,6 +206,8 @@ tags: []
 | PreToolUse 훅 (Write·Edit) | ① `01.자료실/` 기존 파일 수정 차단 ② `03.docs/`·`PRD.md`를 `status: done`으로 바꿀 때 전제조건·게이트(G-PRD 포함) 미충족이면 차단 (`gate_skip: [사유]`가 있으면 통과) ③ `01.자료실/`·`02.wiki/`에 휴대전화·주민등록번호·이메일 패턴 저장 차단 ④ `src/` 제품 코드: PRD review 이상·E09 done일 때만, 개발 체계가 개발팀이면 차단 (G-SPEC) ⑤ 생성 게이트: 전제조건(+G-PRD)이 끝나기 전 산출물 본문 쓰기 차단 — frontmatter만 수정, n/a 처리, `gate_skip`·`early_draft` 사유는 통과 |
 | 화면 지도·화면설계서 | `edpm_screens.py` — E10 2·3·5·8절에서 화면 지도(`.edpm/screens.html`: 모든 화면, 상태 탭, 화면 이동, 구성·상태 빠짐과 끊긴 이동 표시, 대시보드와 함께 갱신)와 `--sb-md`로 sb-lowfi 입력(`05.outputs/화면설계서.md`). 보여주는 화면설계서는 `sb-lowfi-pptx`(HTML·PPTX, 화면이 많으면 에이전트를 나눠 그림)·`sb-lowfi-figma`. 화면마다 프로토타입을 만들지 않음 — 프로토타입은 PRD 9절 정수에만 |
 | CI (GitHub Actions) | `.github/workflows/edpm-ci.yml` — 훅은 Claude Code 안에서만 돌므로, 사람이 직접 고친 PR도 `edpm_check.py ci`(게이트 미충족 done·식별 정보·frontmatter·고정 테스트 수정)로 막고, 제품 코드가 있으면 테스트 실행. `edpm-brief.yml` — 평일 아침 상황판을 팀 채널로(웹훅 비밀값이 있을 때만) |
+| 변경 전파 | `edpm_ripple.py` — 산출물 본문이 바뀌면 PostToolUse 훅이 그 문서를 전제로 쓰는 바로 아래 문서와 같은 ID(REQ·F·SCR·US·T …)를 쓰는 문서를 "전파 대기"로 기록하고 상황판·대시보드에 띄움. 대기 문서를 고치면 풀리고 그 하위로 이어짐. 고칠 것이 없으면 `ack <문서> <사유>`. 상태만 바꾼 저장·손대지 않은 템플릿·n/a는 제외. 전파 작업은 `wbs`로 WBS 후보 → 승인 후 `--write`. 처리는 `/edpm-change` |
+| 현행화 | `edpm_asbuilt.py` — 출시 후 제품 코드(화면 경로·API 경로·기능 ID)와 E10 8절 주소·B02 API·E09 기능을 대조해 `05.outputs/현행화/<릴리스>_<날짜>.md`에 차이와 판정 칸을 남김. E15 done 뒤 기록이 없거나 판정 안 한 행이 있으면 상황판에 표시, M05·E20 완료 차단 (G-ASBUILT) |
 | 대시보드 | `edpm_dashboard.py` — `.edpm/dashboard.html` 한 장(가운데 탭: 여정 보드·스펙 추적·화면·지식 그래프, 왼쪽: 지금 단계·PRD 명확도·진행 요약·WBS 달력·최근 파일, 오른쪽: 주의·스킬·위키 log). SessionStart와 저장 후(PostToolUse) 훅이 다시 만듦. 보기 전용, 판정은 점검기와 같음 |
 | 권한 | 점검·조회 스크립트와 `git log`는 묻지 않음. GitHub 쓰기(push·setup·gh issue), 클라우드 AI 평가, Aside 실행, `git push`는 사용자 확인 |
 | 결정적 점검 | `/edpm-wiki lint`·`/edpm-brief`·`/edpm-brief weekly`는 `edpm_check.py` 결과를 먼저 쓰고 LLM은 보완만. `library`·`add`로 보관함 조회·꺼내기, `portfolio`로 포트폴리오 사실 |

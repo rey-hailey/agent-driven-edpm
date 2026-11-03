@@ -309,7 +309,8 @@ def trace(docs: list[dict]) -> dict:
     for d in docs:
         text = ck.read(d["path"])
         if d["id"] == "E09":
-            feats = [r for r in ck._rows(text, "1. 기능 목록") if r and re.match(r"F-\d{3}$", r[0])]
+            feats = [r for r in ck._rows(text, "1. 기능 목록") if r and re.match(r"F-\d{3}$", r[0])
+                     and "후속" not in r[-1]]  # 후속 릴리스 기능은 출시 후 F02에서 상세해짐 (E09 작성 가이드)
             sec, cur = {}, None
             for ln in text.splitlines():
                 if ln.startswith("## "):
@@ -484,6 +485,11 @@ def build() -> dict:
         attention.append({"kind": "게이트 스킵", "text": x})
     if r["pii"]:
         attention.append({"kind": "개인정보", "text": f"식별 정보 의심 {len(r['pii'])}곳 → /edpm-wiki lint pii"})
+    ab = r.get("asbuilt")
+    if ab is not None and not ab["ok"]:
+        attention.append({"kind": "현행화", "text": ("판정 안 한 행 " + str(sum(x["pending"] for x in ab["records"])) + "개" if ab["records"] else "E15 완료 뒤 현행화 기록 없음") + " → /edpm-change asbuilt <릴리스>"})
+    for x in r.get("ripple_pending", [])[:4]:
+        attention.append({"kind": "변경 전파", "text": f"{x['source_id']} 변경 → {x['target_id']} 확인 ({x['why']}) → /edpm-change"})
     for x in r.get("test_unlocks", [])[:2]:
         attention.append({"kind": "테스트 해제", "text": x})
     return {

@@ -7,6 +7,9 @@
   python3 automation/scripts/edpm_screens.py --open     # 만들고 브라우저로 열기
   python3 automation/scripts/edpm_screens.py --json     # 데이터만 출력 (점검용)
   python3 automation/scripts/edpm_screens.py --sb-md [경로]  # sb-lowfi 입력 화면설계서.md (기본 05.outputs/화면설계서.md)
+  python3 automation/scripts/edpm_screens.py --archive <릴리스> [--base <URL>] [--capture]
+                                                          # 릴리스 화면 아카이브: 05.outputs/화면아카이브/<릴리스>_<날짜>/
+                                                          # (index.md + 화면별 PNG 자리, --capture는 Playwright가 있으면 직접 캡처)
 
 역할 분담: 화면 지도는 전체 목록·빠진 상태·끊긴 이동을 점검하는 용도(자동, 저충실도). 보여주는 화면설계서
 (메타 표·번호 마커·Description·상태·처리 규칙, HTML·PPTX·Figma)는 --sb-md로 만든 md를 sb-lowfi-pptx 스킬이
@@ -77,7 +80,7 @@ def parse_e10(text: str) -> dict:
 
     def get(sid):
         return screens.setdefault(sid, {"id": sid, "name": "", "role": "", "purpose": "", "f": [], "la": "", "platform": "",
-                                        "priority": "", "areas": [], "entry": "", "desc": "", "links": [], "states": {},
+                                        "priority": "", "areas": [], "entry": "", "desc": "", "links": [], "states": {}, "url": "",
                                         "a11y": [], "has_layout": False})
 
     for r in ck._table_rows(text, "2. 화면 목록"):
@@ -126,6 +129,8 @@ def parse_e10(text: str) -> dict:
         key, val = m.group(1).strip(), m.group(2).strip()
         if key == "진입":
             cur["entry"] = val
+        elif key == "주소":
+            cur["url"] = val.strip("`")
         elif key == "설명":
             cur["desc"] = (cur["desc"] + " " + val).strip()
         elif key == "연결":
@@ -267,7 +272,75 @@ def write(quiet: bool = False) -> Path:
     return OUT
 
 
+def _git_rev() -> str:
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
+def archive(release: str, base: str = "", capture: bool = False) -> tuple[Path, list[dict]]:
+    """릴리스 화면 아카이브. 화면의 기준은 배포된 코드이고, 아카이브는 릴리스마다 그 모습을 남기는 기록이다.
+    E10 8절 '주소'가 있는 화면만 자동 캡처 대상이며, 결과는 index.md 한 장으로 본다."""
+    data = build()
+    day = dt.date.today().strftime("%Y%m%d")
+    out = ROOT / "05.outputs" / "화면아카이브" / f"{release}_{day}"
+    out.mkdir(parents=True, exist_ok=True)
+    items = []
+    for s in data["screens"]:
+        sid = s["id"]
+        url = (base.rstrip("/") + s["url"]) if (base and s["url"].startswith("/")) else s["url"]
+        items.append({"id": sid, "name": s["name"], "url": url, "file": f"{sid}.png"})
+    if capture:
+        try:
+            from playwright.sync_api import sync_playwright  # 선택 의존성
+            with sync_playwright() as pw:
+                b = pw.chromium.launch()
+                pg = b.new_page(viewport={"width": 1280, "height": 900})
+                for it in items:
+                    if it["url"].startswith("http"):
+                        try:
+                            pg.goto(it["url"], wait_until="networkidle", timeout=20000)
+                            pg.screenshot(path=str(out / it["file"]), full_page=True)
+                        except Exception as e:  # 한 화면 실패가 전체를 막지 않게
+                            it["error"] = str(e)[:120]
+                b.close()
+        except ImportError:
+            print("Playwright가 없어 직접 캡처하지 않았습니다. webapp-testing 스킬이나 브라우저 도구로 아래 경로에 저장한 뒤 다시 실행하면 index가 갱신됩니다.")
+    rows = []
+    for it in items:
+        have = (out / it["file"]).exists()
+        st = "캡처됨" if have else ("실패: " + it["error"] if it.get("error") else ("캡처 대기" if it["url"] else "주소 없음 (E10 8절 `- 주소:`)"))
+        it["status"] = st
+        img = f"![{it['id']}]({it['file']})" if have else "-"
+        rows.append(f"| {it['id']} | {it['name']} | {it['url'] or '-'} | {st} | {img} |")
+    e10 = data["e10"] or {}
+    head = [f"# 화면 아카이브 {release} ({dt.date.today()})", "",
+            f"- 기준: 배포된 화면 (base {base or '-'}), 커밋 {_git_rev() or '-'}, E10 {e10.get('status', '-')}",
+            "- 화면의 기준은 배포된 코드입니다. 이 폴더는 릴리스마다 그 모습을 남기는 기록이며 고치지 않습니다.",
+            "- Figma에도 남기려면 `/edpm-change archive`의 Figma 단계(버전별 페이지)를 따릅니다.", "",
+            "| SCR | 화면 | 주소 | 상태 | 캡처 |", "|-----|------|------|------|------|"]
+    (out / "index.md").write_text("\n".join(head + rows) + "\n", encoding="utf-8")
+    return out, items
+
+
 def main() -> int:
+    if "--archive" in sys.argv:
+        i = sys.argv.index("--archive")
+        rel = sys.argv[i + 1] if len(sys.argv) > i + 1 and not sys.argv[i + 1].startswith("--") else ""
+        if not rel:
+            print("사용: edpm_screens.py --archive <릴리스> [--base <URL>] [--capture]"); return 1
+        base = sys.argv[sys.argv.index("--base") + 1] if "--base" in sys.argv else ""
+        if not build()["e10"]:
+            print("E10이 아직 없습니다 (/edpm-doc E10)."); return 1
+        out, items = archive(rel, base, "--capture" in sys.argv)
+        n = sum(1 for x in items if x["status"] == "캡처됨")
+        print(f"화면 아카이브: {out.relative_to(ROOT)}/index.md — 화면 {len(items)}개, 캡처됨 {n}, "
+              f"주소 없음 {sum(1 for x in items if x['status'].startswith('주소 없음'))}")
+        if "--json" in sys.argv:
+            print(json.dumps(items, ensure_ascii=False, indent=2))
+        return 0
     if "--sb-md" in sys.argv:
         i = sys.argv.index("--sb-md")
         dest = Path(sys.argv[i + 1]) if len(sys.argv) > i + 1 and not sys.argv[i + 1].startswith("--") else ROOT / "05.outputs" / "화면설계서.md"

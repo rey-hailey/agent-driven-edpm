@@ -67,7 +67,7 @@ argument-hint: "[write | import <파일> | path | update | review | version]"
 
 ## update — 갱신
 
-새 근거(인터뷰, 프로토타입 V03, 지표, ADR)가 생기면 해당 절을 고치고 14절에 한 줄을 남깁니다. 범위·목표·릴리스가 바뀌면 `version`을 올리고, 영향받는 하위 문서(E06 REQ, E09 스펙, V01, M02 WBS)를 목록으로 보여주며 갱신할지 묻습니다.
+새 근거(인터뷰, 프로토타입 V03, 지표, ADR)가 생기면 해당 절을 고치고 14절에 한 줄을 남깁니다. 범위·목표·릴리스가 바뀌면 `version`을 올립니다. 영향받는 하위 문서는 저장 훅이 "변경 전파 대기"로 기록하므로, `python3 automation/scripts/edpm_ripple.py PRD`로 범위(E06 REQ, E09 스펙, V01, 테스트, M02 WBS)를 보여주고 `/edpm-change PRD`로 차례로 갱신할지 묻습니다.
 
 ## review — 검토 요청
 

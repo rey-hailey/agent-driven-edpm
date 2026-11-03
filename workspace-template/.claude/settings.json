@@ -9,6 +9,10 @@
           },
           {
             "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/automation/scripts/edpm_ripple.py\" snapshot --quiet"
+          },
+          {
+            "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/automation/scripts/edpm_dashboard.py\" --quiet"
           }
         ]
@@ -40,6 +44,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/automation/scripts/edpm_ripple.py\" record"
+          },
+          {
+            "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/automation/scripts/edpm_dashboard.py\" --quiet"
           }
         ]
@@ -51,6 +59,8 @@
       "Bash(python3 automation/scripts/edpm_check.py:*)",
       "Bash(python3 automation/scripts/edpm_dashboard.py:*)",
       "Bash(python3 automation/scripts/edpm_screens.py:*)",
+      "Bash(python3 automation/scripts/edpm_ripple.py:*)",
+      "Bash(python3 automation/scripts/edpm_asbuilt.py:*)",
       "Bash(python3 automation/scripts/wbs_sync.py status:*)",
       "Bash(python3 automation/scripts/wbs_sync.py export:*)",
       "Bash(python3 automation/scripts/wbs_sync.py pull:*)",

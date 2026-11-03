@@ -166,11 +166,17 @@ def _table_rows(text: str, header_substr: str) -> list[list[str]]:
     return rows[1:] if len(rows) > 1 else []
 
 
-def gmeasure_ok(f02_text: str) -> bool:
-    """F02 목표 지표에 예시·플레이스홀더가 아닌, 기준선·목표가 채워진 행이 하나라도 있는가 (G-MEASURE)."""
+TASK_TYPES = ("학습", "사용성", "운영")  # F01 task_type: 학습 과제만 학습 지표 필수 (F01 0절)
+
+
+def gmeasure_ok(f02_text: str, learning: bool = False) -> bool:
+    """F02 목표 지표에 예시·플레이스홀더·n/a가 아닌, 기준선·목표가 채워진 행이 하나라도 있는가 (G-MEASURE).
+    learning=True(학습 과제)면 그 행이 '학습 지표' 행이어야 한다."""
     for cells in _table_rows(f02_text, "목표 지표"):
         j = " ".join(cells)
-        if "예시" in j or "{" in j:
+        if "예시" in j or "{" in j or "n/a" in j.lower():
+            continue
+        if learning and "학습" not in cells[0]:
             continue
         if len(cells) >= 7:
             if cells[3] and cells[4] and cells[6]:
@@ -194,6 +200,24 @@ def gimpact_unresolved(f02_text: str) -> int:
         elif "없음" not in applies and "n/a" not in applies.lower() and not re.search(r"\[[xX]\]", done):
             bad += 1
     return bad
+
+
+def asbuilt_state(docs: list[dict]) -> dict | None:
+    """출시 후 현행화(G-ASBUILT). E15가 done이면 그 뒤 날짜의 현행화 기록(05.outputs/현행화/*.md, edpm_asbuilt.py record)이
+    있고 판정 안 한 행({판정})이 없어야 한다. E15가 없거나 done이 아니면 None (적용 안 함)."""
+    e15 = find(docs, "E15")
+    if e15 is None or e15["status"] != "done":
+        return None
+    since = parse_date(e15["fm"].get("updated")) or dt.date.min
+    recs = []
+    out_dir = ROOT / "05.outputs" / "현행화"
+    for p in sorted(out_dir.glob("*.md")) if out_dir.exists() else []:
+        t = read(p)
+        fm = parse_frontmatter(t)
+        if fm.get("asbuilt") and (parse_date(fm.get("date")) or dt.date.min) >= since:
+            recs.append({"rel": str(p.relative_to(ROOT)), "release": fm["asbuilt"], "pending": t.count("{판정}")})
+    ok = bool(recs) and all(r["pending"] == 0 for r in recs)
+    return {"ok": ok, "records": recs, "since": str(since)}
 
 
 def gate_check(doc: dict, docs: list[dict], content: bool = True) -> list[str]:
@@ -232,8 +256,23 @@ def gate_check(doc: dict, docs: list[dict], content: bool = True) -> list[str]:
             weak = ", ".join(d["dim"] for d in c["dims"] if d["score"] < 0.7)
             reasons.append(f"G-CLEAR: 모호도 {c['ambiguity']} > {c['max']} — 흐린 곳: {weak} (edpm_check.py clarity)")
     if content:
-        if doc["id"] == "F02" and not gmeasure_ok(read(doc["path"])):
-            reasons.append("G-MEASURE: 목표 지표에 기준선·목표·SQL이 채워진 실제 행이 없음")
+        if doc["id"] == "F01":
+            tt = (doc["fm"].get("task_type") or "").strip()
+            if tt not in TASK_TYPES:
+                reasons.append("G-MEASURE: F01 task_type이 비어 있거나 잘못됨 — 학습·사용성·운영 중 하나 (F01 0절 판정 질문)")
+        if doc["id"] == "F02":
+            f02_text = read(doc["path"])
+            if not gmeasure_ok(f02_text):
+                reasons.append("G-MEASURE: 목표 지표에 기준선·목표·SQL이 채워진 실제 행이 없음")
+            f01 = next((d for d in docs if d["id"] == "F01" and d["folder"] == doc["folder"]), None)
+            if f01 is not None and (f01["fm"].get("task_type") or "").strip() == "학습" and not gmeasure_ok(f02_text, learning=True):
+                reasons.append("G-MEASURE: 학습 과제(F01 task_type: 학습)인데 학습 지표 행에 기준선·목표·SQL이 없음")
+        if doc["id"] in {"M05", "E20"}:
+            ab = asbuilt_state(docs)
+            if ab is not None and not ab["ok"]:
+                why = (f"판정 안 한 행 {sum(r['pending'] for r in ab['records'])}개" if ab["records"]
+                       else f"E15 완료({ab['since']}) 뒤 현행화 기록 없음")
+                reasons.append(f"G-ASBUILT: 출시한 코드와 문서를 대조하지 않음 — {why} (/edpm-change asbuilt <릴리스>)")
         if doc["id"] == "F03":
             f02 = find(docs, "F02", doc["folder"])
             if f02 is not None:
@@ -902,6 +941,8 @@ def collect() -> dict:
         "meetings_pending": meetings_pending(),
         "unknowns_pending": unknowns_pending(docs),
         "test_unlocks": test_unlocks(),
+        "ripple_pending": ripple_pending(),
+        "asbuilt": asbuilt_state(docs),
     }
 
 
@@ -927,6 +968,16 @@ def ci_problems(base: str = "") -> list[str]:
             if f not in unlocked:
                 out.append(f"고정된 인수조건 테스트를 고침: {f} — 스펙(AC)을 먼저 고치고 .edpm/test-unlock에 경로·사유")
     return out
+
+
+def ripple_pending() -> list[dict]:
+    """변경 전파 대기 (edpm_ripple.py가 .edpm/ripple.json에 기록). 원천·대상이 아직 있는 것만."""
+    try:
+        data = json.loads(read(ROOT / ".edpm" / "ripple.json") or "{}")
+    except ValueError:
+        return []
+    rels = {d["rel"] for d in load_docs()}
+    return [p for p in data.get("pending", []) if p.get("target") in rels and p.get("source") in rels]
 
 
 def test_unlocks() -> list[str]:
@@ -974,6 +1025,14 @@ def fmt_brief(r: dict) -> str:
     if r.get("unknowns_pending"):
         attention.append(f"다음 사이클로 넘기지 않은 '아직 모르는 것' {len(r['unknowns_pending'])}건 → PRD 12절·다음 가설·백로그로: "
                          + r["unknowns_pending"][0])
+    ab = r.get("asbuilt")
+    if ab is not None and not ab["ok"]:
+        attention.append("출시 후 현행화 " + (f"판정 안 한 행 {sum(x['pending'] for x in ab['records'])}개" if ab["records"] else "기록 없음")
+                         + " (코드가 기준, 문서가 따라감) → /edpm-change asbuilt <릴리스>")
+    if r.get("ripple_pending"):
+        rp = r["ripple_pending"]
+        pairs = sorted({f"{x['source_id']} → {x['target_id']}" for x in rp})
+        attention.append(f"변경 전파 대기 {len(rp)}건: " + ", ".join(pairs[:5]) + (" …" if len(pairs) > 5 else "") + " → /edpm-change")
     if r.get("test_unlocks"):
         attention.append(f"고정 해제한 인수조건 테스트 {len(r['test_unlocks'])}건 (.edpm/test-unlock) — 스펙 변경과 맞는지 확인")
     if r["pii"]:

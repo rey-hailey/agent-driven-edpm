@@ -149,6 +149,37 @@ class CheckTests(WorkspaceCase):
         r = run([chk, "gate", f02], self.ws, self.env)
         self.assertEqual(r.returncode, 0, r.stdout)  # 실제 지표 행이 채워지면 통과
 
+    def test_task_type_sets_learning_metric_requirement(self):
+        rel = "F.개선/202610_유형테스트"
+        shutil.copytree(self.doc("F.개선/_과제템플릿"), self.doc(rel))
+        chk = self.ws / "automation/scripts/edpm_check.py"
+        f01 = self.doc(rel + "/F01_문제정의서.md")
+        f02 = self.doc(rel + "/F02_기능기획서.md")
+        self.set_prd("review")
+        r = run([chk, "gate", f01], self.ws, self.env)
+        self.assertIn("task_type", r.stdout)  # 유형을 정하지 않으면 F01 완료 불가
+        f01.write_text(f01.read_text(encoding="utf-8").replace("task_type:", "task_type: 사용성", 1), encoding="utf-8")
+        r = run([chk, "gate", f01], self.ws, self.env)
+        self.assertNotIn("task_type", r.stdout)
+        # 주 지표만 채운 F02: 사용성 과제는 통과
+        self.set_status(rel + "/F01_문제정의서.md", "done")
+        t = f02.read_text(encoding="utf-8").replace(
+            "| 주 지표 | {M-xx} | {…} | {…} | {…} | {출시 후 N주} | `automation/sql/{…}.sql` |",
+            "| 주 지표 | M-80 | 제출 클릭 수 | 3회 (9월) | 1회 | 출시 후 2주 | `automation/sql/제출흐름.sql` |", 1).replace(
+            "| 학습 지표 | {학습 유형: 필수 / 사용성·운영: n/a: 사유} | {…} | {…} | {…} | {…} | {…} |",
+            "| 학습 지표 | n/a: 사용성 과제 | - | - | - | - | - |", 1)
+        f02.write_text(t, encoding="utf-8")
+        r = run([chk, "gate", f02], self.ws, self.env)
+        self.assertNotIn("G-MEASURE", r.stdout, r.stdout)
+        # 같은 F02라도 학습 과제면 학습 지표가 없어서 미충족
+        f01.write_text(f01.read_text(encoding="utf-8").replace("task_type: 사용성", "task_type: 학습", 1), encoding="utf-8")
+        r = run([chk, "gate", f02], self.ws, self.env)
+        self.assertIn("학습 지표", r.stdout)
+        f02.write_text(t.replace("| 학습 지표 | n/a: 사용성 과제 | - | - | - | - | - |",
+                                 "| 학습 지표 | M-12 | 기한 내 제출률 | 82% (9월) | 88% | 출시 후 6주 | `automation/sql/기한제출.sql` |"), encoding="utf-8")
+        r = run([chk, "gate", f02], self.ws, self.env)
+        self.assertNotIn("G-MEASURE", r.stdout, r.stdout)
+
     def test_content_gate_impact_on_f03(self):
         rel = "F.개선/202610_임팩트테스트"
         shutil.copytree(self.doc("F.개선/_과제템플릿"), self.doc(rel))
@@ -652,6 +683,112 @@ class MetricsTests(WorkspaceCase):
         self.assertEqual(r.returncode, 0, r.stderr); self.assertIn("d = ", r.stdout)
         r = run([m, "compare", "--metric", "M-01", "--baseline", "52", "--target", "24", "--actual", "20", "--lower-is-better"], self.ws, self.env)
         self.assertIn("| 예 |", r.stdout)
+
+
+class RippleTests(WorkspaceCase):
+    E06, E09, E10 = "2.정의/E06_상세요구사항서.md", "3.설계/E09_기능명세서.md", "3.설계/E10_화면정보구조설계서.md"
+
+    def ripple(self, *args, stdin=None):
+        return run([self.ws / "automation/scripts/edpm_ripple.py", *args], self.ws, self.env, stdin)
+
+    def save(self, rel):  # PostToolUse 훅이 받는 입력
+        return self.ripple("record", stdin=json.dumps({"tool_input": {"file_path": str(self.doc(rel))}}))
+
+    def append(self, rel, text):
+        p = self.doc(rel)
+        p.write_text(p.read_text(encoding="utf-8") + text, encoding="utf-8")
+
+    def targets(self):
+        return {x["target_id"] for x in json.loads(self.ripple("pending", "--json").stdout)}
+
+    def test_change_propagates_one_step_at_a_time(self):
+        for rel in (self.E06, self.E09, self.E10):
+            self.set_status(rel, "done")
+        self.ripple("snapshot")
+        # 상태·날짜만 바꾼 저장은 변경이 아니다
+        p = self.doc(self.E06)
+        p.write_text(p.read_text(encoding="utf-8").replace("updated: 2026-10-01", "updated: 2026-10-02"), encoding="utf-8")
+        self.assertEqual(self.save(self.E06).stdout.strip(), "")
+        # 본문 변경 → 바로 아래(E09)만, 손대지 않은 템플릿(E07·E08 등)은 제외
+        self.append(self.E06, "\n| REQ-009 | 제출을 한 번에 끝낸다 | SH-01 | 사용성 | PB-01 | Must | |\n")
+        r = self.save(self.E06)
+        self.assertIn("additionalContext", r.stdout)
+        t = self.targets()
+        self.assertIn("E09", t)
+        self.assertNotIn("E10", t)   # 한 단계씩
+        self.assertNotIn("E07", t)   # 템플릿 그대로
+        self.assertIn("변경 전파 대기", self.check("brief").stdout)
+        # E09를 고치면 E09 대기가 풀리고 E10으로 이어짐
+        self.append(self.E09, "\n| F-031 | 과제 제출 | 운영·지원 | REQ-009 | - | P0 | 학습자 | - | R1 | 명세 중 |\n")
+        self.save(self.E09)
+        t = self.targets()
+        self.assertNotIn("E09", t)
+        self.assertIn("E10", t)
+        # 범위: 같은 ID를 쓰는 테스트
+        (self.ws / "tests").mkdir(exist_ok=True)
+        (self.ws / "tests/test_submit.py").write_text("# F-031 제출 한 번에\n", encoding="utf-8")
+        r = self.ripple("E09", "--json")
+        data = json.loads(r.stdout)
+        self.assertIn("F-031", data["ids"])
+        self.assertTrue(any(x["path"] == "tests/test_submit.py" for x in data["tests"]))
+        # WBS 후보 → 쓰기
+        r = self.ripple("wbs", "E09", "--write")
+        self.assertIn("1행 추가", r.stdout)
+        self.assertIn("WP-R.1", (self.ws / "03.docs/M.관리/M02_WBS.csv").read_text(encoding="utf-8"))
+        self.assertIn("WBS에 넣을 전파 작업이 없습니다", self.ripple("wbs", "E09").stdout)  # 같은 작업을 두 번 넣지 않음
+        # 고칠 것 없음 → ack
+        r = self.ripple("ack", "E10", "화면 영향 없음")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertNotIn("E10", self.targets())
+
+    def test_asbuilt_compare_and_gate(self):
+        # 코드: 화면 2개(하나는 E10에 없음), API 1개(메서드가 B02와 다름), 기능 ID 1개(E09에 없음)
+        app = self.ws / "src/app"
+        (app / "assignments/[id]").mkdir(parents=True)
+        (app / "assignments/[id]/page.tsx").write_text("// F-031\nexport default function P(){}\n", encoding="utf-8")
+        (app / "(admin)/settings").mkdir(parents=True)
+        (app / "(admin)/settings/page.tsx").write_text("export default function S(){}\n", encoding="utf-8")
+        (app / "api/attempts").mkdir(parents=True)
+        (app / "api/attempts/route.ts").write_text("export async function GET(){}\n", encoding="utf-8")
+        # 문서: E10 주소 2개(하나는 코드에 없음), B02 API 1개
+        p = self.doc(self.E10)
+        blocks = ("### SCR-021 과제 상세\n- 주소: /assignments/7\n- 본문: 과제\n\n"
+                  "### SCR-030 코칭\n- 주소: /coach/:id\n- 본문: 힌트\n\n---\n\n## 역할별 IA")
+        p.write_text(p.read_text(encoding="utf-8").replace("---\n\n## 역할별 IA", blocks, 1), encoding="utf-8")
+        b02 = self.doc("B.구현/B02_API명세서.md")
+        b02.write_text(b02.read_text(encoding="utf-8").replace(
+            "| {API-0NN} | {메서드 경로} |", "| API-020 | POST /api/attempts | 제출 | F-031 | - | 학습자 | - | |\n| {API-0NN} | {메서드 경로} |", 1), encoding="utf-8")
+        ab = self.ws / "automation/scripts/edpm_asbuilt.py"
+        data = json.loads(run([ab, "scan", "--json"], self.ws, self.env).stdout)
+        diffs = {(r["kind"], r["diff"].split(" ")[0]) for r in data["rows"]}
+        self.assertIn(("화면", "코드에만"), diffs)     # /settings (route group 제거)
+        self.assertIn(("화면", "문서에만"), diffs)     # SCR-030 /coach/:id
+        self.assertIn(("API", "메서드"), diffs)       # GET vs POST
+        self.assertIn(("기능", "코드에만"), diffs)     # F-031이 E09에 없음
+        self.assertTrue(any("SCR-021" in m for m in data["matched"]))  # /assignments/7 ↔ [id]
+        # 게이트: E15 done → M05는 현행화 기록·판정 전까지 막힘
+        self.set_prd("review")
+        self.set_status("4.구축/E15_릴리즈계획서.md", "done")
+        m05 = self.doc("M.관리/M05_완료보고서.md")
+        self.assertIn("G-ASBUILT", self.check("gate", m05).stdout)
+        self.assertIn("출시 후 현행화 기록 없음", self.check("brief").stdout)
+        r = run([ab, "record", "R1"], self.ws, self.env)
+        self.assertIn("판정할 차이", r.stdout)
+        self.assertIn("판정 안 한 행", self.check("gate", m05).stdout)
+        rec = next((self.ws / "05.outputs/현행화").glob("R1_*.md"))
+        rec.write_text(rec.read_text(encoding="utf-8").replace("{판정}", "문서 갱신"), encoding="utf-8")
+        self.assertNotIn("G-ASBUILT", self.check("gate", m05).stdout)
+
+    def test_screen_archive_index(self):
+        p = self.doc(self.E10)
+        blocks = "### SCR-021 과제 상세\n- 주소: /assignments/1\n- 본문: 과제 · [제출]\n\n### SCR-022 제출 완료\n- 본문: 완료 안내\n\n---\n\n## 역할별 IA"
+        p.write_text(p.read_text(encoding="utf-8").replace("---\n\n## 역할별 IA", blocks, 1), encoding="utf-8")  # 8절 안
+        r = run([self.ws / "automation/scripts/edpm_screens.py", "--archive", "R1", "--base", "https://staging.example.com"], self.ws, self.env)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        idx = next((self.ws / "05.outputs/화면아카이브").glob("R1_*/index.md")).read_text(encoding="utf-8")
+        self.assertIn("https://staging.example.com/assignments/1 | 캡처 대기", idx)
+        self.assertIn("SCR-022", idx)
+        self.assertIn("주소 없음", idx)
 
 
 if __name__ == "__main__":

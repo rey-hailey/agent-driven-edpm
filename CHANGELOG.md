@@ -8,6 +8,32 @@ Agent Driven EdPM 변경 이력입니다. 형식은 [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Added — 출시 후 현행화와 G-ASBUILT
+- 원칙: 출시 전에는 스펙이 기준, 출시 후에는 배포된 코드가 기준이고 문서가 따라감 (AGENTS.md 1.1, guide 09)
+- `automation/scripts/edpm_asbuilt.py`: 제품 코드의 화면 경로(Next.js `app/`·`pages/`, route group·병렬 슬롯 제외), API 경로·메서드(`route.*`, `pages/api`, Express·FastAPI 라우터), 기능 ID(F-001)를 E10 8절 `주소`·B02 2절·E09 1절(후속 릴리스 제외)·F02와 대조. `scan`, `record <릴리스>`(`05.outputs/현행화/<릴리스>_<날짜>.md`: 요약·차이·판정 칸·일치·현행화 이력), `--no-code "사유"`, `status`. `[id]`·`{id}`·`:id`·구체 값은 같은 자리로 봄
+- 게이트 **G-ASBUILT**: E15가 done이면 그 뒤 현행화 기록이 있고 `{판정}`이 남지 않아야 M05·E20 완료. 상황판·대시보드에 "출시 후 현행화" 표시
+- `/edpm-change asbuilt`(판정: 문서 갱신 → 변경 전파 / 결함 → defects / 의도된 차이 → 사유), AGENTS.md 2절 "제품 코드 위치", qa smoke 6단계, E15·M05·E20·F04 체크리스트, guide 02·09·13, README
+- 회귀 테스트 1건 — 총 41건
+
+### Added — 변경 전파: 하나를 고치면 연결된 곳까지
+- `automation/scripts/edpm_ripple.py`: 산출물 본문이 바뀌면 그 문서를 `requires`로 쓰는 바로 아래 문서와 같은 ID(REQ·F·SCR·LO·EV·M …, 과제 폴더 안에서는 US·T·AC·IF도)를 쓰는 문서를 "전파 대기"로 기록 (`.edpm/ripple.json`). 대기 문서를 고치면 풀리고 그 하위로 한 단계씩 이어짐. `<문서>`로 전체 범위(하위 산출물·같은 ID·테스트·코드·WBS·화면), `pending`, `ack <문서> <사유>`, `wbs [--write]`(전파 작업 `WP-R.n`을 M02_WBS.csv에). 상태만 바꾼 저장·손대지 않은 템플릿·n/a 제외
+- 훅: PostToolUse `edpm_ripple.py record`(변경 전파를 에이전트에게 알림), SessionStart `snapshot`. 상황판·대시보드 주의에 "변경 전파 대기"
+- 스킬 `/edpm-change`: 전파 처리(체인 순서대로 갱신·ack·결정, done 문서 재승인, 테스트 고정 해제 절차, WBS 반영), `screen <SCR-ID>`(스테이징·코드에서 먼저 바뀐 화면을 E10·스펙으로 역반영 — 배치·문구는 E10, 규칙은 PM 승인 후 AC), `archive <릴리스>`(릴리스 화면 아카이브, Figma는 선택 기록)
+- `edpm_screens.py --archive <릴리스> [--base URL] [--capture]`: `05.outputs/화면아카이브/<릴리스>_<날짜>/index.md`와 화면별 캡처(Playwright가 있으면 직접). E10 8절에 `- 주소:` 키
+- `/edpm-spec qa smoke` 6단계 화면 아카이브, `/edpm-prd update`·`/edpm-wbs impact`가 전파 범위를 씀. AGENTS.md·README·guide 13
+- **업그레이드 주의**: 훅이 늘어 `.claude/settings.json`이 바뀌었습니다. `install.sh --upgrade`는 기존 설정을 덮지 않고 `settings.new.json`을 두므로, 합쳐야 변경 전파 훅이 켜집니다 (`edpm_ripple.py` 명령은 합치기 전에도 쓸 수 있음)
+- 회귀 테스트 2건 — 총 40건
+
+### Changed — 개선 과제 유형: 학습 / 사용성 / 운영
+- 모든 개선이 교육적 효과를 노리지는 않으므로 과제마다 유형을 정함 (F01 0절, frontmatter `task_type`). 판정 질문: "학습자의 학습 활동이나 평가·피드백 결과를 바꾸는가?" 제출 확인 단계 제거·힌트 한 번에 펼치기처럼 학습 흐름에 닿으면 학습
+- 점검기 G-MEASURE: F01은 `task_type`(학습·사용성·운영)이 있어야 완료, 학습 과제의 F02는 학습 지표 행(기준선·목표·SQL)이 있어야 완료. 사용성·운영 과제는 학습 지표 `n/a`로 통과. `n/a` 행은 지표 행으로 세지 않음. **업그레이드 주의**: 기존 워크스페이스의 F01은 `task_type`을 적어야 done으로 올라감
+- F02 학습 지표 "필수" → 학습 과제만 필수, 사용성 지표 예시 추가. F03은 사용성·운영 과제면 단계 출시·롤백 위주로 짧게, 윤리 점검은 학습 과제나 학습자를 나눠 비교할 때만
+- 개선백로그 유형 열, 교육적 효과는 학습 과제만 매기고 사용성·운영은 `n/a`(중립값 3으로 계산). 사용성 예시 FI-012(제출 클릭 3번 → 1번)
+- E06 요구사항 표에 유형 열: 학습 REQ는 LO 추적, 사용성·운영 REQ는 PB·IN 추적과 E09 운영·지원 기능
+- guide 09에 "일하는 방식이 달라도: 0→1, 워터폴, 애자일" 절. guide 02·14, AGENTS.md 문구 정리
+- E09 스펙은 첫 릴리스(R1) 기능만 상세히, 다음 릴리스 기능은 기능 목록에 `릴리스` 열과 상태 `후속 릴리스`로만. 출시(파일럿 포함) 후 F00을 쓰고 후속 기능은 F 트랙 F02로 — 0→1을 짧게 밟고 출시 후 애자일로 이어짐. 대시보드 스펙 추적과 `/edpm-spec check`는 후속 릴리스 기능을 끊긴 추적으로 보지 않음. 게이트(G-SPEC)는 그대로
+- 회귀 테스트 1건
+
 ### Added — 리서치, 팀 알림, CI와 배포 후 점검
 - `/edpm-wiki research <질문>`: 하위 질문 → 웹 검색·원문 읽기 → 출처 등급(1차·2차·3차) → 자료실에 원본 요약(URL·접근일·등급) → 위키 종합(상충 근거, verified) → N01·E04·PRD 2절로. 수치는 1차 출처가 있을 때만 사실로
 - `automation/scripts/edpm_notify.py` + `/edpm-brief notify`: 상황판·주간보고·사건을 Slack·Teams 웹훅으로 (기본 미리보기, `--send`로 전송, 보낼 내용의 식별 정보 검사, 전송은 권한 확인). `.github/workflows/edpm-brief.yml`: 평일 아침 상황판 자동 발송 (Claude 없이, 웹훅 비밀값이 있을 때만)

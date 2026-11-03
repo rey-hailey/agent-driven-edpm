@@ -32,6 +32,7 @@
 3. **기본 품질**: 정적 자원(이미지·글꼴) 응답, 콘솔 오류, 느린 요청, 모바일 폭에서 깨짐, 접근성 기본(대비·키보드·대체 텍스트).
 4. **도구**: 공식 `webapp-testing`(Playwright)이 있으면 자동으로, 없으면 Claude in Chrome 또는 수동 체크리스트. 로그인은 테스트 계정만, 실제 학습자 계정 금지.
 5. **결과**: `05.outputs/smoke_YYYYMMDD_HHMM.md`(항목·결과·스크린샷 경로). 실패는 `defects`로 결함 등록, 출시를 막는 것이면 E15 출시 조건과 비교해 롤백 여부를 사용자에게 묻습니다. 통과·실패를 팀에 알리려면 `/edpm-brief notify event`.
+6. **현행화와 화면 아카이브**: 출시 배포의 smoke가 통과하면 `/edpm-change asbuilt <릴리스>`로 코드와 문서를 대조·판정하고(G-ASBUILT), `/edpm-change archive <릴리스> <URL>`로 그 릴리스의 화면을 남깁니다 (`05.outputs/화면아카이브/`).
 
 ## defects
 
