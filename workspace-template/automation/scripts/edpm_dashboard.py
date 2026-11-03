@@ -151,6 +151,211 @@ def calendar() -> dict:
             "days_in_month": (nxt - first).days, "today": ck.TODAY.day, "load": days, "items": items[:6]}
 
 
+# ---------- 여정 보드 ----------
+STAGES = ["리서치", "PRD", "학습 성과", "요구사항", "스펙·설계", "구현·검증", "출시·효과"]
+
+
+def stage_of(did: str) -> str | None:
+    if did in {"E00", "PRD"}:
+        return "PRD"
+    if did in {"E01", "E02", "E03", "E04", "N01", "N02", "F00", "D01"}:
+        return "리서치"
+    if did in {"E05", "E07", "E08"}:
+        return "학습 성과"
+    if did in {"E06", "N03"}:
+        return "요구사항"
+    if did in {"E09", "E10", "E11", "E12", "E13", "E14", "S06", "S07"} or did[:1] in {"A", "L", "P"} or did in {"B01", "B02", "B03", "B04", "B05"}:
+        return "스펙·설계"
+    if did in {"B06", "B07", "E15", "E16"}:
+        return "구현·검증"
+    if did in {"E17", "E18", "E19", "E20", "N04"}:
+        return "출시·효과"
+    return None  # M·S·F·V는 아래 줄(lane)로
+
+
+def current_stage(docs: list[dict], phase: dict) -> str:
+    step = (phase.get("step") or "").split(" ")[0]
+    st = {d["id"]: d["status"] for d in docs}
+    if step in {"0", "1", "1.5"}:
+        return "PRD"
+    if step == "2":
+        return "리서치"
+    if step == "3":
+        return "학습 성과" if st.get("E05") not in ("done", "n/a") else "요구사항"
+    return {"4": "스펙·설계", "5": "구현·검증", "6": "출시·효과"}.get(step, "PRD")
+
+
+def board(docs: list[dict], rows: list[dict], phase: dict) -> dict:
+    state = {r["rel"]: r for r in rows}
+    cols = {k: [] for k in STAGES}
+    lanes = {"관리·보고": [], "사업": []}
+    tasks = {}
+    for d in sorted(docs, key=ck._order):
+        r = state.get(d["rel"])
+        card = {"id": d["id"], "title": d["fm"].get("title", ""), "status": d["status"],
+                "state": r["state"] if r else ("해당없음" if d["status"] == "n/a" else ""),
+                "updated": str(d["fm"].get("updated", "") or "").replace("YYYY-MM-DD", ""),
+                "url": _open_url(d["path"]), "rel": d["rel"]}
+        if d["id"] == "PRD":
+            path = d["fm"].get("path") or []
+            card["path"] = path if isinstance(path, list) else [path]
+        sg = stage_of(d["id"])
+        if sg:
+            cols[sg].append(card)
+        elif d["id"][:1] == "M":
+            lanes["관리·보고"].append(card)
+        elif d["id"][:1] == "S":
+            lanes["사업"].append(card)
+        elif d["id"] in {"F01", "F02", "F03", "F04"}:
+            tasks.setdefault(d["folder"].name, []).append(card)
+    feature = [{"name": k, "cards": sorted(v, key=lambda c: c["id"])} for k, v in sorted(tasks.items())]
+    protos = []
+    for pt in ck.read_csv(ck.DOCS / "V.프로토타입" / "프로토타입목록.csv"):
+        end = ck.parse_date(pt.get("종료"))
+        protos.append({"id": pt.get("PT", ""), "name": pt.get("이름", ""), "fidelity": pt.get("충실도", ""),
+                       "status": pt.get("상태", ""), "decision": pt.get("결정", ""), "question": pt.get("검증질문", ""),
+                       "dday": (end - ck.TODAY).days if end else None})
+    return {"stages": STAGES, "current": current_stage(docs, phase), "cols": cols, "lanes": lanes,
+            "feature": feature, "protos": protos}
+
+
+# ---------- 스펙 추적 ----------
+
+def _section_text(text: str, head: str) -> str:
+    """head가 들어간 제목부터 다음 같은·상위 수준 제목 전까지의 본문."""
+    out, on, level = [], False, 0
+    for ln in text.splitlines():
+        m = re.match(r"^(#+)\s", ln)
+        if m:
+            if on and len(m.group(1)) <= level:
+                break
+            if head in ln:
+                on, level = True, len(m.group(1))
+                continue
+        if on:
+            out.append(ln)
+    return "\n".join(out)
+
+
+def _ids(cell: str, prefix: str) -> list[str]:
+    return re.findall(rf"{prefix}-[\w-]+", cell or "")
+
+
+def trace(docs: list[dict]) -> dict:
+    reqs = set()
+    for d in docs:
+        if d["id"] == "E06":
+            for r in ck._rows(ck.read(d["path"]), "요구사항"):
+                if r and re.match(r"REQ-\d+", r[0]) and ck._filled(r[1] if len(r) > 1 else ""):
+                    reqs.add(r[0])
+    out = []
+    for d in docs:
+        text = ck.read(d["path"])
+        if d["id"] == "E09":
+            feats = [r for r in ck._rows(text, "1. 기능 목록") if r and re.match(r"F-\d{3}$", r[0])]
+            sec, cur = {}, None
+            for ln in text.splitlines():
+                if ln.startswith("## "):
+                    cur = None
+                m = re.match(r"^###\s+(F-\d{3})", ln)
+                if m:
+                    cur = None if ("예시" in ln or "{" in ln) else m.group(1)
+                    if cur:
+                        sec[cur] = {"us": 0, "ac": [], "state": False}
+                    continue
+                if cur:
+                    t = ln.strip()
+                    if t.startswith("| US-") and "{" not in t:
+                        sec[cur]["us"] += 1
+                    if re.match(r"\|\s*AC-\d+\s*\|", t) and "{" not in t:
+                        sec[cur]["ac"].append(t.split("|")[1].strip())
+                    if "stateDiagram" in t:
+                        sec[cur]["state"] = True
+            tasks = [r for r in ck._rows(text, "작업 분해") if r and re.match(r"T-\d+", r[0])]
+            for f in feats:
+                fid = f[0]
+                info = sec.get(fid, {"us": 0, "ac": [], "state": False})
+                ft = [t for t in tasks if len(t) > 2 and fid in t[2]]
+                out.append(_trace_row(d, fid, f[1] if len(f) > 1 else "", _ids(f[3] if len(f) > 3 else "", "REQ"), reqs,
+                                      info["us"], info["ac"], info["state"], ft, ac_col=3, test_col=4, status_col=-1))
+        elif d["id"] == "F02" and "_과제템플릿" not in d["rel"]:
+            n_us, acs = 0, []
+            for ln in text.splitlines():
+                t = ln.strip()
+                if not t.startswith("| US-") or "(예시)" in t or "{" in t:
+                    continue
+                cells = [c.strip() for c in t.strip("|").split("|")]
+                if len(cells) > 1 and cells[1].startswith("AC-"):
+                    acs.append(cells[1])
+                else:
+                    n_us += 1
+            sect = _section_text(text, "2.1 상태 흐름")
+            tmpl = ck.LIB / "F.개선" / "_과제템플릿" / "F02_기능기획서.md"
+            tsect = _section_text(ck.read(tmpl), "2.1 상태 흐름") if tmpl.exists() else ""
+            has_state = "stateDiagram" in sect and sect.strip() != tsect.strip()
+            tasks = [r for r in _table_with(text, "5.1", "T-ID") if re.match(r"T-\d+", r[0]) and "(예시)" not in " ".join(r)]
+            out.append(_trace_row(d, d["folder"].name, d["fm"].get("title", "기능기획서"), [], None, n_us, acs, has_state,
+                                  tasks, ac_col=2, test_col=3, status_col=-1))
+    return {"rows": out, "req_known": bool(reqs),
+            "summary": {"features": len(out), "broken": sum(1 for r in out if r["flags"])}}
+
+
+def _table_with(text: str, head: str, first_col: str) -> list[list[str]]:
+    """head가 들어간 제목 아래, 첫 열 머리글이 first_col인 표의 데이터 행."""
+    on, found, rows = False, False, []
+    for ln in text.splitlines():
+        if ln.lstrip().startswith("#"):
+            if found:
+                break
+            on = head in ln
+            continue
+        t = ln.strip()
+        if not on or not t.startswith("|"):
+            if found and rows and not t.startswith("|"):
+                break
+            continue
+        cells = [c.strip() for c in t.strip("|").split("|")]
+        if not found:
+            found = cells[0] == first_col
+            continue
+        if set("".join(cells)) <= set("-: "):
+            continue
+        rows.append(cells)
+    return rows
+
+
+def _trace_row(d, fid, name, req_ids, reqs, n_us, acs, has_state, tasks, ac_col, test_col, status_col):
+    covered = set()
+    no_test, test_missing = [], []
+    for t in tasks:
+        covered |= set(_ids(t[ac_col] if len(t) > ac_col else "", "AC"))
+        tc = t[test_col] if len(t) > test_col else ""
+        if not ck._filled(tc):
+            no_test.append(t[0])
+        elif tc.strip("`").startswith("tests/") and not (ROOT / tc.strip("` ").split()[0]).exists():
+            test_missing.append(t[0])
+    flags = []
+    if reqs is not None and not req_ids:
+        flags.append("REQ 연결 없음")
+    elif reqs and any(r not in reqs for r in req_ids):
+        flags.append("E06에 없는 REQ: " + ", ".join(r for r in req_ids if r not in reqs))
+    if not n_us:
+        flags.append("유저스토리 없음")
+    if not acs:
+        flags.append("인수조건 없음")
+    left = [a for a in acs if a not in covered]
+    if acs and left:
+        flags.append("작업 없는 AC: " + ", ".join(left[:4]))
+    if no_test:
+        flags.append("테스트 없는 작업: " + ", ".join(no_test[:4]))
+    if test_missing:
+        flags.append("테스트 파일 없음: " + ", ".join(test_missing[:4]))
+    done = sum(1 for t in tasks if (t[status_col] if t else "") == "완료")
+    return {"doc": d["id"], "id": fid, "name": name, "req": req_ids, "us": n_us, "ac": len(acs), "state": bool(has_state),
+            "tasks": len(tasks), "tasks_done": done, "tests": len(tasks) - len(no_test), "flags": flags,
+            "url": _open_url(d["path"]), "rel": d["rel"]}
+
+
 def recent_files(n: int = 8) -> list[dict]:
     cands = []
     for base in (ck.DOCS, ck.WIKI, ck.OPS, ROOT / "06.prototypes", ROOT / "05.outputs"):
@@ -233,7 +438,8 @@ def build() -> dict:
         "by_status": d["by_status"], "open_marks": pf["open_marks"], "decision_score": pf["decision_score"],
         "decisions": pf["decisions"][-6:], "prototypes": pf["prototypes"], "spec": pf["spec"],
         "attention": attention, "calendar": calendar(), "recent": recent_files(), "log": log_entries(),
-        "skills": skills(), "graph": g,
+        "skills": skills(), "graph": g, "board": board(docs, ck.progress_rows(docs, show_all=True), r["phase"]),
+        "trace": trace(docs),
     }
 
 

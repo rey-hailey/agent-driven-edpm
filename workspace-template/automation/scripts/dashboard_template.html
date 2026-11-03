@@ -91,6 +91,45 @@ input.search:focus{outline:none;border-color:var(--muted)}
 .skill code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent)}
 .skill p{margin:3px 0 0;color:var(--muted);font-size:12px}
 .k{font-size:10.5px;color:var(--faint);white-space:nowrap}
+
+.tabs{display:flex;gap:4px}
+.tabs button{border:1px solid transparent;background:transparent;color:var(--muted);padding:4px 11px;border-radius:7px;cursor:pointer;font-weight:600;font-size:12.5px}
+.tabs button.on{background:var(--panel2);border-color:var(--line2);color:var(--text)}
+.pane{position:relative;flex:1;min-height:320px;overflow:auto;padding:16px 18px}
+.pane[hidden],.stage[hidden]{display:none}
+.board{display:grid;grid-template-columns:repeat(7,minmax(112px,1fr));gap:9px;min-width:830px}
+.colh{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);padding:0 2px 8px;border-bottom:2px solid var(--line2);margin-bottom:8px}
+.colh .c{margin-left:auto;color:var(--faint);font-weight:600}
+.bcol.now .colh{color:var(--accent);border-bottom-color:var(--accent)}
+.bcol.now .colh::after{content:"지금";font-size:10px;padding:1px 6px;border-radius:5px;background:rgba(240,164,58,.15);color:var(--accent);margin-left:4px}
+.bcol{display:flex;flex-direction:column;gap:7px;min-width:0}
+.bcard{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:8px;padding:8px 9px;cursor:pointer;min-width:0}
+.bcard:hover{border-color:var(--line2);background:var(--panel2)}
+.bcard .id{font-weight:800;font-size:12.5px}
+.bcard .tt{color:var(--text);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bcard .st{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.35}
+.bcard .st.wait{color:#c9a46a}
+.bcard .up{color:var(--faint);font-size:10.5px;margin-top:2px}
+.bempty{color:var(--faint);font-size:11.5px;border:1px dashed var(--line2);border-radius:8px;padding:10px;text-align:center}
+.pchips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.pchips span{font-size:10.5px;padding:0 6px;border-radius:4px;background:var(--panel2);border:1px solid var(--line2);color:var(--muted)}
+.lanes{margin-top:18px;display:flex;flex-direction:column;gap:10px;min-width:830px}
+.lane{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:start;border-top:1px solid var(--line);padding-top:10px}
+.lane .lh{font-size:12px;font-weight:700;color:var(--muted);padding-top:6px}
+.lane .li{display:flex;flex-wrap:wrap;gap:8px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:220px;max-width:340px}
+.pcard .q{color:var(--muted);font-size:11.5px;margin-top:2px}
+.steps4{display:flex;gap:3px;margin-top:6px}
+.steps4 i{flex:1;height:5px;border-radius:3px;background:var(--line2)}
+.trace{width:100%;border-collapse:collapse;font-size:12.5px;min-width:820px}
+.trace th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;padding:7px 8px;border-bottom:1px solid var(--line2);white-space:nowrap}
+.trace td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.trace tr.link{cursor:pointer}
+.trace tr.link:hover td{background:var(--panel2)}
+.ok{color:var(--ok)} .no{color:var(--bad)} .mid{color:var(--warn)}
+.flag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:5px;background:rgba(232,103,90,.14);color:#f09a90;margin:1px 4px 1px 0}
+.tsum{display:flex;gap:16px;margin-bottom:12px;color:var(--muted);font-size:12.5px;flex-wrap:wrap}
+.tsum b{color:var(--text)}
 @media (max-width:1100px){
   .app{height:auto}
   .main{grid-template-columns:1fr}
@@ -117,8 +156,10 @@ input.search:focus{outline:none;border-color:var(--muted)}
       <section class="card" id="recent"></section>
     </aside>
     <main class="center">
-      <div class="ctitle"><h2>지식 그래프</h2><span class="sub" id="gcounts"></span></div>
-      <div class="stage" id="stage">
+      <div class="ctitle"><div class="tabs" id="tabs"><button data-t="board" class="on">여정</button><button data-t="trace">스펙 추적</button><button data-t="graph">지식</button></div><span class="sub" id="gcounts"></span></div>
+      <div class="pane" id="pane-board"></div>
+      <div class="pane" id="pane-trace" hidden></div>
+      <div class="stage" id="stage" hidden>
         <canvas id="cv"></canvas>
         <div class="legend" id="legend"></div>
         <div class="tip" id="tip"></div>
@@ -127,9 +168,7 @@ input.search:focus{outline:none;border-color:var(--muted)}
     </main>
     <aside class="col right">
       <section class="card" id="attention"></section>
-      <section class="card" id="progress"></section>
       <section class="card" id="skills"></section>
-      <section class="card" id="protos"></section>
       <section class="card" id="activity"></section>
     </aside>
   </div>
@@ -238,17 +277,6 @@ $("attention").innerHTML = `<h3>주의 ${D.attention.length ? `<span class="badg
   D.attention.length ? D.attention.map(a => `<div class="row"><span class="tag">${esc(a.kind)}</span><span class="t" title="${esc(a.text)}">${esc(a.text)}</span></div>`).join("")
   : `<div class="empty">주의할 항목이 없습니다</div>`}</div>`;
 
-// ---------- progress ----------
-(function(){
-  const rows = D.progress.map(r => {
-    const [lab, col] = STATUS[r.status] || ["", "#888"];
-    const state = r.state.startsWith("대기") ? r.state.replace("대기: ", "대기 · ") : r.state;
-    return `<div class="row link" data-url="${esc(r.url)}" title="${esc(r.rel)}"><i class="dot" style="background:${col}"></i><span class="t"><b>${esc(r.id)}</b> ${esc(r.title)}</span><span class="m">${esc(state)}</span></div>`;
-  }).join("");
-  const out = D.outside.length ? `<div class="sub" style="margin-top:8px">이번 경로에 없는 전제: ${D.outside.map(esc).join(", ")}</div>` : "";
-  $("progress").innerHTML = `<h3>경로 문서 <span class="n">${D.progress.length}건</span></h3><div class="list">${rows || `<div class="empty">문서가 없습니다</div>`}</div>${out}`;
-})();
-
 // ---------- skills ----------
 (function(){
   const render = q => D.skills.filter(s => !q || (s.name + s.desc + s.hint).includes(q)).map(s => `
@@ -256,15 +284,6 @@ $("attention").innerHTML = `<h3>주의 ${D.attention.length ? `<span class="badg
   $("skills").innerHTML = `<h3>스킬 <span class="n">${D.skills.length}</span></h3><input class="search" id="sq" placeholder="스킬 검색 (예: 보고, 프로토타입)"><div id="sl">${render("")}</div>
     <div class="sub" style="margin-top:6px">복사해서 Claude Code 패널에 붙여 넣습니다</div>`;
   $("sq").addEventListener("input", e => { $("sl").innerHTML = render(e.target.value.trim()); });
-})();
-
-// ---------- prototypes & decisions ----------
-(function(){
-  const p = D.prototypes.length ? D.prototypes.map(x => `<div class="row"><span class="tag">${esc(x["충실도"] || "-")}</span><span class="t"><b>${esc(x.PT)}</b> ${esc(x["이름"])}</span><span class="m">${esc(x["결정"] || x["상태"])}</span></div>`).join("")
-    : `<div class="empty">아직 없습니다 (/edpm-proto new)</div>`;
-  const d = D.decisions.length ? D.decisions.map(x => `<div class="row"><span class="tag">${esc(x.outcome || "채점 전")}</span><span class="t" title="${esc(x.prediction)}"><b>${esc(x.id)}</b> ${esc(x.title)}</span></div>`).join("")
-    : `<div class="empty">아직 없습니다 (/edpm-decide new)</div>`;
-  $("protos").innerHTML = `<h3>프로토타입</h3><div class="list">${p}</div><h3 style="margin-top:14px">결정</h3><div class="list">${d}</div>`;
 })();
 
 // ---------- activity ----------
@@ -275,7 +294,7 @@ $("activity").innerHTML = `<h3>최근 활동 <span class="n">위키 log</span></
 (function(){
   const G = D.graph, nodes = G.nodes, edges = G.edges;
   const c = D.counts;
-  $("gcounts").textContent = `위키 ${c.wiki} · 산출물 ${c.docs} · 결정 ${c.decisions} · 자료실 ${c.raw} · 연결 ${edges.length}`;
+  window.graphCounts = `위키 ${c.wiki} · 산출물 ${c.docs} · 결정 ${c.decisions} · 자료실 ${c.raw} · 연결 ${edges.length}`;
   const stage = $("stage"), cv = $("cv"), g = cv.getContext("2d"), tip = $("tip");
   const groups = [...new Set(nodes.map(n => n.group))].sort((a, b) => (a === "산출물") - (b === "산출물") || nodes.filter(n => n.group === b).length - nodes.filter(n => n.group === a).length);
   const off = new Set();
@@ -348,8 +367,79 @@ $("activity").innerHTML = `<h3>최근 활동 <span class="n">위키 log</span></
   $("legend").innerHTML = groups.map(grp => `<span class="chip" data-g="${esc(grp)}"><i class="dot" style="background:${GCOLOR[grp] || "#888"}"></i>${esc(grp)} <b>${nodes.filter(n => n.group === grp).length}</b></span>`).join("");
   $("legend").addEventListener("click", e => { const c = e.target.closest("[data-g]"); if (!c) return; const grp = c.dataset.g; off.has(grp) ? off.delete(grp) : off.add(grp); c.classList.toggle("off"); });
   if (!nodes.length) { stage.insertAdjacentHTML("beforeend", `<div class="empty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">위키와 산출물이 쌓이면 여기에 그래프가 그려집니다 (/edpm-wiki ingest)</div>`); return; }
-  layout(); requestAnimationFrame(draw);
-  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(layout, 150); });
+  let started = false;
+  window.initGraph = () => { if (started) { layout(); return; } started = true; layout(); requestAnimationFrame(draw); };
+  let rt; window.addEventListener("resize", () => { if (!started || stage.hidden) return; clearTimeout(rt); rt = setTimeout(layout, 150); });
+})();
+
+
+// ---------- 여정 보드 ----------
+(function(){
+  const B = D.board;
+  const sc = s => (STATUS[s] || ["", "#666"])[1];
+  const card = c => `<div class="bcard" data-url="${esc(c.url)}" title="${esc(c.rel)}" style="border-left-color:${sc(c.status)}">
+      <div class="id">${esc(c.id)} <span style="font-weight:500;color:var(--muted);font-size:11px">${(STATUS[c.status] || [c.status])[0]}</span></div>
+      <div class="tt">${esc(c.title)}</div>
+      ${c.state && c.status !== "done" ? `<div class="st ${c.state.startsWith("대기") ? "wait" : ""}">${esc(c.state.replace("대기: ", "대기 · "))}</div>` : ""}
+      ${c.path ? `<div class="pchips">${c.path.length ? c.path.map(x => `<span>${esc(x)}</span>`).join("") : `<span>경로 미정</span>`}</div>` : ""}
+      ${c.updated ? `<div class="up">${esc(c.updated)}</div>` : ""}</div>`;
+  const cols = B.stages.map(st => {
+    const cs = B.cols[st] || [];
+    return `<div class="bcol ${st === B.current ? "now" : ""}"><div class="colh">${esc(st)}<span class="c">${cs.length}</span></div>
+      ${cs.length ? cs.map(card).join("") : `<div class="bempty">${st === B.current ? "이 단계의 문서를 꺼내세요" : "—"}</div>`}</div>`;
+  }).join("");
+  const lane = (label, html) => `<div class="lane"><div class="lh">${label}</div><div class="li">${html}</div></div>`;
+  let lanes = "";
+  lanes += lane("프로토타입", B.protos.length ? B.protos.map(p => `<div class="pcard"><div class="id"><span class="tag">${esc(p.fidelity || "-")}</span> <b>${esc(p.id)}</b> ${esc(p.name)}</div>
+      <div class="q">${esc(p.question)}</div><div class="st" style="margin-top:4px;font-size:11.5px;color:${p.decision ? "var(--ok)" : p.dday !== null && p.dday < 0 ? "var(--bad)" : "var(--muted)"}">
+      ${p.decision ? "결정: " + esc(p.decision) : esc(p.status) + (p.dday !== null ? (p.dday >= 0 ? ` · D-${p.dday}` : ` · ${-p.dday}일 지남`) : "")}</div></div>`).join("")
+    : `<div class="bempty" style="min-width:260px">PRD 9절의 정수를 먼저 보여주세요 (/edpm-proto new)</div>`);
+  if (B.feature.length) lanes += lane("운영 개선 과제", B.feature.map(f => {
+    const by = Object.fromEntries(f.cards.map(c => [c.id, c]));
+    const steps = ["F01", "F02", "F03", "F04"].map(k => `<i title="${k} ${by[k] ? (STATUS[by[k].status] || [""])[0] : "-"}" style="background:${by[k] ? sc(by[k].status) : "var(--line2)"}"></i>`).join("");
+    const next = ["F01", "F02", "F03", "F04"].find(k => by[k] && by[k].status !== "done" && by[k].status !== "n/a");
+    return `<div class="pcard" data-url="${esc((by[next || "F04"] || f.cards[0]).url)}" style="cursor:pointer"><div class="id">${esc(f.name)}</div><div class="steps4">${steps}</div>
+      <div class="q">${next ? `지금: ${next} ${esc(by[next].title)}` : "F04까지 완료"}</div></div>`; }).join(""));
+  lanes += lane("결정", D.decisions.length ? D.decisions.map(x => `<span class="chip" title="${esc(x.prediction)}"><b>${esc(x.id)}</b> ${esc(x.title)} · ${esc(x.outcome || "채점 전")}</span>`).join("")
+    : `<span class="empty">아직 없습니다 (/edpm-decide new)</span>`);
+  if (B.lanes["관리·보고"].length) lanes += lane("관리·보고", B.lanes["관리·보고"].map(card).join(""));
+  if (B.lanes["사업"].length) lanes += lane("사업", B.lanes["사업"].map(card).join(""));
+  const out = D.outside.length ? `<div class="sub" style="margin-top:10px">이번 경로에 없는 전제 (막지 않음, 필요하면 /edpm-doc &lt;ID&gt;): ${D.outside.map(esc).join(", ")}</div>` : "";
+  $("pane-board").innerHTML = `<div class="board">${cols}</div>${out}<div class="lanes">${lanes}</div>`;
+})();
+
+// ---------- 스펙 추적 ----------
+(function(){
+  const T = D.trace;
+  if (!T.rows.length) { $("pane-trace").innerHTML = `<div class="empty" style="padding:30px 0">E09 스펙이나 운영 개선 과제(F02)에 기능이 아직 없습니다. 스펙을 쓰면 여기에서 PRD 기능 → REQ → 유저스토리 → 인수조건 → 작업 → 테스트가 이어지는지 봅니다 (/edpm-spec write).</div>`; return; }
+  const yn = (v, okText) => v ? `<span class="ok">${okText || v}</span>` : `<span class="no">없음</span>`;
+  const rows = T.rows.map(r => `<tr class="link" data-url="${esc(r.url)}" title="${esc(r.rel)}">
+      <td><b>${esc(r.id)}</b> ${esc(r.name)}<div class="k">${esc(r.doc)}</div></td>
+      <td>${r.doc === "F02" ? `<span class="k">과제</span>` : r.req.length ? esc(r.req.join(", ")) : `<span class="no">없음</span>`}</td>
+      <td>${yn(r.us)}</td><td>${yn(r.ac)}</td><td>${r.state ? `<span class="ok">있음</span>` : `<span class="mid">없음</span>`}</td>
+      <td>${r.tasks ? `<span class="${r.tasks_done === r.tasks ? "ok" : "mid"}">${r.tasks_done}/${r.tasks}</span>` : `<span class="no">0</span>`}</td>
+      <td>${r.tasks ? `<span class="${r.tests === r.tasks ? "ok" : "no"}">${r.tests}/${r.tasks}</span>` : "-"}</td>
+      <td>${r.flags.length ? r.flags.map(f => `<span class="flag">${esc(f)}</span>`).join("") : `<span class="ok">이어짐</span>`}</td></tr>`).join("");
+  $("pane-trace").innerHTML = `<div class="tsum"><span>기능 <b>${T.summary.features}</b></span><span>끊긴 곳이 있는 기능 <b class="${T.summary.broken ? "no" : "ok"}">${T.summary.broken}</b></span>
+      <span>${T.req_known ? "REQ는 E06과 대조" : "E06 REQ가 아직 없어 REQ 대조는 건너뜀"}</span><span>점검 명령: <code style="color:var(--accent)">/edpm-spec check</code></span></div>
+    <table class="trace"><thead><tr><th>기능</th><th>REQ</th><th>유저스토리</th><th>인수조건</th><th>상태 흐름</th><th>작업 완료</th><th>테스트</th><th>끊긴 곳</th></tr></thead><tbody>${rows}</tbody></table>`;
+})();
+
+// ---------- 탭 ----------
+(function(){
+  const sub = {board: () => `지금: ${D.board.current} · 경로 문서 ${D.progress.length} · 프로토타입 ${D.board.protos.length} · 결정 ${D.decisions.length}`,
+               trace: () => `기능 ${D.trace.summary.features} · 끊긴 곳 ${D.trace.summary.broken}`,
+               graph: () => window.graphCounts || ""};
+  const show = t => {
+    document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.t === t));
+    $("pane-board").hidden = t !== "board"; $("pane-trace").hidden = t !== "trace"; $("stage").hidden = t !== "graph";
+    $("gcounts").textContent = sub[t]();
+    if (t === "graph" && window.initGraph) window.initGraph();
+    try { localStorage.setItem("edpm-tab", t); } catch (_) {}
+  };
+  $("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-t]"); if (b) show(b.dataset.t); });
+  let t0 = location.hash.slice(1) || "board"; if (!location.hash) { try { t0 = localStorage.getItem("edpm-tab") || "board"; } catch (_) {} }
+  show(sub[t0] ? t0 : "board");
 })();
 
 // 조용할 때 다시 읽어 최신 상태로 (훅이 파일을 다시 만든다)

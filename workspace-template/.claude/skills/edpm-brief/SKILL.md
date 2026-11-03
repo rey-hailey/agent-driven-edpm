@@ -23,7 +23,7 @@ argument-hint: "[week | next | progress | gates | dashboard] | weekly [YYYY-MM-D
 | 명령 | 읽을 파일 | 하는 일 |
 |------|-----------|---------|
 | (없음)·`week`·`next`·`progress`·`gates` | 이 파일 | 상황판, 이번 주, 다음 할 일, 진행표, 게이트 |
-| `dashboard` | 이 파일 | 대시보드 화면 열기: `python3 automation/scripts/edpm_dashboard.py --open` → `.edpm/dashboard.html` (지금 단계·PRD 명확도·일정·지식 그래프·주의·경로 문서·스킬). 세션 시작과 문서 저장 때 훅이 다시 만들고, 열어 둔 화면은 조용할 때 스스로 새로 읽음. 보기 전용 — 상태는 문서 frontmatter가 기준 |
+| `dashboard` | 이 파일 | 대시보드 화면 열기: `python3 automation/scripts/edpm_dashboard.py --open` → `.edpm/dashboard.html` (여정 보드·스펙 추적·지식 그래프 탭, 지금 단계·PRD 명확도·일정·주의·스킬). "끊긴 스펙"을 보려면 `.edpm/dashboard.html#trace`. 세션 시작과 문서 저장 때 훅이 다시 만들고, 열어 둔 화면은 조용할 때 스스로 새로 읽음. 보기 전용 — 상태는 문서 frontmatter가 기준 |
 | `weekly` | `weekly.md` | 주간보고 |
 | `report` | `report.md` | 관리 보고서·경영진 요약 (M 문서가 없으면 보관함에서 꺼냄) |
 | `meeting` | `meeting.md` | 회의 준비 한 장, 회의록 → ADR·WBS·백로그·ingest |

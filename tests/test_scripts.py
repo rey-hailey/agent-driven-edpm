@@ -471,6 +471,23 @@ class DashboardTests(WorkspaceCase):
         self.assertIn('"url": "cursor://file/', (self.ws / ".edpm" / "dashboard.html").read_text(encoding="utf-8"))
         self.assertEqual(len(data["skills"]), len(list((self.ws / ".claude/skills").glob("*/SKILL.md"))))
         self.assertNotIn("</script><", m.group(1))
+        self.assertEqual(data["board"]["stages"][0], "리서치")
+        self.assertIn("E09", [c["id"] for c in data["board"]["cols"]["스펙·설계"]])
+        self.assertEqual(data["trace"]["rows"], [])                      # 템플릿 상태: 기능 없음
+        e09 = self.doc("3.설계/E09_기능명세서.md")
+        s = e09.read_text(encoding="utf-8").replace("| {F-0NN} | {기능명} | {LO-ID / 운영·지원}",
+            "| F-101 | 녹음 제출 | LO-01 | REQ-001 | - | P0 | 학습자 | AI | 명세 중 |\n| {F-0NN} | {기능명} | {LO-ID / 운영·지원}", 1)
+        s = s.replace("## 4. 교육 현장 예외 상황", "### F-101. 녹음 제출\n\n| US | 스토리 | 확인하는 AC |\n|----|----|----|\n| US-101-1 | 아이로서 | AC-1 |\n\n"
+                      "| AC | Given | When | Then |\n|----|----|----|----|\n| AC-1 | a | b | c |\n| AC-2 | a | b | c |\n\n## 4. 교육 현장 예외 상황", 1)
+        s = s.replace("| {T-01} | {} | {F-0NN} |", "| T-01 | 업로드 | F-101 | AC-1 | `tests/test_up.py` | 개발팀 | 완료 |\n| {T-01} | {} | {F-0NN} |", 1)
+        e09.write_text(s, encoding="utf-8")
+        run([self.ws / "automation/scripts/edpm_dashboard.py", "--quiet"], self.ws, self.env)
+        html = (self.ws / ".edpm" / "dashboard.html").read_text(encoding="utf-8")
+        data = json.loads(re.search(r"const D = (\{.*?\});\nconst \$", html, re.S).group(1))
+        row = next(r for r in data["trace"]["rows"] if r["id"] == "F-101")
+        self.assertEqual((row["us"], row["ac"], row["tasks"], row["tasks_done"]), (1, 2, 1, 1))
+        self.assertIn("작업 없는 AC: AC-2", row["flags"])
+        self.assertIn("테스트 파일 없음: T-01", row["flags"])
 
 
 class ExportTests(WorkspaceCase):

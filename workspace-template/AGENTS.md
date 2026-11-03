@@ -200,7 +200,7 @@ tags: []
 |------|------|
 | SessionStart 훅 | `edpm_check.py brief` — 처음이면 시작 안내, 그다음 **지금 단계와 다음 할 일**(PRD 다음은 경로 정하기, 스펙과 나란히 프로토타입), 상황판(게이트·검토 대기·지연·프로토타입·결정·회의록·개인정보)을 세션 시작 때 표시 |
 | PreToolUse 훅 (Write·Edit) | ① `01.자료실/` 기존 파일 수정 차단 ② `03.docs/`·`PRD.md`를 `status: done`으로 바꿀 때 전제조건·게이트(G-PRD 포함) 미충족이면 차단 (`gate_skip: [사유]`가 있으면 통과) ③ `01.자료실/`·`02.wiki/`에 휴대전화·주민등록번호·이메일 패턴 저장 차단 ④ `src/` 제품 코드: PRD review 이상·E09 done일 때만, 개발 체계가 개발팀이면 차단 (G-SPEC) ⑤ 생성 게이트: 전제조건(+G-PRD)이 끝나기 전 산출물 본문 쓰기 차단 — frontmatter만 수정, n/a 처리, `gate_skip`·`early_draft` 사유는 통과 |
-| 대시보드 | `edpm_dashboard.py` — `.edpm/dashboard.html` 한 장(지금 단계·PRD 명확도·WBS 달력·최근 파일·지식 그래프·주의·경로 문서·스킬·프로토타입·결정·위키 log). SessionStart와 저장 후(PostToolUse) 훅이 다시 만듦. 보기 전용, 판정은 점검기와 같음 |
+| 대시보드 | `edpm_dashboard.py` — `.edpm/dashboard.html` 한 장(가운데 탭: 여정 보드·스펙 추적·지식 그래프, 왼쪽: 지금 단계·PRD 명확도·진행 요약·WBS 달력·최근 파일, 오른쪽: 주의·스킬·위키 log). SessionStart와 저장 후(PostToolUse) 훅이 다시 만듦. 보기 전용, 판정은 점검기와 같음 |
 | 권한 | 점검·조회 스크립트와 `git log`는 묻지 않음. GitHub 쓰기(push·setup·gh issue), 클라우드 AI 평가, Aside 실행, `git push`는 사용자 확인 |
 | 결정적 점검 | `/edpm-wiki lint`·`/edpm-brief`·`/edpm-brief weekly`는 `edpm_check.py` 결과를 먼저 쓰고 LLM은 보완만. `library`·`add`로 보관함 조회·꺼내기, `portfolio`로 포트폴리오 사실 |
 
