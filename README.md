@@ -32,7 +32,7 @@ cd ~/Work/우리회사-edpm && claude     # 세션이 열리면 상황판이 "�
 
 필요한 것: [Claude Code](https://claude.com/claude-code), git, python3 3.9 이상. 선택: [Obsidian](https://obsidian.md)(위키 보기), Aside CLI(웹 수집), Anthropic API 키(AI 평가 실행). `./install.sh --check`로 먼저 점검하세요.
 
-**스킬**: EdPM 스킬 33종(`/edpm-*`)은 설치 때 워크스페이스의 `.claude/skills/`(숨김 폴더)에 자동으로 들어가며, 그 폴더에서 Claude Code를 열 때 보입니다. Word·PDF 출력은 워크스페이스의 `automation/scripts/edpm_export.py`가 스킬 없이 만듭니다(표지·목차·쪽 번호, PDF는 Chrome, Word는 pandoc). 화면설계서 와이어프레임(PPTX·Figma)은 `./install.sh --extras`가 공개 저장소 [rey-hailey/sb-lowfi](https://github.com/rey-hailey/sb-lowfi)에서 설치하고, `docx`·`pptx`·`xlsx`·`pdf`·`webapp-testing`은 원하면 Anthropic 공식 플러그인으로 설치합니다.
+**스킬**: EdPM 스킬 33종(`/edpm-*`)은 설치 때 워크스페이스의 `.claude/skills/`(숨김 폴더)에 자동으로 들어가며, 그 폴더에서 Claude Code를 열 때 보입니다. Word·PDF 출력은 워크스페이스의 `automation/scripts/edpm_export.py`가 스킬 없이 만듭니다(표지·목차·쪽 번호, PDF는 Chrome, Word는 pandoc). 화면설계서 와이어프레임(PPTX·Figma) 스킬 `sb-lowfi-pptx`·`sb-lowfi-figma`는 워크스페이스를 설치할 때 공개 저장소 [rey-hailey/sb-lowfi](https://github.com/rey-hailey/sb-lowfi)에서 함께 설치되고(`~/.claude/skills`), `docx`·`pptx`·`xlsx`·`pdf`·`webapp-testing`은 원하면 Anthropic 공식 플러그인으로 설치합니다.
 
 **처음이라면 [guide/14.AtoZ사용가이드.md](guide/14.AtoZ사용가이드.md)부터** — 설치부터 1일차 온보딩, 매일 루틴, 운영 개선 과제 하나와 신사업 단계 심사까지 가상 회사로 따라가는 실전 가이드. 설치 옵션·외부 스킬 상세는 [guide/00.시작하기.md](guide/00.시작하기.md). "이걸로 영업·개발·디자이너·대표와 어떻게 일하나요?"는 [guide/15.협업가이드.md](guide/15.협업가이드.md).
 
@@ -173,7 +173,7 @@ graph LR
 | [archetypes/](archetypes/) | 서비스 유형 15종 (비즈니스 로직, 역할, IA, 트랙별 필수·권장, 지표, 규제, 시즌, 시작 순서) |
 | [guide/](guide/) | 00 시작하기(설치·사용법) · 01 설계 원칙 · 02 산출물 체인과 게이트 · 03 LLM 위키 운영 · 04 자동화 선택 · 05 회사 온보딩 · 06 기존 자료 가져오기 · 07 교육과정 지식그래프 · 08 커버리지 맵 · 09 업무 모드 · 10 AI 방식 선택 · 11 프로토타입과 MVP · 12 일정 관리 도구 연동 · 13 하네스와 점검 · **14 A to Z 사용 가이드** · **15 협업 가이드** |
 | [workspace-template/](workspace-template/) | 워크스페이스 원본 (산출물 템플릿 84종(PRD 포함), 스킬 33종, 점검기·훅·지표 계산·WBS 동기화 스크립트, 자동화·평가·비용·지식그래프 도구) |
-| [extras/](extras/) | 선택 설치 안내: `./install.sh --extras`가 [sb-lowfi](https://github.com/rey-hailey/sb-lowfi)(low-fi 와이어프레임 PPTX·Figma)를 설치, 공식 문서 스킬 안내 |
+| [extras/](extras/) | 함께 쓰는 스킬 안내: [sb-lowfi](https://github.com/rey-hailey/sb-lowfi)(low-fi 와이어프레임 PPTX·Figma, 설치 때 자동), 공식 문서 스킬(선택) |
 | [brain-seed/](brain-seed/) | 개인 EdTech Brain 초기 지식팩 (학습과학, 측정, 규제·표준, 이러닝 비즈니스 로직, IA·화면 패턴, 서비스 정책, AI 활용, AI 서비스 로직·IA·화면·정책, 서비스 형태별 지식, 교육과정, 용어집 — 87페이지) |
 | [tests/](tests/) | 점검기·훅·WBS 동기화·지표 계산 회귀 테스트 (`python3 -m unittest discover -s tests`) |
 | [CHANGELOG.md](CHANGELOG.md) | 변경 이력 |
@@ -219,5 +219,5 @@ graph LR
 | 외부 자료 | 라이선스 | 받는 방법 |
 |-----------|----------|-----------|
 | 교육과정 지식그래프 원천 데이터 | 각 원천 저장소의 MIT (출처 고지 필요) | `install.sh --with-kg` 또는 `/edpm-curriculum setup` |
-| `sb-lowfi` 스킬 | 해당 저장소 라이선스 | `install.sh --extras` |
+| `sb-lowfi` 스킬 | 해당 저장소 라이선스 | `install.sh`가 함께 설치 |
 | Anthropic 공식 문서 스킬, n8n 스킬 | 각 배포처 라이선스 | 직접 설치 (`extras/README.md`) |

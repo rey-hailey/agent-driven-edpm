@@ -242,7 +242,7 @@ git clone https://github.com/rey-hailey/agent-driven-edpm.git ~/agent-driven-edp
 
 # 2) 워크스페이스 만들기 — 인자 없이 실행하면 회사 이름·업무 모드·개발 체계·서비스 유형을 묻습니다
 ./install.sh
-#    (직접 지정: ./install.sh ~/Work/우리회사-edpm --mode NF --dev team --archetype AT07,AT09 --with-extras)
+#    (직접 지정: ./install.sh ~/Work/우리회사-edpm --mode NF --dev team --archetype AT07,AT09)
 
 # 3) 그 폴더에서 Claude Code를 열면 상황판이 "지금 단계"를 알려줍니다. 처음이면
 cd ~/Work/우리회사-edpm && claude
@@ -341,7 +341,7 @@ cd ~/Work/우리회사-edpm && claude
     <tr><td><code>/edpm-policy</code> · <code>/edpm-ai-design</code> · <code>/edpm-eval</code> · <code>/edpm-curriculum</code></td><td>정책 P01~P09 / AI 설계 / AI 평가 / 교육과정 지식그래프</td></tr>
     <tr><td><code>/edpm-qa</code> · <code>/edpm-proposal</code> · <code>/edpm-content</code></td><td>테스트·결함 / RFP·제안·견적 / 세일즈·마케팅</td></tr>
   </tbody></table></div>
-  <p class="chips" style="margin-top:12px"><b style="font-size:.9rem">외부 스킬 2종 (<code>--extras</code>, rey-hailey/sb-lowfi):</b>
+  <p class="chips" style="margin-top:12px"><b style="font-size:.9rem">함께 설치되는 화면설계 스킬 2종 (rey-hailey/sb-lowfi):</b>
     <span class="badge">sb-lowfi-pptx</span><span class="badge">sb-lowfi-figma</span>
     <b style="font-size:.9rem">Word·PDF:</b> <span class="badge">edpm_export.py</span>
   </p>

@@ -8,6 +8,9 @@ Agent Driven EdPM 변경 이력입니다. 형식은 [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Changed — sb-lowfi 기본 설치
+- 화면설계 스킬 `sb-lowfi-pptx`·`sb-lowfi-figma`(rey-hailey/sb-lowfi)를 워크스페이스 설치와 `--upgrade` 때 기본으로 `~/.claude/skills`에 설치(이미 있으면 건너뜀, 네트워크가 없으면 플러그인 설치 안내). 건너뛰려면 `--no-sb-lowfi`, `--extras`는 sb-lowfi만 다시 설치, `--with-extras`는 호환용으로 남김. 대화형 설치의 변환 스킬 질문 제거. README·CLAUDE.md·guide 00·14·마스터 가이드·extras 안내 반영
+
 ### Added — AI 프로덕트 기획 실무 대응 (텍스트 스펙·상태 흐름·연구 이관·포트폴리오)
 - **E09 유저스토리·상태 흐름**: 기능마다 유저스토리(US, 스토리마다 확인하는 AC) → 인수조건 → 상태 흐름(Mermaid `stateDiagram-v2`: 빈 상태·실패·시간 초과·권한 없음·오프라인·사람 이관) 순서. `/edpm-spec check`가 `F → US → AC → T` 추적과 상태 흐름 누락을 점검
 - **E14 2.1 AI 응답 흐름**: 입력 검사 → 근거 조회 → 생성 → 출력 검사 → 표시, 거절·대체·교사 이관 분기마다 기준(GR·시간·비용 한도)·화면 문구·로그·평가 시나리오, 응답 시간·비용·정확도 트레이드오프 기록. E14 체크리스트의 옛 분류 표현("유형 A/B/C")을 구성 요소로 수정

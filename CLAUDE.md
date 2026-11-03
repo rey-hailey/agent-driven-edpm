@@ -12,9 +12,9 @@
    - 하는 일: 신사업 시작(N) / 운영 중 서비스 개선(F) / 둘 다(NF)
    - 제품은 누가 만드나: 개발팀이 있다(team) / 개발자 없이 직접 만든다 — 바이브코딩(vibe)
    - 서비스 유형: 모르면 건너뜀 (`archetypes/README.md`, 나중에 `/edpm-blueprint detect`)
-   - Word·PDF·화면설계서 변환 스킬 설치 여부
 3. `./install.sh --check`로 필수 도구를 확인하고, 승인을 받아 설치합니다:
-   `./install.sh <경로> --mode <N|F|NF> --dev <team|vibe> [--archetype AT0x,AT0y] [--with-extras]`
+   `./install.sh <경로> --mode <N|F|NF> --dev <team|vibe> [--archetype AT0x,AT0y]`
+   (화면설계 스킬 sb-lowfi는 함께 설치됨. 건너뛰려면 `--no-sb-lowfi`)
    (사용자가 터미널에서 직접 하겠다면 인자 없이 `./install.sh`를 실행하면 같은 질문을 대화형으로 묻는다고 알려줍니다.)
 4. 설치가 끝나면 다음 행동을 알려줍니다: **새 터미널에서 `cd <경로> && claude`를 실행하고 `/edpm-start`를 입력하세요.** 워크스페이스 세션에서만 `/edpm-*` 스킬과 상황판·훅이 동작합니다.
 5. 더 읽을거리가 필요하면 하나만 권합니다: `guide/14.AtoZ사용가이드.md` (실전 순서), 브라우저로 볼 개요는 `guide/EdPM_마스터가이드.html`.
@@ -37,8 +37,8 @@
 | `guide/` | 사람이 읽는 가이드 00~15, 마스터 가이드 HTML |
 | `archetypes/` | 서비스 유형 AT01~AT15 |
 | `brain-seed/` | 개인 Brain 초기 지식 |
-| `extras/` | 선택 설치 스킬 |
-| `install.sh` | 설치·점검·업그레이드 (`--check`, `--extras`, `--upgrade`) |
+| `extras/` | 함께 쓰는 스킬 안내 (sb-lowfi 기본 설치, 공식 스킬 선택) |
+| `install.sh` | 설치·점검·업그레이드 (`--check`, `--extras` sb-lowfi만 다시, `--upgrade`) |
 | `tests/` | 회귀 테스트: `python3 -m unittest discover -s tests -v` |
 
 규칙: 스크립트·훅을 고치면 테스트를 돌리고, 바뀐 점을 `CHANGELOG.md`의 Unreleased에 적습니다. 산출물·스킬 수가 바뀌면 README·AGENTS·guide 00·14의 숫자를 함께 맞춥니다. 한국어, 이모지 없음.

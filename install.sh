@@ -13,22 +13,22 @@
 #   --with-kg                국가 교육과정 지식그래프를 받아 빌드 (약 260MB 다운로드, git·python3 필요)
 #   --dev team|vibe          개발 체계 (team: 개발팀이 있음 — PM은 스펙까지, vibe: 개발자 없이 PM이 LLM과 구현)
 #   --no-git                 git init 하지 않음
-#   --with-extras            추가 스킬(sb-lowfi: 화면설계서 PPTX·Figma)을 ~/.claude/skills에 설치
+#   --no-sb-lowfi            화면설계 스킬 sb-lowfi 설치를 건너뜀 (기본: ~/.claude/skills에 함께 설치, 이미 있으면 건너뜀)
 #   ./install.sh --check     설치 없이 필수 도구·외부 스킬만 점검 (guide/00.시작하기.md)
-#   ./install.sh --extras    추가 스킬만 설치 (extras/README.md)
+#   ./install.sh --extras    sb-lowfi만 설치 (설치 때 네트워크가 없었을 때, extras/README.md)
 #   ./install.sh --upgrade <워크스페이스>  스킬·스크립트·훅·설정을 새 버전으로 (작성한 산출물·위키는 그대로)
 set -euo pipefail
 
 FW="$(cd "$(dirname "$0")" && pwd)"
 
-# 추가 스킬(sb-lowfi)을 사용자 전역에 설치한다. 이미 있는 스킬은 덮어쓰지 않는다.
+# EdPM과 함께 쓰는 화면설계 스킬(sb-lowfi)을 사용자 전역에 설치한다. 워크스페이스 설치·업그레이드 때 기본으로 실행. 이미 있는 스킬은 덮어쓰지 않는다.
 # Word·PDF 출력은 스킬 없이 워크스페이스의 automation/scripts/edpm_export.py가 맡는다.
 install_extras() {
   local dest="$HOME/.claude/skills"
   mkdir -p "$dest"
-  echo "[추가 스킬 → $dest]"
+  echo "[화면설계 스킬 sb-lowfi → $dest]"
   install_sb_lowfi "$dest"
-  echo "  안내: extras/README.md (Word·PDF 출력은 edpm_export.py, 공식 문서 스킬은 선택)"
+  echo "  안내: extras/README.md (Word·PDF 출력은 edpm_export.py, 공식 문서 스킬은 선택)"; return 0
 }
 
 # sb-lowfi-pptx·sb-lowfi-figma는 별도 공개 저장소에서 받는다. 이미 있으면 건너뛴다.
@@ -66,7 +66,7 @@ preflight() {
   else
     echo "  ✗ Claude Code 필요 — https://claude.com/claude-code (설치는 계속되지만 스킬을 실행할 수 없음)"
   fi
-  echo "[외부 스킬 — 선택, 문서 변환용]"
+  echo "[함께 쓰는 스킬]"
   local plugins="$HOME/.claude/plugins/installed_plugins.json" s found
   for s in docx pptx xlsx pdf webapp-testing sb-lowfi-pptx sb-lowfi-figma; do
     found=""
@@ -81,7 +81,7 @@ preflight() {
     fi
     if [[ -n "$found" ]]; then echo "  ✓ $s ($found)"; else echo "  – $s 없음"; fi
   done
-  echo "  Word·PDF는 스킬 없이 edpm_export.py가 만듭니다(PDF: Chrome, Word: pandoc). sb-lowfi: ./install.sh --extras, 공식 docx·pptx·xlsx·pdf·webapp-testing: guide/00.시작하기.md 3.2절"
+  echo "  Word·PDF는 스킬 없이 edpm_export.py가 만듭니다(PDF: Chrome, Word: pandoc). sb-lowfi: 워크스페이스 설치 때 자동(없으면 ./install.sh --extras), 공식 docx·pptx·xlsx·pdf·webapp-testing(선택): guide/00.시작하기.md 3.2절"
   command -v pandoc >/dev/null 2>&1 && echo "  ✓ pandoc (Word 출력)" || echo "  – pandoc 없음 (Word 출력용, 선택: brew install pandoc)"
   echo "[선택 도구]"
   command -v obsidian >/dev/null 2>&1 || [[ -d /Applications/Obsidian.app ]] && echo "  ✓ Obsidian" || echo "  – Obsidian 없음 (위키 보기용, 없어도 동작)"
@@ -110,6 +110,7 @@ if [[ "$TARGET" == "--upgrade" ]]; then
   rsync -a "$FW/workspace-template/.claude/skills/" "$WS/.claude/skills/" && echo "  스킬 $(ls -d "$WS"/.claude/skills/edpm-*/ | wc -l | tr -d ' ')종 갱신"
   rsync -a "$FW/workspace-template/automation/scripts/" "$WS/automation/scripts/" && echo "  automation/scripts 갱신"
   rsync -a "$FW/workspace-template/automation/hooks/" "$WS/automation/hooks/" && echo "  automation/hooks 갱신"
+  [[ " $* " == *" --no-sb-lowfi "* ]] || { mkdir -p "$HOME/.claude/skills"; install_sb_lowfi "$HOME/.claude/skills"; }
   rsync -a "$FW/workspace-template/automation/kg/" --exclude sources.lock.json "$WS/automation/kg/" 2>/dev/null || true
   rsync -a --ignore-existing "$FW/workspace-template/automation/sql/" "$WS/automation/sql/" && echo "  automation/sql 템플릿 추가 (기존 파일 유지)"
   rsync -a --ignore-existing "$FW/workspace-template/.github/" "$WS/.github/" 2>/dev/null || true
@@ -154,16 +155,14 @@ if [[ -z "$TARGET" && ( -t 0 || -n "${EDPM_WIZARD:-}" ) ]]; then   # EDPM_WIZARD
   echo "5) 서비스 유형 (쉼표로 여러 개, 모르면 Enter — 나중에 /edpm-blueprint detect). 목록: archetypes/README.md"
   for f in "$FW"/archetypes/AT*_*.md; do printf "   %s\n" "$(basename "$f" .md)"; done
   read -r -p "   유형 (예: AT07,AT10) []: " at
-  read -r -p "6) Word·PDF·화면설계서 변환 스킬도 설치할까요? (y/N): " ex
   set -- "$path" --mode "$m" --dev "$dv"
   if [[ -n "$at" ]]; then set -- "$@" --archetype "$at"; fi
-  if [[ "$ex" == y || "$ex" == Y ]]; then set -- "$@" --with-extras; fi
   TARGET="$1"
   echo; echo "실행: ./install.sh $*"; echo
 fi
 [[ -z "$TARGET" || "$TARGET" == --* ]] && { sed -n '2,21p' "$0"; exit 1; }
 shift
-MODE=""; ARCH=""; DEV=""; BRAIN="$HOME/EdTech-Brain"; WITH_KG=0; GIT=1; EXTRAS=0
+MODE=""; ARCH=""; DEV=""; BRAIN="$HOME/EdTech-Brain"; WITH_KG=0; GIT=1; EXTRAS=1
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --mode) MODE="$2"; shift 2 ;;
@@ -172,7 +171,8 @@ while [[ $# -gt 0 ]]; do
     --brain) BRAIN="$2"; shift 2 ;;
     --with-kg) WITH_KG=1; shift ;;
     --no-git) GIT=0; shift ;;
-    --with-extras) EXTRAS=1; shift ;;
+    --with-extras) EXTRAS=1; shift ;;   # 예전 옵션: 이제 기본
+    --no-sb-lowfi) EXTRAS=0; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 1 ;;
   esac
 done
