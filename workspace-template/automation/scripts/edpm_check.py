@@ -12,6 +12,8 @@
   python3 automation/scripts/edpm_check.py progress [--all]   # 진행표 한 장: 문서·상태·완료일·전제·착수 가능 여부
   python3 automation/scripts/edpm_check.py start <문서 경로>  # 이 문서를 지금 써도 되는가 — 전제조건 (0 가능 / 1 불가, 생성 게이트)
   python3 automation/scripts/edpm_check.py code-gate <경로>   # 제품 코드(src/)를 써도 되는가 (G-SPEC, 개발 체계) (0 가능 / 1 불가)
+  python3 automation/scripts/edpm_check.py portfolio [--ids PRD,E09,V01] [--adr ADR-003,ADR-007]
+                                                              # 포트폴리오용 사실(JSON): 문서 상태·기간, 스펙 규모, 미해결 [가정], 게이트 기록, 결정·적중, 프로토타입
 
 판정 규칙은 AGENTS.md 6절·프레임워크 guide/02와 같다. 여기서 못 보는 게이트(G-CAL 시즌 충돌, G-MEASURE SQL 결과 등)는
 /edpm-lint가 LLM으로 보완한다. 표준 라이브러리만 쓴다.
@@ -252,7 +254,7 @@ def start_check(doc: dict, docs: list[dict]) -> list[str]:
 
 
 CHAIN_ORDER = ["E00", "PRD"] + [f"E{i:02d}" for i in range(1, 21)]
-TRACK_ORDER = "MNVFALPSB"
+TRACK_ORDER = "MNDVFALPSB"
 
 
 def _order(d: dict) -> tuple:
@@ -563,6 +565,94 @@ def agents_context() -> dict:
     return out
 
 
+# ---------- 포트폴리오 사실 ----------
+
+ASSUME = re.compile(r"\[가정\]")
+CONFIRM = re.compile(r"\[확인 필요\]")
+
+
+def _real_lines(text: str):
+    """템플릿 예시·플레이스홀더를 뺀 줄. 제목에 '예시'가 있는 구간, '(예시)'·'{' 가 있는 줄, 작성 가이드 인용은 제외."""
+    in_example, in_fm = False, False
+    for i, ln in enumerate(text.splitlines()):
+        if i == 0 and ln.strip() == "---":
+            in_fm = True
+            continue
+        if in_fm:
+            if ln.strip() == "---":
+                in_fm = False
+            continue
+        s = ln.strip()
+        if s.startswith("#"):
+            in_example = "예시" in s
+            continue
+        if in_example or s.startswith(">") or "(예시)" in s or "예시:" in s or "{" in s or re.match(r"\|\s*예시\s*\|", s):
+            continue
+        yield s
+
+
+def spec_size(docs: list[dict]) -> dict:
+    out = {"F": 0, "US": 0, "AC": 0, "state_diagrams": 0, "T": spec_tasks(docs)}
+    for d in docs:
+        if d["id"] != "E09":
+            continue
+        text = read(d["path"])
+        f_ids, n_us, n_ac = set(), 0, 0
+        for s in _real_lines(text):
+            m = re.match(r"\|\s*(F-\d{3})\s*\|", s)
+            if m:
+                f_ids.add(m.group(1))
+            n_us += bool(re.match(r"\|\s*US-[\w-]+\s*\|", s))
+            n_ac += bool(re.match(r"\|\s*AC-\d+\s*\|", s))
+        out["F"] += len(f_ids); out["US"] += n_us; out["AC"] += n_ac
+        blocks = re.split(r"^#{1,4} ", text, flags=re.M)
+        out["state_diagrams"] += sum(len(re.findall(r"^\s*stateDiagram", b, re.M)) for b in blocks
+                                     if "예시" not in b.split("\n", 1)[0] and "{F-0NN}" not in b.split("\n", 1)[0])
+    return out
+
+
+def portfolio(docs: list[dict], ids: list[str] | None = None, adrs: list[str] | None = None) -> dict:
+    sel = [d for d in docs if d["status"] != "n/a" and (not ids or d["id"] in ids)]
+    rows = []
+    for d in sorted(sel, key=_order):
+        text = "\n".join(_real_lines(read(d["path"])))
+        rows.append({"id": d["id"], "title": d["fm"].get("title", ""), "status": d["status"],
+                     "updated": d["fm"].get("updated", ""), "path": d["rel"],
+                     "assume_open": len(ASSUME.findall(text)), "confirm_open": len(CONFIRM.findall(text)),
+                     "gate_skip": (d["fm"].get("gate_skip") or "").strip(),
+                     "early_draft": (d["fm"].get("early_draft") or "").strip()})
+    dates = sorted(x for x in (parse_date(r["updated"]) for r in rows) if x)
+    dec = []
+    ddir = WIKI / "decisions"
+    for p in sorted(ddir.glob("ADR-*.md")) if ddir.exists() else []:
+        fm = parse_frontmatter(read(p))
+        aid = fm.get("adr_id") or p.stem.split("_")[0]
+        if adrs and aid not in adrs:
+            continue
+        rel = fm.get("related_docs") or []
+        if not adrs and ids and not (set(rel) & set(ids)):
+            continue
+        dec.append({"id": aid, "title": fm.get("title", ""), "decided": fm.get("decided", ""),
+                    "status": fm.get("decision_status", ""), "prediction": fm.get("prediction", ""),
+                    "outcome": fm.get("outcome", ""), "path": str(p.relative_to(ROOT))})
+    scored = [x for x in dec if x["outcome"] and x["outcome"] != "판단 불가"]
+    hits = sum(1 for x in scored if x["outcome"] == "적중") + 0.5 * sum(1 for x in scored if x["outcome"] == "부분 적중")
+    protos = read_csv(DOCS / "V.프로토타입" / "프로토타입목록.csv")
+    return {
+        "today": str(TODAY), "context": agents_context(),
+        "period": {"first_updated": str(dates[0]) if dates else "", "last_updated": str(dates[-1]) if dates else ""},
+        "docs": rows,
+        "docs_by_status": {k: sum(1 for r in rows if r["status"] == k) for k in ("draft", "review", "done")},
+        "open_marks": {"가정": sum(r["assume_open"] for r in rows), "확인 필요": sum(r["confirm_open"] for r in rows)},
+        "gate_records": [f"{r['id']} gate_skip: {r['gate_skip']}" for r in rows if r["gate_skip"]]
+                        + [f"{r['id']} early_draft: {r['early_draft']}" for r in rows if r["early_draft"]],
+        "spec": spec_size(docs) if (not ids or "E09" in ids) else {},
+        "decisions": dec,
+        "decision_score": {"scored": len(scored), "hit_rate": round(hits / len(scored), 2) if scored else None},
+        "prototypes": [{k: r.get(k, "") for k in ("PT", "이름", "충실도", "상태", "시작", "종료", "결정")} for r in protos],
+    }
+
+
 # ---------- 조립 ----------
 
 def collect() -> dict:
@@ -706,6 +796,13 @@ def main() -> int:
         ok, msg = code_gate(Path(sys.argv[2]), load_docs())
         print(msg)
         return 0 if ok else 1
+    if cmd == "portfolio":
+        def _arg(flag):
+            if flag in sys.argv and sys.argv.index(flag) + 1 < len(sys.argv):
+                return [x.strip() for x in sys.argv[sys.argv.index(flag) + 1].split(",") if x.strip()]
+            return None
+        print(json.dumps(portfolio(load_docs(), _arg("--ids"), _arg("--adr")), ensure_ascii=False, indent=2, default=str))
+        return 0
     r = collect()
     if cmd == "json":
         print(json.dumps(r, ensure_ascii=False, indent=2, default=str))

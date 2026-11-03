@@ -251,6 +251,57 @@ class StartGateTests(WorkspaceCase):
         self.assertRegex(out, r"\| E01 \|.*착수 가능")
 
 
+class PortfolioTests(WorkspaceCase):
+    def test_portfolio_facts_exclude_examples_and_score_decisions(self):
+        out = json.loads(self.check("portfolio", "--ids", "E09").stdout)
+        self.assertEqual((out["spec"]["F"], out["spec"]["US"], out["spec"]["AC"], out["spec"]["state_diagrams"]), (0, 0, 0, 0))
+        e09 = self.doc("3.설계/E09_기능명세서.md")
+        s = e09.read_text(encoding="utf-8").replace("updated: YYYY-MM-DD", "updated: 2026-10-20", 1)
+        s = s.replace("## 4. 교육 현장 예외 상황", """### F-101. 읽기 녹음 제출
+
+| US | 스토리 | 확인하는 AC |
+|----|--------|-------------|
+| US-101-1 | 학습자로서 읽기를 마치면 바로 제출하고 싶다 | AC-1 |
+| US-101-2 | 교사로서 불량 녹음을 다시 받고 싶다 | AC-2 |
+
+| AC | Given | When | Then |
+|----|-------|------|------|
+| AC-1 | 녹음이 끝났다 | 제출한다 | 5초 안에 점수가 보인다 [가정] |
+| AC-2 | 소음이 크다 | 제출한다 | 재녹음 안내가 보인다 |
+
+```mermaid
+stateDiagram-v2
+    [*] --> 녹음
+    녹음 --> 재녹음: 품질 미달
+```
+
+## 4. 교육 현장 예외 상황""", 1)
+        s = s.replace("| {F-0NN} | {기능명} | {LO-ID / 운영·지원}", "| F-101 | 읽기 녹음 제출 | LO-01 | REQ-001 | - | P0 | 학습자 | AI | 명세 중 |\n| {F-0NN} | {기능명} | {LO-ID / 운영·지원}", 1)
+        e09.write_text(s, encoding="utf-8")
+        dd = self.ws / "02.wiki" / "decisions"
+        tpl = (dd / "_template.md").read_text(encoding="utf-8")
+        for n, outcome, rel in ((1, "적중", "[E09]"), (2, "빗나감", "[E09]"), (3, "부분 적중", "[E09]"), (4, "적중", "[E15]")):
+            t = tpl.replace("adr_id: ADR-001", f"adr_id: ADR-00{n}").replace("related_docs: []", f"related_docs: {rel}")
+            t = t.replace("outcome:                    #", f"outcome: {outcome}  #")
+            (dd / f"ADR-00{n}_결정.md").write_text(t, encoding="utf-8")
+        out = json.loads(self.check("portfolio", "--ids", "E09").stdout)
+        self.assertEqual((out["spec"]["F"], out["spec"]["US"], out["spec"]["AC"], out["spec"]["state_diagrams"]), (1, 2, 2, 1))
+        self.assertEqual(out["open_marks"]["가정"], 1)
+        self.assertEqual([d["id"] for d in out["decisions"]], ["ADR-001", "ADR-002", "ADR-003"])
+        self.assertEqual(out["decision_score"], {"scored": 3, "hit_rate": 0.5})
+        self.assertEqual(out["period"]["last_updated"], "2026-10-20")
+        out = json.loads(self.check("portfolio", "--adr", "ADR-004").stdout)
+        self.assertEqual([d["id"] for d in out["decisions"]], ["ADR-004"])
+
+    def test_research_track_d01_follows_creation_gate(self):
+        d01 = self.doc("D.연구이관/D01_연구PoC제품화검토서.md")
+        self.assertEqual(self.check("start", str(d01)).returncode, 1)
+        self.set_status("0.온보딩/E00_회사사업프로필.md", "done")
+        self.set_prd("review")
+        self.assertEqual(self.check("start", str(d01)).returncode, 0)
+        self.assertRegex(self.check("progress").stdout, r"\| D01 \|.*착수 가능")
+
+
 class ExportTests(WorkspaceCase):
     def test_export_html_strips_guides_and_examples(self):
         out = self.tmp / "out"

@@ -4,7 +4,7 @@
 
 **에듀테크 PM을 위한 범용 에이전트 프레임워크.** 이러닝 마켓플레이스부터 기업교육 LMS, 부트캠프, 라이브 클래스, K-12 코스웨어, 학원 서비스, 학습앱, 고등교육, 시험대비, AI 튜터까지 — 어떤 에듀테크 회사에서든 내려받아 Claude Code로 바로 쓸 수 있습니다.
 
-**신사업으로 새 서비스를 만드는 PM**과 **운영 중인 서비스에서 기능을 개선하는 PM** 모두를 위한 흐름이 따로 있습니다. 일할수록 지식이 쌓이는 LLM 위키, 업무 모드·서비스 유형별로 켜지는 산출물 83종, 반복 업무를 맡는 스킬 32종, 규칙을 장치로 지키는 점검기·훅, 문제를 직접 만들어 검증하는 프로토타입·MVP 흐름, GitHub로 공유하는 WBS, 국가 교육과정 지식그래프를 한 묶음으로 제공합니다.
+**신사업으로 새 서비스를 만드는 PM**과 **운영 중인 서비스에서 기능을 개선하는 PM** 모두를 위한 흐름이 따로 있습니다. 일할수록 지식이 쌓이는 LLM 위키, 업무 모드·서비스 유형별로 켜지는 산출물 84종, 반복 업무를 맡는 스킬 33종, 규칙을 장치로 지키는 점검기·훅, 문제를 직접 만들어 검증하는 프로토타입·MVP 흐름, GitHub로 공유하는 WBS, 국가 교육과정 지식그래프를 한 묶음으로 제공합니다.
 
 ---
 
@@ -32,7 +32,7 @@ cd ~/Work/우리회사-edpm && claude     # 세션이 열리면 상황판이 "�
 
 필요한 것: [Claude Code](https://claude.com/claude-code), git, python3 3.9 이상. 선택: [Obsidian](https://obsidian.md)(위키 보기), Aside CLI(웹 수집), Anthropic API 키(AI 평가 실행). `./install.sh --check`로 먼저 점검하세요.
 
-**스킬**: EdPM 스킬 32종(`/edpm-*`)은 설치 때 워크스페이스의 `.claude/skills/`(숨김 폴더)에 자동으로 들어가며, 그 폴더에서 Claude Code를 열 때 보입니다. Word·PDF 출력은 워크스페이스의 `automation/scripts/edpm_export.py`가 스킬 없이 만듭니다(표지·목차·쪽 번호, PDF는 Chrome, Word는 pandoc). 화면설계서 와이어프레임(PPTX·Figma)은 `./install.sh --extras`가 공개 저장소 [rey-hailey/sb-lowfi](https://github.com/rey-hailey/sb-lowfi)에서 설치하고, `docx`·`pptx`·`xlsx`·`pdf`·`webapp-testing`은 원하면 Anthropic 공식 플러그인으로 설치합니다.
+**스킬**: EdPM 스킬 33종(`/edpm-*`)은 설치 때 워크스페이스의 `.claude/skills/`(숨김 폴더)에 자동으로 들어가며, 그 폴더에서 Claude Code를 열 때 보입니다. Word·PDF 출력은 워크스페이스의 `automation/scripts/edpm_export.py`가 스킬 없이 만듭니다(표지·목차·쪽 번호, PDF는 Chrome, Word는 pandoc). 화면설계서 와이어프레임(PPTX·Figma)은 `./install.sh --extras`가 공개 저장소 [rey-hailey/sb-lowfi](https://github.com/rey-hailey/sb-lowfi)에서 설치하고, `docx`·`pptx`·`xlsx`·`pdf`·`webapp-testing`은 원하면 Anthropic 공식 플러그인으로 설치합니다.
 
 **처음이라면 [guide/14.AtoZ사용가이드.md](guide/14.AtoZ사용가이드.md)부터** — 설치부터 1일차 온보딩, 매일 루틴, 운영 개선 과제 하나와 신사업 단계 심사까지 가상 회사로 따라가는 실전 가이드. 설치 옵션·외부 스킬 상세는 [guide/00.시작하기.md](guide/00.시작하기.md). "이걸로 영업·개발·디자이너·대표와 어떻게 일하나요?"는 [guide/15.협업가이드.md](guide/15.협업가이드.md).
 
@@ -42,7 +42,7 @@ EdPM이 만드는 산출물과 함께 주는 SQL·지식·정책 초안은 **템
 
 | 프레임워크가 주는 것 | 왜 출발점인가 | 회사에 맞추는 법 |
 |----------------------|---------------|------------------|
-| 산출물 템플릿 (`PRD.md`, `03.docs/` 83종) | 에듀테크 PM에게 필요한 항목을 빠뜨리지 않게 하는 기본 절 구성. 예시 행(매스핏 등)은 가상 | 회사 문서 양식이 있으면 md로 구조화해 넣고 그 구조로 쓰거나(방식 A), EdPM 산출물을 회사 양식으로 옮겨 냄(방식 B) — `/edpm-template`, `templates/회사양식/` |
+| 산출물 템플릿 (`PRD.md`, `03.docs/` 84종) | 에듀테크 PM에게 필요한 항목을 빠뜨리지 않게 하는 기본 절 구성. 예시 행(매스핏 등)은 가상 | 회사 문서 양식이 있으면 md로 구조화해 넣고 그 구조로 쓰거나(방식 A), EdPM 산출물을 회사 양식으로 옮겨 냄(방식 B) — `/edpm-template`, `templates/회사양식/` |
 | 지표 SQL (`automation/sql/`) | 기본 스키마(`learners`·`enrollments`·`learning_events`)를 가정한 예시 쿼리 | 회사 DB 테이블에 맞는 뷰를 만들거나 쿼리를 고치고 매핑을 기록 — `/edpm-metrics connect` |
 | 위키 도메인 지식 (`02.wiki/domain/`) | 공개 자료로 만든 일반 지식, 확인 날짜(`verified`) 기준 | 회사 사례·자료로 보완, `[확인 필요]`는 담당자 확인, 180일마다 재확인 — `/edpm-ingest`, `/edpm-lint` |
 | 정책 템플릿 (P01~P09) | 법령·약관 확인 목록과 계산 예시 | 회사 약관·법무 검토로 확정. 법률 자문이 아님 — `/edpm-policy legal-check` |
@@ -112,6 +112,8 @@ EdPM이 만드는 산출물과 함께 주는 SQL·지식·정책 초안은 **템
 | 구현 협업 | B01~B07 시스템·API·DB·인프라·디자인시스템·테스트 | `/edpm-doc`, `/edpm-qa` |
 | 수주·영업 | S01 RFP 분석, S02 제안서, S04 세일즈 플레이북, S05 마케팅 | `/edpm-proposal`, `/edpm-content` |
 | 자료·지식 | 자료실(9분류), LLM 위키, 개인 EdTech Brain, 웹 수집 레시피 | `/edpm-ingest`, `/edpm-query`, `/edpm-lint`, `/edpm-library`, `/edpm-collect`, `/edpm-promote` |
+| 연구 이관 | 연구·교과 조직의 PoC·학습 알고리즘 → 제품 기능·프로세스·데이터 구조 (D01) | `/edpm-doc D01` |
+| 일한 기록 → 포트폴리오 | 한 사이클의 문제 정의·결정과 이유·개발이 참조한 산출물·AI 결과 검증·결과 지표를 한 장으로 (기밀 점검 후 HTML) | `/edpm-portfolio` |
 
 주제별로 어디를 보면 되는지는 [guide/08.에듀테크PM커버리지맵.md](guide/08.에듀테크PM커버리지맵.md)에 있습니다.
 
@@ -170,7 +172,7 @@ graph LR
 | [install.sh](install.sh) | 워크스페이스 설치 |
 | [archetypes/](archetypes/) | 서비스 유형 15종 (비즈니스 로직, 역할, IA, 트랙별 필수·권장, 지표, 규제, 시즌, 시작 순서) |
 | [guide/](guide/) | 00 시작하기(설치·사용법) · 01 설계 원칙 · 02 산출물 체인과 게이트 · 03 LLM 위키 운영 · 04 자동화 선택 · 05 회사 온보딩 · 06 기존 자료 가져오기 · 07 교육과정 지식그래프 · 08 커버리지 맵 · 09 업무 모드 · 10 AI 방식 선택 · 11 프로토타입과 MVP · 12 일정 관리 도구 연동 · 13 하네스와 점검 · **14 A to Z 사용 가이드** · **15 협업 가이드** |
-| [workspace-template/](workspace-template/) | 워크스페이스 원본 (산출물 템플릿 83종(PRD 포함), 스킬 32종, 점검기·훅·지표 계산·WBS 동기화 스크립트, 자동화·평가·비용·지식그래프 도구) |
+| [workspace-template/](workspace-template/) | 워크스페이스 원본 (산출물 템플릿 84종(PRD 포함), 스킬 33종, 점검기·훅·지표 계산·WBS 동기화 스크립트, 자동화·평가·비용·지식그래프 도구) |
 | [extras/](extras/) | 선택 설치 안내: `./install.sh --extras`가 [sb-lowfi](https://github.com/rey-hailey/sb-lowfi)(low-fi 와이어프레임 PPTX·Figma)를 설치, 공식 문서 스킬 안내 |
 | [brain-seed/](brain-seed/) | 개인 EdTech Brain 초기 지식팩 (학습과학, 측정, 규제·표준, 이러닝 비즈니스 로직, IA·화면 패턴, 서비스 정책, AI 활용, AI 서비스 로직·IA·화면·정책, 서비스 형태별 지식, 교육과정, 용어집 — 87페이지) |
 | [tests/](tests/) | 점검기·훅·WBS 동기화·지표 계산 회귀 테스트 (`python3 -m unittest discover -s tests`) |
