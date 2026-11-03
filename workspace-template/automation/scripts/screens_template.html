@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EdPM 화면설계서</title>
+<title>EdPM 화면 지도</title>
 <style>
 :root{--bg:#0c0e11;--panel:#13161b;--panel2:#181c22;--line:#252a32;--line2:#2f3540;--text:#ebe8e3;--muted:#8d929b;--faint:#5d636d;
   --accent:#f0a43a;--ok:#4fbf8a;--bad:#e8675a;
@@ -86,11 +86,12 @@ section.view{overflow:auto;min-height:0}
 <body>
 <div class="app">
   <header>
-    <div class="brand">Ed<b>PM</b> 화면설계서</div>
+    <div class="brand">Ed<b>PM</b> 화면 지도</div>
     <div class="meta" id="meta"></div>
     <div class="sp"></div>
     <div class="seg" id="mode"><button data-m="map" class="on">지도</button><button data-m="screen">화면</button></div>
     <label class="tog"><input type="checkbox" id="annot">설계 보기</label>
+    <a class="lnk" id="sb" href="#" style="display:none;color:var(--accent);border-color:rgba(240,164,58,.5)">실무형 화면설계서</a>
     <a class="lnk" id="e10" href="#">E10 열기</a>
     <a class="lnk" href="dashboard.html">대시보드</a>
   </header>
@@ -109,6 +110,7 @@ let mode = "map", cur = null, st = "기본";
 
 $("meta").textContent = [S.product, S.e10 ? `E10 ${S.e10.status}` : "", `갱신 ${S.generated.slice(11)}`].filter(Boolean).join("  ·  ");
 if (S.e10) $("e10").href = S.e10.url; else $("e10").style.display = "none";
+if (S.sb_html) { $("sb").href = S.sb_html; $("sb").style.display = ""; }
 
 function frameClass(p){ p = p || ""; return /모바일/.test(p) ? "mobile" : /태블릿/.test(p) ? "tablet" : "web"; }
 const WIDTH = {mobile: 360, tablet: 560, web: 780};
@@ -132,7 +134,8 @@ function renderMap(){
   const u = S.summary;
   const groups = {};
   S.screens.forEach(s => (groups[s.role || "역할 미정"] ||= []).push(s));
-  $("view").innerHTML = `<div class="sum"><span>화면 <b>${u.screens}</b></span><span>구성 있음 <b>${u.with_layout}</b></span>
+  const sbHint = S.sb_html ? "" : `<span>보여주는 화면설계서(PPTX·Figma): <code style="color:var(--accent)">python3 automation/scripts/edpm_screens.py --sb-md</code> → sb-lowfi-pptx 스킬</span>`;
+  $("view").innerHTML = `<div class="sum"><span>화면 <b>${u.screens}</b></span>${sbHint}<span>구성 있음 <b>${u.with_layout}</b></span>
       <span>상태 빠진 화면 <b class="${u.missing_states ? "bad" : ""}">${u.missing_states}</b></span><span>끊긴 이동 <b class="${u.broken ? "bad" : ""}">${u.broken}</b></span>
       ${S.broken.length ? `<span class="bad">${esc(S.broken.join(", "))}</span>` : ""}</div>` +
     Object.entries(groups).map(([g, ss]) => `<div class="mapgrp">${esc(g)} · ${ss.length}</div><div class="grid">${ss.map(s =>
@@ -165,7 +168,8 @@ function renderScreen(){
   const ann = s.areas.map((a, i) => `<div class="ann"><b>${i + 1}</b> ${esc(a.key)}: ${esc(a.items.map(x => x.t === "nav" ? x.label + " → " + x.to : x.label).join(" · "))}</div>`).join("");
   $("view").innerHTML = `<div class="screen ${$("annot").checked ? "annot" : ""}" id="scr">
     <div class="stagewrap">
-      <div class="shead"><h2>${s.id} ${esc(s.name)}</h2><span class="m">${esc([s.role, s.platform, s.priority].filter(Boolean).join(" · "))}</span></div>
+      <div class="shead"><h2>${s.id} ${esc(s.name)}</h2><span class="m">${esc([s.role, s.platform, s.priority].filter(Boolean).join(" · "))}</span>
+        ${S.sb_html ? `<a class="lnk" style="margin-left:auto;color:var(--accent)" href="${esc(S.sb_html)}#${s.id.toLowerCase()}">실무형 화면설계서에서 보기</a>` : ""}</div>
       <div class="tabs" id="stabs">${tabs}</div>
       <div class="frame ${fc}" style="width:${WIDTH[fc]}px;max-width:100%">${inner}</div>
     </div>

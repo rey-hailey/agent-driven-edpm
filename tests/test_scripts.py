@@ -519,6 +519,15 @@ class ScreensTests(WorkspaceCase):
         self.assertTrue(all("{" not in i["label"] for s in d["screens"] for a in s["areas"] for i in a["items"]))
         run([self.ws / "automation/scripts/edpm_dashboard.py", "--quiet"], self.ws, self.env)
         self.assertTrue((self.ws / ".edpm" / "screens.html").exists())
+        r = run([self.ws / "automation/scripts/edpm_screens.py", "--sb-md"], self.ws, self.env)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        md = (self.ws / "05.outputs" / "화면설계서.md").read_text(encoding="utf-8")
+        self.assertIn("### SCR-001. 홈", md)                        # sb-lowfi 블록 형식
+        self.assertIn("| 관련 기능 | F-101 · AC-1 |", md)
+        self.assertIn("| 1 | 상단: 이름 | 표시 |", md)
+        self.assertIn("누르면 SCR-002 읽기(으)로 이동", md)
+        self.assertIn("**상태별 화면**", md)
+        self.assertRegex(md, r"\| SCR-009 \| 설정 \|.*\| P2 \|")      # 우선순위 표 (sb-lowfi가 읽음)
 
 
 class ExportTests(WorkspaceCase):

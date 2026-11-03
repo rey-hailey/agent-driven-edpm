@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""EdPM 화면설계서: E10의 화면 목록·상태·화면별 구성으로 모든 화면을 HTML 한 장에 (.edpm/screens.html).
+"""EdPM 화면 지도: E10의 화면 목록·상태·화면별 구성으로 모든 화면을 한 장에 (.edpm/screens.html), 그리고
+실무형 화면설계서(sb-lowfi)의 입력 md를 만든다.
 
 사용:
-  python3 automation/scripts/edpm_screens.py            # 만들기
+  python3 automation/scripts/edpm_screens.py            # 화면 지도 만들기
   python3 automation/scripts/edpm_screens.py --open     # 만들고 브라우저로 열기
   python3 automation/scripts/edpm_screens.py --json     # 데이터만 출력 (점검용)
+  python3 automation/scripts/edpm_screens.py --sb-md [경로]  # sb-lowfi 입력 화면설계서.md (기본 05.outputs/화면설계서.md)
+
+역할 분담: 화면 지도는 전체 목록·빠진 상태·끊긴 이동을 점검하는 용도(자동, 저충실도). 보여주는 화면설계서
+(메타 표·번호 마커·Description·상태·처리 규칙, HTML·PPTX·Figma)는 --sb-md로 만든 md를 sb-lowfi-pptx 스킬이
+화면별로 그린다. sb-lowfi 결과 HTML이 05.outputs/에 있으면 화면 지도가 화면마다 그 화면으로 링크한다.
 
 화면마다 프로토타입을 만들지 않는다. 화면 전체는 E10에서 자동으로 그리고(저충실도 프레임·상태 탭·설명·화면 이동),
 높은 충실도의 프로토타입은 PRD 9절의 정수에만 쓴다 (V 트랙). 원천은 E10 하나이며, 문서를 고치면 다시 만든다
@@ -180,6 +186,7 @@ def build() -> dict:
             roles.append(s["role"])
     order = sorted(screens.values(), key=lambda s: (roles.index(s["role"]) if s["role"] else 99, s["id"]))
     base.update({
+        "sb_html": latest_sb_html(),
         "e10": {"status": e10["status"], "rel": e10["rel"], "url": _editor_url() + e10["path"].resolve().as_posix()},
         "screens": order, "flows": data["flows"], "broken": broken,
         "summary": {"screens": len(order), "with_layout": sum(1 for s in order if s["has_layout"]),
@@ -187,6 +194,57 @@ def build() -> dict:
                     "warns": sum(1 for s in order if s["warns"])},
     })
     return base
+
+
+PLATFORM = [("모바일", "Mobile"), ("태블릿", "Mobile (태블릿)"), ("웹", "PC"), ("PC", "PC")]
+
+
+def to_sb_md(data: dict) -> str:
+    """sb-lowfi-pptx 입력 형식: ### <ID>. 화면명 + 메타 표 + 레이아웃 + UI 컴포넌트 + 상태별 화면 + 처리 규칙."""
+    plat = lambda p: next((v for k, v in PLATFORM if k in (p or "")), p or "-")  # noqa: E731
+    L = [f"# 화면설계서 — {data.get('product') or '제품'}", "",
+         f"> E10 화면·정보구조설계서에서 자동 생성 ({data['generated']}). 고칠 때는 E10을 고치고 다시 만듭니다: "
+         "`python3 automation/scripts/edpm_screens.py --sb-md`. 이 파일을 입력으로 `sb-lowfi-pptx` 스킬이 화면을 그립니다.", "",
+         "## 화면 목록", "", "| Screen ID | 화면명 | 역할 | 플랫폼 | 우선순위 |", "|-----------|--------|------|--------|----------|"]
+    L += [f"| {s['id']} | {s['name']} | {s['role'] or '-'} | {plat(s['platform'])} | {s['priority'] or 'P1'} |" for s in data["screens"]]
+    names = {s["id"]: s["name"] for s in data["screens"]}
+    for s in data["screens"]:
+        L += ["", f"### {s['id']}. {s['name'] or s['id']}", "", "| 항목 | 내용 |", "|------|------|",
+              f"| URL | {s['entry'] or '-'} |", f"| 플랫폼 | {plat(s['platform'])} |", f"| 접근 권한 | {s['role'] or '-'} |",
+              f"| 관련 기능 | {' · '.join(dict.fromkeys(s['f'] + s['links'])) or '-'} |", "| 관련 API | - |"]
+        if s["purpose"]:
+            L += ["", f"목적: {s['purpose']}"]
+        if s["areas"]:
+            L += ["", "**레이아웃 (위에서 아래)**", "", "```"]
+            L += [f"[{a['key']}] " + " | ".join(("[" + i["label"] + "]") if i["t"] in ("nav", "btn") else
+                                              ("(" + i["label"] + ")") if i["t"] == "input" else i["label"] for i in a["items"]) for a in s["areas"]]
+            L += ["```", "", "**UI 컴포넌트**", "", "| No. | 컴포넌트 | 설명·인터랙션 |", "|-----|----------|---------------|"]
+            n = 0
+            for a in s["areas"]:
+                for i in a["items"]:
+                    n += 1
+                    how = {"nav": f"버튼. 누르면 {i.get('to')} {names.get(i.get('to'), '')}(으)로 이동".rstrip(),
+                           "btn": "버튼", "input": "입력칸", "text": "표시"}[i["t"]]
+                    L.append(f"| {n} | {a['key']}: {i['label']} | {how} |")
+        else:
+            L += ["", "> 화면별 구성(E10 8절)이 아직 없습니다. 레이아웃과 UI 컴포넌트를 E10에 먼저 씁니다."]
+        if s["states"]:
+            L += ["", "**상태별 화면**", "", "| 상태 | 조건 | 표시 내용 |", "|------|------|-----------|"]
+            L += [f"| {k} | - | {v} |" for k, v in s["states"].items()]
+        rules = [x.strip() for x in re.split(r"(?<=[.다])\s+", s["desc"]) if x.strip()] if s["desc"] else []
+        rules += [f"접근성 — {a['item']}: {a['req']}" for a in s["a11y"]]
+        if s["missing_states"]:
+            rules.append("정의되지 않은 상태: " + ", ".join(s["missing_states"]) + " (E10 3절)")
+        if rules:
+            L += ["", "**처리 규칙**", ""] + [f"- {r}" for r in rules]
+    return "\n".join(L) + "\n"
+
+
+def latest_sb_html() -> str:
+    """05.outputs/의 가장 최근 sb-lowfi 결과 HTML (.edpm/ 기준 상대 경로)."""
+    out = ROOT / "05.outputs"
+    c = sorted([p for p in out.rglob("*.html") if "lowfi" in p.name], key=lambda p: p.stat().st_mtime) if out.exists() else []
+    return os.path.relpath(c[-1], ROOT / ".edpm") if c else ""
 
 
 def _editor_url() -> str:
@@ -204,12 +262,22 @@ def write(quiet: bool = False) -> Path:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(html, encoding="utf-8")
     if not quiet:
-        print(f"화면설계서: {OUT} (화면 {data['summary'].get('screens', 0)}개)" if data["e10"] else
-              f"화면설계서: {OUT} — E10이 아직 없습니다 (/edpm-doc E10)")
+        print(f"화면 지도: {OUT} (화면 {data['summary'].get('screens', 0)}개)" if data["e10"] else
+              f"화면 지도: {OUT} — E10이 아직 없습니다 (/edpm-doc E10)")
     return OUT
 
 
 def main() -> int:
+    if "--sb-md" in sys.argv:
+        i = sys.argv.index("--sb-md")
+        dest = Path(sys.argv[i + 1]) if len(sys.argv) > i + 1 and not sys.argv[i + 1].startswith("--") else ROOT / "05.outputs" / "화면설계서.md"
+        data = build()
+        if not data["e10"]:
+            print("E10이 아직 없습니다 (/edpm-doc E10)."); return 1
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(to_sb_md(data), encoding="utf-8")
+        print(f"sb-lowfi 입력: {dest} (화면 {len(data['screens'])}개) — 다음: sb-lowfi-pptx 스킬로 HTML·PPTX, sb-lowfi-figma로 Figma")
+        return 0
     if "--json" in sys.argv:
         print(json.dumps(build(), ensure_ascii=False, indent=2))
         return 0
