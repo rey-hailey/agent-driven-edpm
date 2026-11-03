@@ -7,8 +7,9 @@
   python3 automation/scripts/edpm_dashboard.py --quiet    # 훅용: 출력 없이 만들기
 
 판정은 edpm_check.py와 같은 함수를 그대로 쓴다 (새 기준을 만들지 않음). 화면은 보기 전용이며,
-문서 상태를 바꾸는 일은 Claude Code가 한다. 문서를 누르면 편집기(기본 Antigravity)에서 열린다.
-편집기 URL은 환경변수 EDPM_EDITOR_URL로 바꿀 수 있다 (예: vscode://file, cursor://file).
+문서 상태를 바꾸는 일은 Claude Code가 한다. 문서를 누르면 설치된 편집기에서 열린다
+(Antigravity IDE → Cursor → VS Code → Antigravity 순서로 찾음). 직접 정하려면 환경변수 EDPM_EDITOR_URL
+(예: antigravity-ide://file, cursor://file, vscode://file).
 외부 라이브러리·네트워크 없이 동작한다.
 """
 from __future__ import annotations
@@ -27,7 +28,22 @@ import edpm_check as ck  # noqa: E402
 ROOT = ck.ROOT
 OUT = ROOT / ".edpm" / "dashboard.html"
 TEMPLATE = Path(__file__).resolve().parent / "dashboard_template.html"
-EDITOR = os.environ.get("EDPM_EDITOR_URL", "antigravity://file")
+APPS = [("Antigravity IDE.app", "antigravity-ide://file"), ("Cursor.app", "cursor://file"),
+        ("Visual Studio Code.app", "vscode://file"), ("Antigravity.app", "antigravity://file")]
+
+
+def _editor_url() -> str:
+    """macOS에서 Antigravity IDE와 Antigravity(별도 앱)가 함께 있으면 antigravity://는 IDE가 아닌 앱으로 간다.
+    그래서 IDE가 등록한 antigravity-ide://를 먼저 쓴다."""
+    if os.environ.get("EDPM_EDITOR_URL"):
+        return os.environ["EDPM_EDITOR_URL"].rstrip("/")
+    for app, url in APPS:
+        if any((Path(base) / app).exists() for base in ("/Applications", Path.home() / "Applications")):
+            return url
+    return "antigravity-ide://file"
+
+
+EDITOR = _editor_url()
 GROUPS = {"domain": "도메인 지식", "company": "회사", "learners": "학습자", "research": "리서치",
           "market": "시장", "decisions": "결정", "curriculum": "교육과정"}
 LINK = re.compile(r"\[\[([^\]|#]+)")

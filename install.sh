@@ -84,7 +84,8 @@ preflight() {
   echo "  Word·PDF는 스킬 없이 edpm_export.py가 만듭니다(PDF: Chrome, Word: pandoc). sb-lowfi: 워크스페이스 설치 때 자동(없으면 ./install.sh --extras), 공식 docx·pptx·xlsx·pdf·webapp-testing(선택): guide/00.시작하기.md 3.2절"
   command -v pandoc >/dev/null 2>&1 && echo "  ✓ pandoc (Word 출력)" || echo "  – pandoc 없음 (Word 출력용, 선택: brew install pandoc)"
   echo "[선택 도구]"
-  if command -v antigravity >/dev/null 2>&1 || [[ -d /Applications/Antigravity.app ]]; then echo "  ✓ Antigravity (권장 작업 환경)"
+  if [[ -d "/Applications/Antigravity IDE.app" ]]; then echo "  ✓ Antigravity IDE (권장 작업 환경)"
+  elif command -v antigravity >/dev/null 2>&1 || [[ -d /Applications/Antigravity.app ]]; then echo "  ✓ Antigravity (권장 작업 환경, 에디터 앱이 'Antigravity IDE'라면 그것을 씁니다)"
   elif command -v cursor >/dev/null 2>&1 || command -v code >/dev/null 2>&1 || [[ -d /Applications/Cursor.app || -d "/Applications/Visual Studio Code.app" ]]; then echo "  ✓ VS Code 계열 에디터 (Antigravity 권장, 같은 설정 사용)"
   else echo "  – Antigravity 없음 (권장 작업 환경: https://antigravity.google, Claude Code 확장 설치. 터미널만으로도 동작)"; fi
   command -v obsidian >/dev/null 2>&1 || [[ -d /Applications/Obsidian.app ]] && echo "  ✓ Obsidian" || echo "  – Obsidian 없음 (위키 링크·그래프 보기용, 없어도 동작)"
@@ -275,8 +276,8 @@ fi
 
 cat <<EOF
 
-시작하기 (권장: Antigravity + Claude Code 확장):
-  1. Antigravity에서 File > Open Folder → $TARGET
+시작하기 (권장: Antigravity IDE + Claude Code 확장):
+  1. Antigravity IDE에서 File > Open Folder → $TARGET
   2. 권장 확장 설치 알림이 뜨면 설치 (Claude Code, Mermaid 미리보기, CSV)
   3. Claude Code 패널을 열고 /edpm-start 입력 — 산출물은 왼쪽 탐색기에서 바로 열어 봅니다 (미리보기 Cmd+Shift+V)
   대시보드: $TARGET/.edpm/dashboard.html 를 브라우저로 열어 두기 (/edpm-brief dashboard). 문서를 저장할 때마다 갱신
@@ -286,7 +287,11 @@ cat <<EOF
 EOF
 
 # 대화형 설치였고 Antigravity가 있으면 바로 열기
-if [[ -n "${WIZ:-}" && -d /Applications/Antigravity.app && -t 0 ]]; then
-  read -r -p "지금 Antigravity로 워크스페이스를 열까요? (Y/n): " op
-  if [[ "${op:-Y}" =~ ^[Yy]$ ]]; then open -a Antigravity "$TARGET"; fi
+# 에디터는 'Antigravity IDE.app'. 같은 Mac에 별도 앱 'Antigravity.app'이 있을 수 있어 IDE를 먼저 찾는다
+AG_APP=""
+[[ -d "/Applications/Antigravity IDE.app" ]] && AG_APP="Antigravity IDE"
+[[ -z "$AG_APP" && -d /Applications/Antigravity.app ]] && AG_APP="Antigravity"
+if [[ -n "${WIZ:-}" && -n "$AG_APP" && -t 0 ]]; then
+  read -r -p "지금 $AG_APP 로 워크스페이스를 열까요? (Y/n): " op
+  if [[ "${op:-Y}" =~ ^[Yy]$ ]]; then open -a "$AG_APP" "$TARGET"; fi
 fi

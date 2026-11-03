@@ -10,6 +10,7 @@ Agent Driven EdPM 변경 이력입니다. 형식은 [Keep a Changelog](https://k
 
 ### Added — 대시보드
 - `automation/scripts/edpm_dashboard.py` + `dashboard_template.html`: 워크스페이스 상태를 `.edpm/dashboard.html` 한 장으로. 왼쪽(지금 단계·흐름 막대·다음 명령 복사, PRD 명확도, 진행 요약, WBS 달력, 최근 파일), 가운데(위키·산출물 지식 그래프: 도메인 지식은 AI·규제·표준·IA·화면·학습과학·평가·비즈니스·운영 군집, 회사·학습자·리서치·시장·결정·교육과정, 가운데 산출물은 상태별 색, 링크·전제조건 연결), 오른쪽(주의, 경로 문서, 스킬 검색·명령 복사, 프로토타입·결정, 위키 log). 점을 누르면 Antigravity에서 파일이 열림(`EDPM_EDITOR_URL`로 변경). 외부 라이브러리·네트워크 없음, 보기 전용, 판정은 점검기와 같음
+- 편집기 링크: macOS에 `Antigravity IDE.app`(에디터, `antigravity-ide://`)과 별도 앱 `Antigravity.app`(`antigravity://`)이 함께 있으면 링크가 IDE가 아닌 앱으로 가던 문제 — 설치된 편집기를 Antigravity IDE → Cursor → VS Code → Antigravity 순서로 찾음, `EDPM_EDITOR_URL`로 지정 가능. 설치 스크립트의 사전 점검·바로 열기도 IDE 우선
 - SessionStart·PostToolUse(저장 후) 훅이 다시 만들고, 열어 둔 화면은 조용할 때 다시 읽음. `/edpm-brief dashboard`, 설치 직후 생성, `.gitignore`에 생성물 제외
 - 회귀 테스트 1건 — 총 34건
 
