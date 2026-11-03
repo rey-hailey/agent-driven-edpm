@@ -474,6 +474,11 @@ class DashboardTests(WorkspaceCase):
         self.assertEqual(data["board"]["stages"][0], "리서치")
         self.assertIn("E09", [c["id"] for c in data["board"]["cols"]["스펙·설계"]])
         self.assertEqual(data["trace"]["rows"], [])                      # 템플릿 상태: 기능 없음
+        cards = {c["id"]: c for col in data["board"]["cols"].values() for c in col}
+        self.assertEqual(data["board"]["pick"], "/edpm-start")            # 상황판 첫 할 일
+        self.assertEqual(cards["E00"]["next"]["cmd"], "/edpm-start init")
+        self.assertIsNone(cards["E06"]["next"]["cmd"])                    # PRD 때문에 막힌 카드는 안내만
+        self.assertIn("PRD가 먼저", cards["E06"]["next"]["why"])
         e09 = self.doc("3.설계/E09_기능명세서.md")
         s = e09.read_text(encoding="utf-8").replace("| {F-0NN} | {기능명} | {LO-ID / 운영·지원}",
             "| F-101 | 녹음 제출 | LO-01 | REQ-001 | - | P0 | 학습자 | AI | 명세 중 |\n| {F-0NN} | {기능명} | {LO-ID / 운영·지원}", 1)

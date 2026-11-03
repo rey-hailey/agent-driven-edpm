@@ -151,6 +151,61 @@ def calendar() -> dict:
             "days_in_month": (nxt - first).days, "today": ck.TODAY.day, "load": days, "items": items[:6]}
 
 
+# ---------- 다음 할 일 (카드마다 명령 하나) ----------
+CMD = {"PRD": "/edpm-prd", "E00": "/edpm-start init", "E07": "/edpm-metrics define", "E09": "/edpm-spec write",
+       "N01": "/edpm-doc venture opportunity", "N02": "/edpm-doc venture case", "N03": "/edpm-doc venture mvp",
+       "N04": "/edpm-doc venture gate", "F00": "/edpm-doc feature baseline", "F02": "/edpm-doc feature spec",
+       "F03": "/edpm-doc feature launch", "F04": "/edpm-doc feature review", "M02": "/edpm-wbs create",
+       "A06": "/edpm-ai eval run", "B06": "/edpm-spec qa plan", "B07": "/edpm-spec qa report",
+       "S01": "/edpm-doc proposal analyze", "S02": "/edpm-doc proposal write", "S03": "/edpm-doc proposal price",
+       "S04": "/edpm-doc content S04", "S05": "/edpm-doc content S05"}
+
+
+def write_cmd(did: str) -> str:
+    if did in CMD:
+        return CMD[did]
+    if did[:1] == "M":
+        return f"/edpm-brief report {did}"
+    if did[:1] == "A":
+        return f"/edpm-ai {did}"
+    if did[:1] == "P":
+        return f"/edpm-doc policy {did}"
+    return f"/edpm-doc {did}"
+
+
+def next_action(did: str, status: str, state: str) -> dict | None:
+    """점검기의 판정(progress 상태 문자열)을 명령 하나로. 판정은 하지 않는다."""
+    if status in ("done", "n/a"):
+        return None
+    if did == "PRD" and status == "review":
+        return None  # PRD는 review면 다음 단계가 열림 (판 관리로 계속 다듬음)
+    if status == "review":
+        return {"cmd": f"/edpm-doc review {did}", "why": "이해관계자 검토 후 완료로"}
+    if state.startswith("대기"):
+        reasons = [x.strip() for x in state.split(":", 1)[-1].split(";")]
+        for r in reasons:
+            if r.startswith("G-PRD"):
+                return {"cmd": None, "why": "PRD가 먼저 (review 이상이 되면 열림)"}
+            if r.startswith("G-CLEAR"):
+                return {"cmd": "/edpm-prd review", "why": "흐린 곳부터 채우기"}
+            if r.startswith("전제 "):
+                dep = r.split()[1]
+                return {"cmd": write_cmd(dep), "why": f"먼저 {dep}"}
+        return {"cmd": "/edpm-brief gates", "why": "막힌 이유 확인"}
+    if state.startswith("미리 초안"):
+        return {"cmd": write_cmd(did), "why": "전제가 끝나면 다시 맞추기"}
+    return {"cmd": write_cmd(did), "why": "지금 쓸 수 있음"}
+
+
+def proto_next(pt: dict) -> dict | None:
+    st, pid = pt.get("상태", ""), pt.get("PT", "")
+    if pt.get("결정"):
+        return None
+    step = {"계획": "plan", "빌드": "build", "진행": "build", "테스트": "test", "테스트완료": "decide", "완료": "decide"}.get(st, "plan")
+    why = {"plan": "검증 질문·기준 확정", "build": "만들기", "test": "사용자 테스트", "decide": "결정하기"}[step]
+    return {"cmd": f"/edpm-proto {step} {pid}".strip(), "why": why}
+
+
 # ---------- 여정 보드 ----------
 STAGES = ["리서치", "PRD", "학습 성과", "요구사항", "스펙·설계", "구현·검증", "출시·효과"]
 
@@ -196,6 +251,7 @@ def board(docs: list[dict], rows: list[dict], phase: dict) -> dict:
                 "state": r["state"] if r else ("해당없음" if d["status"] == "n/a" else ""),
                 "updated": str(d["fm"].get("updated", "") or "").replace("YYYY-MM-DD", ""),
                 "url": _open_url(d["path"]), "rel": d["rel"]}
+        card["next"] = next_action(d["id"], d["status"], card["state"])
         if d["id"] == "PRD":
             path = d["fm"].get("path") or []
             card["path"] = path if isinstance(path, list) else [path]
@@ -214,9 +270,10 @@ def board(docs: list[dict], rows: list[dict], phase: dict) -> dict:
         end = ck.parse_date(pt.get("종료"))
         protos.append({"id": pt.get("PT", ""), "name": pt.get("이름", ""), "fidelity": pt.get("충실도", ""),
                        "status": pt.get("상태", ""), "decision": pt.get("결정", ""), "question": pt.get("검증질문", ""),
-                       "dday": (end - ck.TODAY).days if end else None})
+                       "dday": (end - ck.TODAY).days if end else None, "next": proto_next(pt)})
+    pick = (phase.get("do") or [""])[0].split(" — ")[0].strip()
     return {"stages": STAGES, "current": current_stage(docs, phase), "cols": cols, "lanes": lanes,
-            "feature": feature, "protos": protos}
+            "feature": feature, "protos": protos, "pick": pick}
 
 
 # ---------- 스펙 추적 ----------

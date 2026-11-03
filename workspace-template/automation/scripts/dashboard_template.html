@@ -110,6 +110,12 @@ input.search:focus{outline:none;border-color:var(--muted)}
 .bcard .st{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.35}
 .bcard .st.wait{color:#c9a46a}
 .bcard .up{color:var(--faint);font-size:10.5px;margin-top:2px}
+.nx{display:flex;align-items:center;gap:6px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line2)}
+.nx code{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.nx .copy{padding:0 6px;font-size:10.5px}
+.nxw{color:var(--faint);font-size:10.5px;margin-top:2px}
+.bcard.pick,.pcard.pick{border-color:var(--accent);box-shadow:0 0 0 1px rgba(240,164,58,.35),0 0 18px rgba(240,164,58,.18)}
+.picktag{display:inline-block;white-space:nowrap;font-size:10px;padding:0 7px;border-radius:4px;background:var(--accent);color:#1a1205;font-weight:800;margin-bottom:5px}
 .bempty{color:var(--faint);font-size:11.5px;border:1px dashed var(--line2);border-radius:8px;padding:10px;text-align:center}
 .pchips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 .pchips span{font-size:10.5px;padding:0 6px;border-radius:4px;background:var(--panel2);border:1px solid var(--line2);color:var(--muted)}
@@ -377,12 +383,17 @@ $("activity").innerHTML = `<h3>최근 활동 <span class="n">위키 log</span></
 (function(){
   const B = D.board;
   const sc = s => (STATUS[s] || ["", "#666"])[1];
-  const card = c => `<div class="bcard" data-url="${esc(c.url)}" title="${esc(c.rel)}" style="border-left-color:${sc(c.status)}">
-      <div class="id">${esc(c.id)} <span style="font-weight:500;color:var(--muted);font-size:11px">${(STATUS[c.status] || [c.status])[0]}</span></div>
+  const isPick = n => n && B.pick && (n.cmd === B.pick || B.pick.startsWith(n.cmd + " "));
+  const nx = n => !n ? "" : n.cmd ? `<div class="nx"><code title="${esc(n.cmd)}">${esc(n.cmd)}</code>${copyBtn(n.cmd)}</div><div class="nxw">${esc(n.why)}</div>`
+    : `<div class="nxw" style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--line2)">${esc(n.why)}</div>`;
+  let picked = false;
+  const card = c => { const pk = !picked && isPick(c.next); if (pk) picked = true;
+    return `<div class="bcard ${pk ? "pick" : ""}" data-url="${esc(c.url)}" title="${esc(c.rel)}" style="border-left-color:${sc(c.status)}">
+      ${pk ? `<div class="picktag">지금 할 일</div>` : ""}<div class="id">${esc(c.id)} <span style="font-weight:500;color:var(--muted);font-size:11px">${(STATUS[c.status] || [c.status])[0]}</span></div>
       <div class="tt">${esc(c.title)}</div>
       ${c.state && c.status !== "done" ? `<div class="st ${c.state.startsWith("대기") ? "wait" : ""}">${esc(c.state.replace("대기: ", "대기 · "))}</div>` : ""}
       ${c.path ? `<div class="pchips">${c.path.length ? c.path.map(x => `<span>${esc(x)}</span>`).join("") : `<span>경로 미정</span>`}</div>` : ""}
-      ${c.updated ? `<div class="up">${esc(c.updated)}</div>` : ""}</div>`;
+      ${c.updated ? `<div class="up">${esc(c.updated)}</div>` : ""}${nx(c.next)}</div>`; };
   const cols = B.stages.map(st => {
     const cs = B.cols[st] || [];
     return `<div class="bcol ${st === B.current ? "now" : ""}"><div class="colh">${esc(st)}<span class="c">${cs.length}</span></div>
@@ -392,14 +403,14 @@ $("activity").innerHTML = `<h3>최근 활동 <span class="n">위키 log</span></
   let lanes = "";
   lanes += lane("프로토타입", B.protos.length ? B.protos.map(p => `<div class="pcard"><div class="id"><span class="tag">${esc(p.fidelity || "-")}</span> <b>${esc(p.id)}</b> ${esc(p.name)}</div>
       <div class="q">${esc(p.question)}</div><div class="st" style="margin-top:4px;font-size:11.5px;color:${p.decision ? "var(--ok)" : p.dday !== null && p.dday < 0 ? "var(--bad)" : "var(--muted)"}">
-      ${p.decision ? "결정: " + esc(p.decision) : esc(p.status) + (p.dday !== null ? (p.dday >= 0 ? ` · D-${p.dday}` : ` · ${-p.dday}일 지남`) : "")}</div></div>`).join("")
+      ${p.decision ? "결정: " + esc(p.decision) : esc(p.status) + (p.dday !== null ? (p.dday >= 0 ? ` · D-${p.dday}` : ` · ${-p.dday}일 지남`) : "")}</div>${nx(p.next)}</div>`).join("")
     : `<div class="bempty" style="min-width:260px">PRD 9절의 정수를 먼저 보여주세요 (/edpm-proto new)</div>`);
   if (B.feature.length) lanes += lane("운영 개선 과제", B.feature.map(f => {
     const by = Object.fromEntries(f.cards.map(c => [c.id, c]));
     const steps = ["F01", "F02", "F03", "F04"].map(k => `<i title="${k} ${by[k] ? (STATUS[by[k].status] || [""])[0] : "-"}" style="background:${by[k] ? sc(by[k].status) : "var(--line2)"}"></i>`).join("");
     const next = ["F01", "F02", "F03", "F04"].find(k => by[k] && by[k].status !== "done" && by[k].status !== "n/a");
     return `<div class="pcard" data-url="${esc((by[next || "F04"] || f.cards[0]).url)}" style="cursor:pointer"><div class="id">${esc(f.name)}</div><div class="steps4">${steps}</div>
-      <div class="q">${next ? `지금: ${next} ${esc(by[next].title)}` : "F04까지 완료"}</div></div>`; }).join(""));
+      <div class="q">${next ? `지금: ${next} ${esc(by[next].title)}` : "F04까지 완료"}</div>${next ? nx(by[next].next) : ""}</div>`; }).join(""));
   lanes += lane("결정", D.decisions.length ? D.decisions.map(x => `<span class="chip" title="${esc(x.prediction)}"><b>${esc(x.id)}</b> ${esc(x.title)} · ${esc(x.outcome || "채점 전")}</span>`).join("")
     : `<span class="empty">아직 없습니다 (/edpm-decide new)</span>`);
   if (B.lanes["관리·보고"].length) lanes += lane("관리·보고", B.lanes["관리·보고"].map(card).join(""));
