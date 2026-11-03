@@ -1,6 +1,7 @@
 # OS·에디터
 .DS_Store
-/.vscode/          # 루트만 (workspace-template/.vscode는 설치 때 복사되는 설정이라 올림)
+# .vscode는 루트만 무시 (workspace-template/.vscode는 설치 때 복사되는 설정이라 올림)
+/.vscode/
 .idea/
 *.swp
 
