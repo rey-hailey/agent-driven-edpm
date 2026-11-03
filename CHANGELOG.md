@@ -11,6 +11,9 @@ Agent Driven EdPM 변경 이력입니다. 형식은 [Keep a Changelog](https://k
 ### Added — 프레임워크 CI
 - `.github/workflows/tests.yml`: PR과 main push마다 회귀 테스트(`tests/`)를 Python 3.10·3.13에서 실행. 이후 변경은 브랜치 → PR → 테스트 통과 후 합침
 
+### Fixed
+- 루트 `.gitignore`의 `.vscode/`가 `workspace-template/.vscode/`까지 막아 GitHub에서 받은 설치본에 에디터 설정(권장 확장, holdout 검색 제외)이 빠지던 문제. 루트만 무시하도록 변경 (CI가 발견)
+
 ### Added — 출시 후 현행화와 G-ASBUILT
 - 원칙: 출시 전에는 스펙이 기준, 출시 후에는 배포된 코드가 기준이고 문서가 따라감 (AGENTS.md 1.1, guide 09)
 - `automation/scripts/edpm_asbuilt.py`: 제품 코드의 화면 경로(Next.js `app/`·`pages/`, route group·병렬 슬롯 제외), API 경로·메서드(`route.*`, `pages/api`, Express·FastAPI 라우터), 기능 ID(F-001)를 E10 8절 `주소`·B02 2절·E09 1절(후속 릴리스 제외)·F02와 대조. `scan`, `record <릴리스>`(`05.outputs/현행화/<릴리스>_<날짜>.md`: 요약·차이·판정 칸·일치·현행화 이력), `--no-code "사유"`, `status`. `[id]`·`{id}`·`:id`·구체 값은 같은 자리로 봄

@@ -1,0 +1,26 @@
+{
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.DS_Store": true,
+    "data/curriculum-kg": true
+  },
+  "search.exclude": {
+    ".edpm/library": true,
+    "data/curriculum-kg": true,
+    "**/node_modules": true,
+    "**/*holdout*": true
+  },
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "other": false,
+      "comments": false,
+      "strings": false
+    }
+  },
+  "markdown.preview.breaks": false,
+  "markdown.validate.enabled": true,
+  "markdown.updateLinksOnFileMove.enabled": "prompt",
+  "explorer.sortOrder": "default",
+  "workbench.startupEditor": "none"
+}
