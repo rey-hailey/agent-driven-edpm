@@ -12,7 +12,7 @@
    > 출처: {URL 또는 제공자} | 수집: YYYY-MM-DD | 방법: {인터뷰/Aside R03/Web Clipper/내부 전달} | 비식별화: {완료/해당없음}
    ```
 
-4. 자료는 `/edpm-ingest`로 넣습니다. 직접 넣었다면 `/edpm-library catalog`로 목록을 갱신합니다.
+4. 자료는 `/edpm-wiki ingest`로 넣습니다. 직접 넣었다면 `/edpm-wiki library catalog`로 목록을 갱신합니다.
 
 ## 분류
 
@@ -30,9 +30,9 @@
 
 ## 자료 목록
 
-[_자료목록.md](_자료목록.md) — `/edpm-library catalog`가 다시 만듭니다.
+[_자료목록.md](_자료목록.md) — `/edpm-wiki library catalog`가 다시 만듭니다.
 
 ## 공유와 NotebookLM
 
-- 외부에 자료를 보낼 때는 `/edpm-library bundle <목적>`으로 승인한 파일만 묶습니다.
-- NotebookLM은 기준 저장소가 아니라 공유·청취용입니다. `/edpm-library nlm-sync`로 회사 정책이 허용하는 자료만 올립니다.
+- 외부에 자료를 보낼 때는 `/edpm-wiki library bundle <목적>`으로 승인한 파일만 묶습니다.
+- NotebookLM은 기준 저장소가 아니라 공유·청취용입니다. `/edpm-wiki library nlm-sync`로 회사 정책이 허용하는 자료만 올립니다.

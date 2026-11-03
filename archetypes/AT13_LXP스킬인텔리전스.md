@@ -126,14 +126,14 @@ E07에 측정 기간·대상·분모·이벤트를 고정합니다. 스킬 커�
 
 ## 10. 시작 순서
 
-1. `/edpm-init` → E00 (기업 구독·재직자 역량개발, AT02와의 책임 경계, AI 사용 여부 명시)
-2. `/edpm-blueprint apply AT13` — 활성 트랙 확인, n/a 설정, 신규 필요 도메인 지식 확보 계획 기록
-3. `/edpm-report M01`, `/edpm-doc P1` (E02에 학습자·HRD·현업 관리자·IT 보안·공급사 분리)
+1. `/edpm-start init` → E00 (기업 구독·재직자 역량개발, AT02와의 책임 경계, AI 사용 여부 명시)
+2. `/edpm-start blueprint apply AT13` — 활성 트랙 확인, n/a 설정, 신규 필요 도메인 지식 확보 계획 기록
+3. `/edpm-brief report M01`, `/edpm-doc P1` (E02에 학습자·HRD·현업 관리자·IT 보안·공급사 분리)
 4. `/edpm-doc E05`, `/edpm-doc E06` → `/edpm-doc L01` (목표 스킬·증거·콘텐츠 매핑) → `/edpm-doc E07` (커버리지·추천 적중·활성화)
 5. `/edpm-doc E08`, `/edpm-doc E09`, `/edpm-doc E10`, `/edpm-doc E12` → B01 (자체 개발 문서 없을 때) → `/edpm-doc L05`, `/edpm-doc L03` (원장·권한·이력)
 6. AI 사용 시 `/edpm-doc A00` → `/edpm-doc E14` → `/edpm-doc A10` → `/edpm-doc A11` (규칙 기준선·방식·모델 선택), `/edpm-doc A13`, `/edpm-doc A14`
-7. `/edpm-doc S06`, `/edpm-proposal price` (S03) → `/edpm-policy P01`, `/edpm-policy P02`, `/edpm-policy P05`; AI 사용 시 A12·P07~P09와 E13 검토
-8. `/edpm-doc E16` → `/edpm-doc E17` (직무·조직별 파일럿); AI 사용 시 A06 평가 → E15·E18의 G-AI·G-POLICY·G-CAL 확인 → `/edpm-proposal write` (S02, 입찰이면 S01부터)
+7. `/edpm-doc S06`, `/edpm-doc proposal price` (S03) → `/edpm-doc policy P01`, `/edpm-doc policy P02`, `/edpm-doc policy P05`; AI 사용 시 A12·P07~P09와 E13 검토
+8. `/edpm-doc E16` → `/edpm-doc E17` (직무·조직별 파일럿); AI 사용 시 A06 평가 → E15·E18의 G-AI·G-POLICY·G-CAL 확인 → `/edpm-doc proposal write` (S02, 입찰이면 S01부터)
 
 ## 11. 관련 페이지
 

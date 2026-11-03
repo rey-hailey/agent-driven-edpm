@@ -113,14 +113,14 @@ updated: 2026-10-12
 
 ## 10. 시작 순서
 
-1. `/edpm-init` → E00 (위탁 운영·환급 과정 여부 명시)
-2. `/edpm-blueprint apply AT02`
-3. `/edpm-report M01`, `/edpm-doc P1` (E02에 HRD·현업 관리자·학습자 분리)
+1. `/edpm-start init` → E00 (위탁 운영·환급 과정 여부 명시)
+2. `/edpm-start blueprint apply AT02`
+3. `/edpm-brief report M01`, `/edpm-doc P1` (E02에 HRD·현업 관리자·학습자 분리)
 4. `/edpm-doc E05`, `/edpm-doc E06`
 5. `/edpm-doc L01` → `/edpm-doc L03` (환급 기준 포함) → `/edpm-doc L05`
-6. `/edpm-doc S06`, `/edpm-proposal price` (S03), `/edpm-policy P01`, `/edpm-policy P03`
-7. `/edpm-doc E13` (고객사 보안 요건), `/edpm-content S04`
-8. `/edpm-proposal write` (S02, 입찰이면 S01부터)
+6. `/edpm-doc S06`, `/edpm-doc proposal price` (S03), `/edpm-doc policy P01`, `/edpm-doc policy P03`
+7. `/edpm-doc E13` (고객사 보안 요건), `/edpm-doc content S04`
+8. `/edpm-doc proposal write` (S02, 입찰이면 S01부터)
 
 ## 11. 관련 페이지
 

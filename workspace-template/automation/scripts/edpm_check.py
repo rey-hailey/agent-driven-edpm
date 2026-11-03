@@ -3,7 +3,7 @@
 
 사용:
   python3 automation/scripts/edpm_check.py brief              # 세션 시작용 요약 (SessionStart 훅이 호출)
-  python3 automation/scripts/edpm_check.py report             # 전체 점검 표 (/edpm-lint가 먼저 실행)
+  python3 automation/scripts/edpm_check.py report             # 전체 점검 표 (/edpm-wiki lint가 먼저 실행)
   python3 automation/scripts/edpm_check.py json               # 같은 내용을 JSON으로
   python3 automation/scripts/edpm_check.py gate <문서 경로>   # 그 문서를 done으로 바꿀 수 있는가 (0 가능 / 1 불가)
   python3 automation/scripts/edpm_check.py pii <파일 경로>    # 식별 정보 패턴 검사 (0 없음 / 1 발견)
@@ -12,11 +12,15 @@
   python3 automation/scripts/edpm_check.py progress [--all]   # 진행표 한 장: 문서·상태·완료일·전제·착수 가능 여부
   python3 automation/scripts/edpm_check.py start <문서 경로>  # 이 문서를 지금 써도 되는가 — 전제조건 (0 가능 / 1 불가, 생성 게이트)
   python3 automation/scripts/edpm_check.py code-gate <경로>   # 제품 코드(src/)를 써도 되는가 (G-SPEC, 개발 체계) (0 가능 / 1 불가)
+  python3 automation/scripts/edpm_check.py library [검색어]     # 보관함에 있고 아직 꺼내지 않은 산출물 (트랙별, 언제 쓰나)
+  python3 automation/scripts/edpm_check.py add <ID> [<ID>...]  # 보관함에서 워크스페이스로 꺼내기 (딸린 CSV·템플릿 폴더 포함)
   python3 automation/scripts/edpm_check.py portfolio [--ids PRD,E09,V01] [--adr ADR-003,ADR-007]
                                                               # 포트폴리오용 사실(JSON): 문서 상태·기간, 스펙 규모, 미해결 [가정], 게이트 기록, 결정·적중, 프로토타입
 
+워크스페이스에는 지금 경로의 산출물만 둔다. 나머지는 보관함(.edpm/library)에 있고 필요할 때 add로 꺼낸다.
+워크스페이스에 없는 전제조건은 "이번 경로에 없음"으로 보고 막지 않는다. 명시적 게이트(G-LEARN·G-EVIDENCE 등)는 문서가 없으면 막는다.
 판정 규칙은 AGENTS.md 6절·프레임워크 guide/02와 같다. 여기서 못 보는 게이트(G-CAL 시즌 충돌, G-MEASURE SQL 결과 등)는
-/edpm-lint가 LLM으로 보완한다. 표준 라이브러리만 쓴다.
+/edpm-wiki lint가 LLM으로 보완한다. 표준 라이브러리만 쓴다.
 """
 from __future__ import annotations
 
@@ -28,8 +32,10 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(os.environ.get("EDPM_ROOT") or Path(__file__).resolve().parents[2])
+ROOT = Path(os.environ.get("EDPM_ROOT") or Path(__file__).resolve().parents[2]).resolve()
 DOCS, WIKI, RAW, OPS = ROOT / "03.docs", ROOT / "02.wiki", ROOT / "01.자료실", ROOT / "04.ops"
+# 보관함: 워크스페이스는 .edpm/library, 프레임워크 저장소에서 직접 돌릴 때는 ../library
+LIB = Path(os.environ.get("EDPM_LIBRARY") or (ROOT / ".edpm" / "library" if (ROOT / ".edpm" / "library").exists() else ROOT.parent / "library"))
 TODAY = dt.date.today()
 STALE_DAYS = 180
 DONE = {"done", "n/a"}
@@ -108,7 +114,7 @@ def load_docs() -> list[dict]:
         return docs
     for p in sorted(DOCS.rglob("*.md")):
         if any(part.startswith("_") for part in p.relative_to(DOCS).parts):
-            continue  # _과제템플릿, _프로토타입템플릿, _dashboard
+            continue  # _과제템플릿, _프로토타입템플릿
         fm = parse_frontmatter(read(p))
         if not fm.get("doc_id"):
             continue
@@ -201,8 +207,8 @@ def gate_check(doc: dict, docs: list[dict], content: bool = True) -> list[str]:
             continue  # PRD는 위 G-PRD로 판정, "+테스트 기록" 같은 설명은 실체 검증 대상 (lint)
         r = find(docs, req, doc["folder"])
         if r is None:
-            reasons.append(f"전제 {req}: 문서 없음")
-        elif r["status"] not in DONE:
+            continue  # 이번 경로에 없는 전제 — 필요하면 /edpm-doc <ID>로 꺼낸다 (progress가 목록을 보여줌)
+        if r["status"] not in DONE:
             reasons.append(f"전제 {req}: status={r['status']}")
     for gate, reqs, cond in GATES.get(doc["id"], []):
         if cond.startswith("present"):
@@ -213,7 +219,7 @@ def gate_check(doc: dict, docs: list[dict], content: bool = True) -> list[str]:
         for req in reqs:
             r = find(docs, req, doc["folder"])
             if r is None:
-                reasons.append(f"{gate}: {req} 문서 없음")
+                reasons.append(f"{gate}: {req} 없음 — /edpm-doc {req} 로 꺼내 작성")
             elif r["status"] not in DONE:
                 reasons.append(f"{gate}: {req} status={r['status']}")
     if content:
@@ -247,8 +253,8 @@ def start_check(doc: dict, docs: list[dict]) -> list[str]:
             continue
         r = find(docs, req, doc["folder"])
         if r is None:
-            reasons.append(f"전제 {req}: 문서 없음")
-        elif r["status"] not in DONE:
+            continue  # 이번 경로에 없는 전제 — 필요하면 /edpm-doc <ID>로 꺼낸다 (progress가 목록을 보여줌)
+        if r["status"] not in DONE:
             reasons.append(f"전제 {req}: status={r['status']}")
     return reasons
 
@@ -298,6 +304,83 @@ def fmt_progress(docs: list[dict], show_all: bool = False) -> str:
     L += [f"| {r['id']} | {r['title']} | {r['status']} | {r['done_date']} | {r['requires']} | {r['state']} |" for r in rows]
     if na and not show_all:
         L.append(f"\n해당없음(n/a) {na}건은 숨김 — 모두 보려면 `progress --all`")
+    outside = outside_path(docs)
+    if outside:
+        L.append("\n이번 경로에 없는 전제 (막지 않음, 필요하면 `/edpm-doc <ID>`로 꺼냄): " + ", ".join(outside))
+    return "\n".join(L)
+
+
+# ---------- 보관함 ----------
+
+def outside_path(docs: list[dict]) -> list[str]:
+    have = {d["id"] for d in docs}
+    out = set()
+    for d in docs:
+        if d["status"] == "n/a":
+            continue
+        for r in d["fm"].get("requires", []) or []:
+            r = r.split("(")[0].strip()
+            if REQ_ID.fullmatch(r) and r not in have:
+                out.add(r)
+    return sorted(out, key=lambda x: (x[0] != "E", x))
+
+
+def library_docs() -> list[dict]:
+    out = []
+    if not LIB.exists():
+        return out
+    for p in sorted(LIB.rglob("*.md")):
+        if any(part.startswith("_") for part in p.relative_to(LIB).parts):
+            continue
+        text = read(p)
+        fm = parse_frontmatter(text)
+        if not fm.get("doc_id"):
+            continue
+        m = re.search(r"\*\*목적\*\*:\s*(.+)", text)
+        why = re.sub(r"\s+", " ", m.group(1).replace("**", "")).split(". ")[0].rstrip(".")[:90] if m else ""
+        out.append({"id": fm["doc_id"], "title": fm.get("title", ""), "rel": str(p.relative_to(LIB)),
+                    "requires": [r for r in (fm.get("requires") or []) if REQ_ID.fullmatch(r.split("(")[0].strip())], "why": why})
+    return out
+
+
+def add_docs(ids: list[str]) -> list[str]:
+    """보관함 → 03.docs. 같은 폴더의 딸린 파일(CSV)과 '_' 템플릿 폴더도 없으면 함께. 이미 있으면 건너뜀."""
+    import shutil
+    lib = {d["id"]: d for d in library_docs()}
+    have = {d["id"] for d in load_docs()}
+    msgs = []
+    for i in ids:
+        i = i.strip().upper()
+        if i in have:
+            msgs.append(f"= {i} 이미 있음"); continue
+        d = lib.get(i)
+        if d is None:
+            msgs.append(f"? {i} 보관함에 없음 (`library`로 목록 확인)"); continue
+        src = LIB / d["rel"]; dst = DOCS / d["rel"]
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        msgs.append(f"+ {i} {d['title']} → 03.docs/{d['rel']}")
+        for extra in sorted(src.parent.iterdir()):
+            tgt = dst.parent / extra.name
+            if tgt.exists():
+                continue
+            if extra.is_dir() and extra.name.startswith("_"):
+                shutil.copytree(extra, tgt); msgs.append(f"  + 03.docs/{extra.relative_to(LIB)}/")
+            elif extra.is_file() and extra.suffix != ".md" and (extra.name.startswith(i) or not re.match(r"[A-Z]\d{2}_", extra.name)):
+                shutil.copy2(extra, tgt); msgs.append(f"  + 03.docs/{extra.relative_to(LIB)}")
+        have.add(i)
+    return msgs
+
+
+def fmt_library(query: str = "") -> str:
+    have = {d["id"] for d in load_docs()}
+    rows = [d for d in library_docs() if d["id"] not in have
+            and (not query or query in d["id"] or query in d["title"] or query in d["why"])]
+    if not rows:
+        return "꺼낼 산출물이 없습니다." if not query else f"'{query}'에 맞는 산출물이 없습니다."
+    L = [f"# 보관함 — 꺼내지 않은 산출물 {len(rows)}건", "꺼내기: `/edpm-doc <ID>` (또는 `edpm_check.py add <ID>`)", "",
+         "| ID | 산출물 | 전제 | 언제 쓰나 |", "|----|--------|------|-----------|"]
+    L += [f"| {d['id']} | {d['title']} | {', '.join(d['requires']) or '-'} | {d['why']} |" for d in rows]
     return "\n".join(L)
 
 
@@ -312,10 +395,9 @@ def next_docs(docs: list[dict]) -> list[dict]:
             continue
         reqs = [r.split("(")[0].strip() for r in d["fm"].get("requires", []) or []]
         reqs = [r for r in reqs if REQ_ID.fullmatch(r)]
-        if reqs:
-            real = [find(docs, r, d["folder"]) for r in reqs]
-            if not any(x is not None and (x["status"] == "done" or (x["id"] == "PRD" and x["status"] in PRD_OK)) for x in real):
-                continue
+        present = [x for x in (find(docs, r, d["folder"]) for r in reqs) if x is not None]
+        if present and not any(x["status"] == "done" or (x["id"] == "PRD" and x["status"] in PRD_OK) for x in present):
+            continue  # 있는 전제가 모두 미완료이거나 n/a뿐 (예: E19 n/a인데 E20이 뜨는 문제)
         if not gate_check(d, docs, content=False):
             out.append(d)
     return out
@@ -341,8 +423,9 @@ def work_mode() -> str:
 
 
 def spec_ok(docs: list[dict]) -> bool:
-    e09 = [d for d in docs if d["id"] == "E09"]
-    return any(d["status"] == "done" or (d["fm"].get("gate_skip") or "").strip() for d in e09)
+    """스펙 승인 여부. E09(제품 스펙) 또는 운영 개선 과제의 F02(기능 단위 스펙)가 done이면 승인으로 본다."""
+    specs = [d for d in docs if d["id"] == "E09" or (d["id"] == "F02" and "_과제템플릿" not in d["rel"])]
+    return any(d["status"] == "done" or (d["fm"].get("gate_skip") or "").strip() for d in specs)
 
 
 def spec_tasks(docs: list[dict]) -> dict:
@@ -363,33 +446,44 @@ def _st(docs, did):
     return d["status"] if d else None
 
 
+def proto_hint(docs: list[dict]) -> list[str]:
+    """PRD가 검토 단계면 요구사항·스펙과 나란히 PRD 9절의 정수를 프로토타입으로 먼저 보여준다 (짧은 사이클)."""
+    started = any(d["id"] == "V01" for d in docs) or bool(read_csv(DOCS / "V.프로토타입" / "프로토타입목록.csv"))
+    return [] if started else ["/edpm-proto new — PRD 9절 정수를 먼저 프로토타입으로 (요구사항·스펙과 병행, 컨셉 합의용)"]
+
+
 def phase(docs: list[dict]) -> dict:
     """프레임워크 흐름상 지금 단계와 다음 할 일. 순서: 시작 → PRD → (탐색·진단·착수) → 상세 요구사항 → 스펙 → 프로토타입·구현 → 출시."""
     mode, dev = work_mode(), dev_system()
     st = lambda i: _st(docs, i)  # noqa: E731
     open_ = lambda i: st(i) not in (None, "done", "n/a")  # noqa: E731
     if st("E00") != "done":
-        return {"step": "0 시작", "why": "회사·제품 프로필(E00)이 아직 없습니다", "do": ["/edpm-start — 무엇을 하려는지 묻고 길을 안내", "/edpm-init — 회사·제품 인터뷰"]}
+        return {"step": "0 시작", "why": "회사·제품 프로필(E00)이 아직 없습니다", "do": ["/edpm-start — 무엇을 하려는지 묻고 길을 안내", "/edpm-start init — 회사·제품 인터뷰"]}
     if not prd_ready(docs):
         why = "PRD.md가 없습니다" if st("PRD") is None else f"PRD가 {st('PRD')}입니다"
         return {"step": "1 PRD", "why": why + ". 모든 산출물·프로토타입·코드는 PRD에서 출발합니다 (만들 제품 전체를 정의)",
                 "do": ["/edpm-prd — 인터뷰로 작성하거나 기존 기획서를 PRD로 정리", "검토 후 PRD status를 review로"]}
+    prd = find(docs, "PRD")
+    if prd is not None and not prd["fm"].get("path"):
+        return {"step": "1.5 경로 정하기", "why": "PRD를 읽고 이 제품에 필요한 산출물만 보관함에서 꺼냅니다 (미성년 → E13, AI → E14·A10·A14·A06, 유료 → P01 …). 해당 없으면 핵심 경로로 충분합니다",
+                "do": ["/edpm-prd path — 꺼낼 산출물 고르기, PRD frontmatter path 기록"] + proto_hint(docs)}
     todo = []
     if "N" in mode and open_("N01"):
-        todo.append("/edpm-venture opportunity — N01 사업기회 (PRD 2절 근거 보강)")
+        todo.append("/edpm-doc venture opportunity — N01 사업기회 (PRD 2절 근거 보강)")
     if "F" in mode and open_("F00"):
-        todo.append("/edpm-feature baseline — F00 서비스 현황 진단")
+        todo.append("/edpm-doc feature baseline — F00 서비스 현황 진단")
     if open_("M01"):
-        todo.append("/edpm-report M01 — 착수보고서 (PRD 8절 릴리스 계획 → 일정)")
+        todo.append("/edpm-brief report M01 — 착수보고서 (PRD 8절 릴리스 계획 → 일정)")
     if todo:
-        return {"step": "2 착수·근거", "why": "PRD를 근거와 일정으로 받칩니다", "do": todo}
+        return {"step": "2 착수·근거", "why": "PRD를 근거와 일정으로 받칩니다", "do": todo + proto_hint(docs)}
+    proto = proto_hint(docs)
     if open_("E06"):
         miss = gate_check(find(docs, "E06"), docs, content=False)
         return {"step": "3 상세 요구사항", "why": "PRD 5·7절을 REQ와 인수조건으로 쪼갭니다" + (f" (먼저: {', '.join(m.split(':')[0] for m in miss)})" if miss else ""),
-                "do": ["/edpm-doc E06"] + [f"/edpm-doc {m.split(':')[0].replace('전제 ', '')}" for m in miss if m.startswith("전제")][:3]}
+                "do": ["/edpm-doc E06"] + [f"/edpm-doc {m.split(':')[0].replace('전제 ', '')}" for m in miss if m.startswith("전제")][:3] + proto}
     if open_("E09"):
         return {"step": "4 스펙", "why": "E09 기능명세 = 스펙: 기능·인수조건·입출력 계약·작업(T)·테스트. 승인 전에는 제품 코드를 쓰지 않습니다 (G-SPEC)",
-                "do": ["/edpm-spec write", "/edpm-spec check"]}
+                "do": ["/edpm-spec write", "/edpm-spec check"] + proto}
     tasks = spec_tasks(docs)
     if dev == "바이브코딩":
         left = sum(v for k, v in tasks.items() if k != "완료")
@@ -401,8 +495,8 @@ def phase(docs: list[dict]) -> dict:
     # 출시 준비로 넘어가는 신호: 스펙 작업이 있고 모두 완료, 또는 릴리즈·파일럿 문서 작업이 시작됨
     built = bool(tasks) and not any(k != "완료" for k in tasks)
     started = any(st(i) in ("review", "done") for i in ("E15", "E17"))
-    for did, cmd in (("E15", "/edpm-doc E15 — 릴리즈 계획"), ("E18", "/edpm-doc E18 — 도입·출시 계획")):
-        if open_(did) and (built or started):
+    for did, cmd in (("E15", "/edpm-doc E15 — 릴리즈 계획 (없으면 보관함에서 꺼냄)"), ("E18", "/edpm-doc E18 — 도입·출시 계획 (없으면 보관함에서 꺼냄)")):
+        if st(did) not in ("done", "n/a") and (built or started):
             return {"step": "6 출시 준비", "why": "구현·검증이 끝나면 출시 게이트(G-SAFE·G-AI·G-EVIDENCE)를 통과합니다", "do": [cmd]}
     return step
 
@@ -422,7 +516,7 @@ def code_gate(path: Path, docs: list[dict]) -> tuple[bool, str]:
     if not prd_ready(docs):
         return False, "G-PRD: PRD.md가 review 이상이어야 제품 코드를 씁니다 (/edpm-prd)"
     if not spec_ok(docs):
-        return False, ("G-SPEC: 스펙(E09 기능명세)이 done이 아닙니다. 스펙을 먼저 확정합니다 (/edpm-spec write → 승인). "
+        return False, ("G-SPEC: 스펙(E09 기능명세, 운영 개선 과제는 F02)이 done이 아닙니다. 스펙을 먼저 확정합니다 (/edpm-spec write → 승인). "
                        "검증용 spike는 06.prototypes/PT-xx에 V01과 함께. 사용자가 명시적으로 허용하면 E09에 gate_skip 사유")
     return True, "스펙 승인됨"
 
@@ -691,7 +785,7 @@ def fmt_brief(r: dict) -> str:
         L += ["", "## 처음 오셨군요",
               "이 워크스페이스는 PRD에서 출발해 요구사항 → 스펙 → 프로토타입·구현으로 갑니다. 세 단계로 시작합니다.",
               "1. `/edpm-start` — 무엇을 하려는지(신사업 / 운영 중 서비스 개선 / 기존 기획서 있음) 묻고 길을 안내합니다",
-              "2. `/edpm-init` — 회사·제품 인터뷰 (20~30분)",
+              "2. `/edpm-start init` — 회사·제품 인터뷰 (20~30분)",
               "3. `/edpm-prd` — 만들 제품 전체를 PRD로 정의",
               "자세한 순서: 프레임워크 `guide/14.AtoZ사용가이드.md`. 슬래시 명령을 몰라도 \"처음인데 뭐부터 해?\"라고 말하면 됩니다."]
     L += ["", f"## 지금 단계: {ph['step']}", ph["why"]] + [f"- 다음: `{x.split(' — ')[0]}`" + (f" — {x.split(' — ', 1)[1]}" if " — " in x else "") for x in ph["do"]]
@@ -717,9 +811,9 @@ def fmt_brief(r: dict) -> str:
     if r["decisions_due"]:
         attention.append(f"재검토일 지난 결정 {len(r['decisions_due'])}건: " + ", ".join(x['id'] for x in r["decisions_due"][:3]) + " → /edpm-decide review")
     if r["meetings_pending"]:
-        attention.append(f"위키 반영 안 된 회의록 {len(r['meetings_pending'])}건 → /edpm-meeting ingest")
+        attention.append(f"위키 반영 안 된 회의록 {len(r['meetings_pending'])}건 → /edpm-brief meeting ingest")
     if r["pii"]:
-        attention.append(f"식별 정보 의심 {len(r['pii'])}곳 (G-PII) → /edpm-lint pii")
+        attention.append(f"식별 정보 의심 {len(r['pii'])}곳 (G-PII) → /edpm-wiki lint pii")
     if r["wiki"]["stale"]:
         attention.append(f"180일 넘은 규제·가격 페이지 {len(r['wiki']['stale'])}건")
     if r["wiki"]["broken_links"]:
@@ -796,6 +890,13 @@ def main() -> int:
         ok, msg = code_gate(Path(sys.argv[2]), load_docs())
         print(msg)
         return 0 if ok else 1
+    if cmd == "library":
+        print(fmt_library(sys.argv[2] if len(sys.argv) > 2 else "")); return 0
+    if cmd == "add":
+        if len(sys.argv) < 3:
+            print("사용: edpm_check.py add <ID> [<ID>...]"); return 1
+        msgs = add_docs([x for a in sys.argv[2:] for x in a.split(",") if x])
+        print("\n".join(msgs)); return 1 if any(m.startswith("?") for m in msgs) else 0
     if cmd == "portfolio":
         def _arg(flag):
             if flag in sys.argv and sys.argv.index(flag) + 1 < len(sys.argv):

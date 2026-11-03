@@ -1,7 +1,7 @@
 ---
 name: edpm-brief
-description: 지금 워크스페이스 상황과 오늘 할 일을 한 장으로 보여준다. 결정적 점검기(edpm_check.py)의 결과(게이트, 검토 대기, 지연 WP, 프로토타입 timebox, 재검토할 결정, 반영 안 된 회의록, 개인정보 의심)와 시즌 일정을 합쳐 우선순위가 있는 할 일 목록을 만든다. "오늘 뭐 해야 해", "상황판", "브리핑", "지금 어디까지 왔어", "다음에 뭐 써" 요청에 사용. 세션 시작 때는 훅이 같은 요약을 자동으로 보여준다.
-argument-hint: "[week | next | progress | gates]"
+description: 지금 상황과 할 일, 그리고 보고를 맡는다. 상황판(점검기 결과 → 오늘 할 일), 진행표, 주간보고(weekly), 관리 보고서 M01 착수·M03 위험·M04 중간·M05 완료·경영진 요약(report), 회의 준비·회의록 → 결정·액션·위키 반영(meeting). "오늘 뭐 해야 해", "상황판", "지금 어디까지 왔어", "다음에 뭐 써", "진행표", "주간보고", "착수보고서", "중간보고", "경영진 보고", "회의 준비", "회의록 정리", "액션 아이템" 요청에 사용. 세션 시작 때는 훅이 상황판 요약을 자동으로 보여준다.
+argument-hint: "[week | next | progress | gates] | weekly [YYYY-MM-DD] | report <M01 | M03 | M04 | M05 | exec> [--format md|docx|pdf|pptx] | meeting <prep | notes | ingest | actions>"
 ---
 
 # edpm-brief
@@ -17,9 +17,21 @@ argument-hint: "[week | next | progress | gates]"
 4. 각 항목에 실행할 명령을 붙입니다 (`/edpm-doc E09`, `/edpm-wbs pull`, `/edpm-decide review ADR-007` …).
 5. 묻지 않고 바로 할 수 있는 것(진척 pull, 린트)은 제안만 하고 실행은 승인 후.
 
+
+## 하위 명령
+
+| 명령 | 읽을 파일 | 하는 일 |
+|------|-----------|---------|
+| (없음)·`week`·`next`·`progress`·`gates` | 이 파일 | 상황판, 이번 주, 다음 할 일, 진행표, 게이트 |
+| `weekly` | `weekly.md` | 주간보고 |
+| `report` | `report.md` | 관리 보고서·경영진 요약 (M 문서가 없으면 보관함에서 꺼냄) |
+| `meeting` | `meeting.md` | 회의 준비 한 장, 회의록 → ADR·WBS·백로그·ingest |
+
+하위 명령이면 같은 폴더의 해당 파일을 읽고 그 절차를 따릅니다.
+
 ## week
 
-`/edpm-weekly` 전 주간 점검: 지난 7일 log, 상태 변화, 이번 주 마감 WP, 다음 주 시즌 이벤트. 주간보고 초안 작성으로 이어갈지 묻습니다.
+`/edpm-brief weekly` 전 주간 점검: 지난 7일 log, 상태 변화, 이번 주 마감 WP, 다음 주 시즌 이벤트. 주간보고 초안 작성으로 이어갈지 묻습니다.
 
 ## progress
 

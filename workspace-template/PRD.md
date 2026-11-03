@@ -7,6 +7,7 @@ requires: [E00]
 owner: PM
 reviewers: []        # 예: [대표, 개발 리드, 디자인 리드, 운영]
 sources: []          # 예: ["[[company/회사개요]]", "01.자료실/회사/2026-10-01_기획서.md"]
+path:                # /edpm-prd path가 기록: 꺼낸 산출물 (예: [E13, E14, A10, A14, A06]) 또는 [핵심]
 updated: YYYY-MM-DD
 gate_skip:
 ---

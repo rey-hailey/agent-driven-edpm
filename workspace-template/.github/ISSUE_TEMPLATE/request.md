@@ -1,6 +1,6 @@
 ---
 name: 개선 요청
-about: 이해관계자(교사·강사·학습자·보호자·기관·영업·CS)의 문제를 접수합니다. PM이 /edpm-feature intake로 개선백로그(FI)에 옮깁니다.
+about: 이해관계자(교사·강사·학습자·보호자·기관·영업·CS)의 문제를 접수합니다. PM이 /edpm-doc feature intake로 개선백로그(FI)에 옮깁니다.
 title: "[요청] "
 labels: request
 assignees: ''

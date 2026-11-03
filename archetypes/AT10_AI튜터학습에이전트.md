@@ -66,7 +66,7 @@ LLM 기반 AI가 학습자·교사와 대화하며 설명·질문·피드백·�
 | P 정책운영 | P05 (AI 오류·신고 처리) | P01 (유료 시 필수), P04 (생성물 품질 기준) | P02, P03, P06 (주 유형에 따름) |
 
 - 모듈: AI 필수 / AI-TECH 필수(A00~A09 중 구성 요소별) / SAFE 필수(대화·기억 데이터, 미성년이면 G-SAFE) / DATA 필수 / CONTENT 지식 소스 제작 시 / GTM 필수
-- A 트랙 범위는 `/edpm-ai-design type`의 역할·구성 요소 판정으로 정합니다 (가이드 02 3절의 "A00~A09"는 전체 후보).
+- A 트랙 범위는 `/edpm-ai type`의 역할·구성 요소 판정으로 정합니다 (가이드 02 3절의 "A00~A09"는 전체 후보).
 - 교육과정 KG: K-12 교과 튜터면 예 (A01·A02·A05에서 SQL 도구로 성취기준 조회), 그 외 아니오
 
 ## 6. 핵심 지표
@@ -80,7 +80,7 @@ LLM 기반 AI가 학습자·교사와 대화하며 설명·질문·피드백·�
 | M-4x 사업 | AI 플랜 전환율, 사용자당 AI 비용, 비용 대비 유지율 |
 | M-9x 가드레일 | 정답 직접 노출률, 사실 오류율(골든셋), 부적절 응답, 개인정보 노출, 환각 출처 |
 
-AI 평가 수치는 `/edpm-eval` 결과 파일에서만 인용합니다 (A06 실체 검증: 골든셋 30건 또는 시나리오셋 10건 이상).
+AI 평가 수치는 `/edpm-ai eval` 결과 파일에서만 인용합니다 (A06 실체 검증: 골든셋 30건 또는 시나리오셋 10건 이상).
 
 ## 7. 규제·리스크 포인트
 
@@ -114,13 +114,13 @@ AI 평가 수치는 `/edpm-eval` 결과 파일에서만 인용합니다 (A06 실
 
 ## 10. 시작 순서
 
-1. `/edpm-init` → E00 (주 유형, AI 대상 연령, 데이터 전송 규칙)
-2. `/edpm-blueprint apply AT10` (조합이면 `apply AT05,AT10` 등)
-3. `/edpm-report M01`, `/edpm-doc P1`, `/edpm-doc E05`, `/edpm-doc E06`
+1. `/edpm-start init` → E00 (주 유형, AI 대상 연령, 데이터 전송 규칙)
+2. `/edpm-start blueprint apply AT10` (조합이면 `apply AT05,AT10` 등)
+3. `/edpm-brief report M01`, `/edpm-doc P1`, `/edpm-doc E05`, `/edpm-doc E06`
 4. `/edpm-doc A00` (AI 적용 기회 맵)
-5. `/edpm-doc E14` (역할·가드레일·평가세트 20건 이상), `/edpm-ai-design type`
-6. `/edpm-ai-design A01`(구성 요소별 A01·A04·A05) → `/edpm-ai-design A02` → `/edpm-ai-design A03`
-7. `/edpm-ai-design goldenset`, `/edpm-eval run 골든셋` → `/edpm-eval report` (A06)
+5. `/edpm-doc E14` (역할·가드레일·평가세트 20건 이상), `/edpm-ai type`
+6. `/edpm-ai A01`(구성 요소별 A01·A04·A05) → `/edpm-ai A02` → `/edpm-ai A03`
+7. `/edpm-ai goldenset`, `/edpm-ai eval run 골든셋` → `/edpm-ai eval report` (A06)
 8. `/edpm-doc E13` (고영향 여부, 미성년 대화 안전)
 
 ## 11. 관련 페이지

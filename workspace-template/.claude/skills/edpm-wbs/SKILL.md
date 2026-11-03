@@ -44,7 +44,7 @@ argument-hint: "[create | push | pull | status | update | impact <변경 내용>
 
 ## status — 진척 요약
 
-`wbs_sync.py status`: 상태별 개수, 완료율, 종료일 지난 미완료 WP, 7일 안에 끝나야 하는 WP. `/edpm-weekly`·`/edpm-report`가 이 결과를 씁니다. 도구를 쓰면 먼저 `pull`.
+`wbs_sync.py status`: 상태별 개수, 완료율, 종료일 지난 미완료 WP, 7일 안에 끝나야 하는 WP. `/edpm-brief weekly`·`/edpm-brief report`가 이 결과를 씁니다. 도구를 쓰면 먼저 `pull`.
 
 ## update
 

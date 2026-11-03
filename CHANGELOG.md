@@ -8,6 +8,19 @@ Agent Driven EdPM 변경 이력입니다. 형식은 [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Changed — 단순화: 핵심 경로 + 보관함, 스킬 15종, 기준 문서 한 곳
+목표는 한 사이클(PRD → 스펙·프로토타입 → 결정 → 출시 → 효과 리뷰)을 더 빨리 돌리는 것. 같은 기능을 덜 보이게 하고, 같은 내용을 한 곳에만 둔다.
+- **워크스페이스는 핵심 경로만**: 설치 시 E00·PRD·E05·E06·E09·V(프로토타입)·WBS CSV + 업무 모드 문서(N01·N03·N04 또는 F00·백로그·과제 템플릿)만 `03.docs/`에. 나머지 산출물은 프레임워크 `library/` → 워크스페이스 `.edpm/library/` 보관함. `edpm_check.py library [검색어]`(꺼내지 않은 산출물·언제 쓰나), `add <ID>`(딸린 CSV·템플릿 폴더와 함께 꺼냄), `/edpm-doc <ID>`가 없으면 자동으로 꺼냄
+- **경로 밖 전제는 막지 않음**: 워크스페이스에 없는 전제조건은 "이번 경로에 없음"(진행표 하단에 목록). 명시적 게이트(G-LEARN·G-EVIDENCE·G-STAGE·G-AI 등)가 요구하는 문서는 없으면 막고 꺼내라고 안내
+- **경로 정하기**: `/edpm-prd path` — PRD를 읽고 필요한 산출물만 꺼냄(미성년 → E13, AI → E14·A10·A14·A06, 유료 → P01, 교과 → E11, 연구 PoC → D01, 효과 주장 → E16·E17), PRD frontmatter `path:`에 기록. 단계 "1.5 경로 정하기" 추가
+- **프로토타입 병행**: PRD가 review가 되면 단계 안내가 스펙과 나란히 `/edpm-proto new`(PRD 9절의 정수)를 제안
+- **스킬 33종 → 15종**: `edpm-start`(+init, blueprint), `edpm-doc`(+review, venture, feature, policy, proposal, content, list), `edpm-spec`(+qa), `edpm-ai`(ai-design + eval), `edpm-wiki`(ingest, query, lint, library, collect, promote), `edpm-brief`(+weekly, report, meeting). 기존 절차는 스킬 폴더의 참조 파일로 그대로 옮김(예: `edpm-doc/venture.md`). 명령 이름 변경: `/edpm-venture X` → `/edpm-doc venture X`, `/edpm-ingest` → `/edpm-wiki ingest`, `/edpm-eval` → `/edpm-ai eval` 등. `install.sh --upgrade`가 옛 스킬 폴더를 지우고 새 스킬을 넣음
+- **기준 문서 한 곳**: README(사람용 기준, 재작성), `AGENTS.md`(에이전트용, 5절 스킬 표·6절 판정 규칙만), guide 02(체인·게이트 참조), guide 00(설치·문제 해결만, 재작성), guide 14(실전, 재작성). 문서에 산출물·스킬 개수를 쓰지 않음. 손으로 쓴 마스터 가이드 HTML과 `03.docs/_dashboard.md`(진행표와 중복) 삭제
+- 대화형 설치에서 서비스 유형 질문 제거 (PRD 뒤 `/edpm-start blueprint detect`). blueprint apply는 필수 산출물을 꺼내는 방식으로
+- A06 전제에 E14 추가(설계 전 평가 착수 방지), 새 워크스페이스의 끊긴 링크 0건
+- 회귀 테스트 2건(핵심 경로·보관함·경로 정하기·명시적 게이트, 설치 시 모드 문서) — 총 26건. 기존 테스트는 보관함 전체를 꺼낸 워크스페이스로 실행
+- 기존 워크스페이스: `--upgrade` 후 PRD frontmatter에 `path:`가 없으면 상황판이 경로 정하기를 안내합니다. 이미 산출물을 다 갖고 있으면 `path: [기존]`처럼 적으면 됩니다
+
 ### Changed — sb-lowfi 기본 설치
 - 화면설계 스킬 `sb-lowfi-pptx`·`sb-lowfi-figma`(rey-hailey/sb-lowfi)를 워크스페이스 설치와 `--upgrade` 때 기본으로 `~/.claude/skills`에 설치(이미 있으면 건너뜀, 네트워크가 없으면 플러그인 설치 안내). 건너뛰려면 `--no-sb-lowfi`, `--extras`는 sb-lowfi만 다시 설치, `--with-extras`는 호환용으로 남김. 대화형 설치의 변환 스킬 질문 제거. README·CLAUDE.md·guide 00·14·마스터 가이드·extras 안내 반영
 

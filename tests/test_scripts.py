@@ -48,10 +48,15 @@ def run(args, cwd, env=None, stdin=None):
 
 
 class WorkspaceCase(unittest.TestCase):
+    FULL = True
+
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="edpm-test-"))
         self.ws = self.tmp / "ws"
         shutil.copytree(TEMPLATE, self.ws, symlinks=True)
+        if self.FULL:  # 보관함 전체를 꺼낸 워크스페이스 (모든 트랙 게이트 시험용)
+            shutil.copytree(FW / "library", self.ws / "03.docs", dirs_exist_ok=True)
+        shutil.copytree(FW / "library", self.ws / ".edpm" / "library")
         shutil.copytree(FW / "brain-seed" / "domain", self.ws / "02.wiki" / "domain", dirs_exist_ok=True)  # install.sh와 같게
         self.env = {"EDPM_ROOT": str(self.ws), "CLAUDE_PROJECT_DIR": str(self.ws)}
 
@@ -68,10 +73,11 @@ class WorkspaceCase(unittest.TestCase):
         s = s.replace("updated: YYYY-MM-DD", "updated: 2026-10-01", 1)
         p.write_text(s, encoding="utf-8")
 
-    def set_prd(self, status):
+    def set_prd(self, status, path="[핵심]"):
         p = self.ws / "PRD.md"
         s = p.read_text(encoding="utf-8")
         s = re.sub(r"^status:.*$", f"status: {status}", s, count=1, flags=re.M)
+        s = re.sub(r"^path:.*$", f"path: {path}", s, count=1, flags=re.M)
         p.write_text(s, encoding="utf-8")
 
     def set_agents(self, key, value):
@@ -95,7 +101,7 @@ class CheckTests(WorkspaceCase):
         data = json.loads(r.stdout)
         self.assertGreaterEqual(data["docs"]["total"], 70)
         self.assertEqual(data["pii"], [])
-        self.assertLessEqual(len(data["wiki"]["broken_links"]), 1, f"템플릿 자체의 끊긴 링크: {data['wiki']['broken_links']}")
+        self.assertEqual(len(data["wiki"]["broken_links"]), 0, f"템플릿 자체의 끊긴 링크: {data['wiki']['broken_links']}")
 
     def test_gate_blocks_until_prereqs_done(self):
         e09 = self.doc("3.설계/E09_기능명세서.md")
@@ -104,7 +110,7 @@ class CheckTests(WorkspaceCase):
         self.assertIn("G-LEARN", r.stdout)
         for rel in ("0.온보딩/E00_회사사업프로필.md", "1.발견/E01_교육문제정의서.md", "1.발견/E02_이해관계자맵.md",
                     "1.발견/E03_현장리서치종합.md", "1.발견/E04_시장정책분석.md", "2.정의/E05_학습성과설계서.md",
-                    "2.정의/E06_제품요구사항서.md", "3.설계/E08_학습경험설계서.md"):
+                    "2.정의/E06_상세요구사항서.md", "3.설계/E08_학습경험설계서.md"):
             self.set_status(rel, "done")
         r = run([self.ws / "automation/scripts/edpm_check.py", "gate", e09], self.ws, self.env)
         self.assertEqual(r.returncode, 1)
@@ -174,7 +180,7 @@ class FlowTests(WorkspaceCase):
         for rel in ("M.관리/M01_착수보고서.md",):
             self.set_status(rel, "done")
         self.assertIn("3 상세 요구사항", self.check("phase").stdout)
-        self.set_status("2.정의/E06_제품요구사항서.md", "done")
+        self.set_status("2.정의/E06_상세요구사항서.md", "done")
         self.assertIn("4 스펙", self.check("phase").stdout)
         self.set_status("3.설계/E09_기능명세서.md", "done")
         self.assertIn("5 프로토타입", self.check("phase").stdout)
@@ -211,6 +217,20 @@ class FlowTests(WorkspaceCase):
         self.assertIn("개발팀", r.stderr)
         self.assertEqual(self.hook("Write", self.ws / "06.prototypes" / "PT-01_x" / "app.py", content="x").returncode, 0,
                          "프로토타입 코드는 스펙 게이트 대상 아님")
+
+
+class FeatureSpecGateTests(WorkspaceCase):
+    def test_approved_f02_opens_code_in_vibe_mode(self):
+        self.set_agents("개발 체계", "바이브코딩")
+        self.set_status("0.온보딩/E00_회사사업프로필.md", "done")
+        self.set_prd("review")
+        src = self.ws / "src" / "app.py"
+        self.assertEqual(self.check("code-gate", str(src)).returncode, 1)
+        task = self.doc("F.개선/FI-001_진도율개선")
+        shutil.copytree(self.doc("F.개선/_과제템플릿"), task)
+        self.set_status("F.개선/FI-001_진도율개선/F02_기능기획서.md", "done")
+        r = self.check("code-gate", str(src))
+        self.assertEqual(r.returncode, 0, r.stdout)   # 운영 개선 과제의 F02 = 기능 단위 스펙
 
 
 class StartGateTests(WorkspaceCase):
@@ -300,6 +320,59 @@ stateDiagram-v2
         self.set_prd("review")
         self.assertEqual(self.check("start", str(d01)).returncode, 0)
         self.assertRegex(self.check("progress").stdout, r"\| D01 \|.*착수 가능")
+
+
+class CorePathTests(WorkspaceCase):
+    """설치 직후처럼 핵심 경로 산출물만 있는 워크스페이스."""
+    FULL = False
+
+    def test_core_path_and_library(self):
+        ids = sorted(json.loads(self.check("portfolio").stdout)["docs"], key=lambda d: d["id"])
+        self.assertEqual([d["id"] for d in ids], ["E00", "E05", "E06", "E09", "PRD"])
+        self.set_status("0.온보딩/E00_회사사업프로필.md", "done")
+        self.set_prd("review", path="")
+        self.assertIn("1.5 경로 정하기", self.check("phase").stdout)  # PRD 다음은 이 제품에 필요한 산출물 고르기
+        self.set_prd("review")
+        out = self.check("progress").stdout
+        self.assertRegex(out, r"\| E05 \|.*착수 가능")          # E01·E03·E04는 경로 밖 — 막지 않음
+        self.assertRegex(out, r"\| E06 \|.*대기: 전제 E05")
+        self.assertIn("이번 경로에 없는 전제", out)
+        self.assertIn("/edpm-proto new", self.check("phase").stdout)  # 프로토타입을 스펙과 병행
+        self.assertRegex(self.check("library").stdout, r"(?m)^\| E14 \|")
+        r = self.check("add", "E14,E18")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertTrue(self.doc("3.설계/E14_평가세트.csv").exists())
+        self.assertNotRegex(self.check("library").stdout, r"(?m)^\| E14 \|")
+        self.assertIn("= E14 이미 있음", self.check("add", "E14").stdout)
+        self.assertEqual(self.check("add", "Z99").returncode, 1)
+        # 명시적 게이트는 경로 밖이어도 막는다: E18은 실제 파일럿(E17) 없이 완료 불가
+        gate = self.check("gate", str(self.doc("6.출시/E18_도입출시계획서.md"))).stdout
+        self.assertIn("G-EVIDENCE: E17 없음", gate)
+
+    def test_release_step_pulls_e15_when_built(self):
+        self.set_status("0.온보딩/E00_회사사업프로필.md", "done")
+        self.set_prd("review")
+        for rel in ("2.정의/E05_학습성과설계서.md", "2.정의/E06_상세요구사항서.md", "3.설계/E09_기능명세서.md"):
+            self.set_status(rel, "done")
+        e09 = self.doc("3.설계/E09_기능명세서.md")
+        s = e09.read_text(encoding="utf-8").replace("| {T-01} |", "| T-01 | 힌트 API | F-012 | AC-1 | tests/test_hint.py | 개발팀 | 완료 |\n| {T-01} |", 1)
+        e09.write_text(s, encoding="utf-8")
+        out = self.check("phase").stdout
+        self.assertIn("6 출시 준비", out)
+        self.assertIn("/edpm-doc E15", out)          # E15가 보관함에 있어도 출시 단계로 안내
+
+    def test_install_core_and_mode_docs(self):
+        r = subprocess.run(["bash", str(FW / "install.sh"), str(self.tmp / "inst"), "--mode", "F", "--dev", "vibe",
+                            "--no-git", "--no-sb-lowfi", "--brain", str(self.tmp / "brain")],
+                           capture_output=True, text=True, env={**os.environ, "HOME": str(self.tmp / "home")})
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        inst = self.tmp / "inst"
+        self.assertTrue((inst / ".edpm/library/A.AI/A10_AI방식선택아키텍처설계서.md").exists())
+        self.assertFalse((inst / "03.docs/A.AI").exists())
+        self.assertTrue((inst / "03.docs/F.개선/F00_서비스현황진단서.md").exists())
+        self.assertTrue((inst / "03.docs/F.개선/개선백로그.csv").exists())
+        self.assertTrue((inst / "03.docs/F.개선/_과제템플릿/F02_기능기획서.md").exists())
+        self.assertFalse((inst / "03.docs/N.신사업").exists())
 
 
 class ExportTests(WorkspaceCase):

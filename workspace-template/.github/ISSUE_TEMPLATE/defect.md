@@ -1,6 +1,6 @@
 ---
 name: 결함
-about: 테스트·파일럿·운영 중 발견한 결함. /edpm-qa defects가 B07 결함 목록과 맞춥니다.
+about: 테스트·파일럿·운영 중 발견한 결함. /edpm-spec qa defects가 B07 결함 목록과 맞춥니다.
 title: "[결함] "
 labels: defect
 assignees: ''

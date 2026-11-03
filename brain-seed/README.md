@@ -24,18 +24,18 @@
 
 ```mermaid
 graph LR
-    B[(EdTech Brain<br/>domain/)] -->|edpm-init: 복사| W[워크스페이스<br/>02.wiki/domain/]
+    B[(EdTech Brain<br/>domain/)] -->|edpm-start init: 복사| W[워크스페이스<br/>02.wiki/domain/]
     W -->|일하면서 ingest·query로 갱신| W
-    W -->|edpm-promote: 기밀 제거 후 반영| B
+    W -->|edpm-wiki promote: 기밀 제거 후 반영| B
 ```
 
-- **`/edpm-init`**: 새 워크스페이스를 만들 때 Brain의 `domain/` 페이지를 워크스페이스 `02.wiki/domain/`으로 복사하고, `index.md`의 domain 항목을 워크스페이스 `02.wiki/index.md`에 합칩니다. 링크가 `[[domain/페이지명]]` 형식이라 양쪽에서 그대로 동작합니다.
-- **`/edpm-promote`**: 프로젝트 종료·퇴사 전에 워크스페이스 `02.wiki/domain/`(필요하면 일반화한 `learners/`, `research/`, 공개 정보만 있는 `market/`)에서 새로 생기거나 고친 내용을 골라 기밀 점검 후 Brain에 반영하고, Brain `log.md`에 `promote` 기록을 남깁니다.
+- **`/edpm-start init`**: 새 워크스페이스를 만들 때 Brain의 `domain/` 페이지를 워크스페이스 `02.wiki/domain/`으로 복사하고, `index.md`의 domain 항목을 워크스페이스 `02.wiki/index.md`에 합칩니다. 링크가 `[[domain/페이지명]]` 형식이라 양쪽에서 그대로 동작합니다.
+- **`/edpm-wiki promote`**: 프로젝트 종료·퇴사 전에 워크스페이스 `02.wiki/domain/`(필요하면 일반화한 `learners/`, `research/`, 공개 정보만 있는 `market/`)에서 새로 생기거나 고친 내용을 골라 기밀 점검 후 Brain에 반영하고, Brain `log.md`에 `promote` 기록을 남깁니다.
 - 승격 전 점검: 회사명·제품명·고객사·수치·내부 링크·개인정보가 없는지, 모든 주장에 공개 출처가 있는지, `verified` 날짜가 최신인지.
 
 ## 4. 유지 관리
 
-- 규제·표준·일정 페이지는 `verified` 날짜 기준 180일이 지나면 다시 확인합니다 (`/edpm-lint`가 `stale` 표시).
+- 규제·표준·일정 페이지는 `verified` 날짜 기준 180일이 지나면 다시 확인합니다 (`/edpm-wiki lint`가 `stale` 표시).
 - `[확인 필요]` 표시는 확인되면 지우고 출처 URL과 `verified` 날짜를 갱신합니다.
 - 출처끼리 충돌하면 지우지 말고 `## 상충하는 근거`에 둘 다 남깁니다.
 - 이 지식팩은 법률 자문이 아닙니다. 규제 페이지는 법무 검토의 출발점으로만 씁니다.

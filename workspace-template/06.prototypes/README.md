@@ -18,7 +18,7 @@
 | P0 | 화면 흐름 스토리보드, low-fi 와이어프레임 | E10 ASCII 배치 → `sb-lowfi-pptx` |
 | P1 | 클릭 프로토타입 | `_starter/click-prototype.html` 복사, `sb-lowfi-pptx`, `sb-lowfi-figma`, Figma |
 | P2 | 클릭 프로토타입 + 사람이 뒤에서 처리하는 운영 스크립트 | `ops/` 폴더, 공유 시트 |
-| P3 | 노코드·로우코드 흐름 | Google Forms·Sheets, n8n, NotebookLM(AI 노코드 점검 — `/edpm-ai-design nocode`) |
+| P3 | 노코드·로우코드 흐름 | Google Forms·Sheets, n8n, NotebookLM(AI 노코드 점검 — `/edpm-ai nocode`) |
 | P4 | 코드 MVP | Claude Code. 회사 스택이 없으면 Next.js + Tailwind + Supabase + Vercel |
 
 ## 지킬 것 (G-PROTO)

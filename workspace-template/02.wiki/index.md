@@ -9,7 +9,7 @@ updated: YYYY-MM-DD
 
 ## domain (일반 에듀테크 지식, 개인 Brain에서 시드)
 
-> `/edpm-init`이 채웁니다.
+> `/edpm-start init`이 채웁니다.
 
 ## company (회사·제품)
 

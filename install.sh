@@ -8,7 +8,7 @@
 #
 # 옵션:
 #   --mode N|F|NF            업무 모드 (N 신사업, F 운영 개선, NF 둘 다)를 AGENTS.md에 기록
-#   --archetype AT0x[,AT0y]  서비스 유형을 AGENTS.md에 미리 기록 (적용은 Claude Code에서 /edpm-blueprint apply)
+#   --archetype AT0x[,AT0y]  서비스 유형을 AGENTS.md에 미리 기록 (적용은 Claude Code에서 /edpm-start blueprint apply)
 #   --brain <경로>           개인 EdTech Brain 위치 (기본 ~/EdTech-Brain, 없으면 brain-seed로 새로 만듦)
 #   --with-kg                국가 교육과정 지식그래프를 받아 빌드 (약 260MB 다운로드, git·python3 필요)
 #   --dev team|vibe          개발 체계 (team: 개발팀이 있음 — PM은 스펙까지, vibe: 개발자 없이 PM이 LLM과 구현)
@@ -85,8 +85,8 @@ preflight() {
   command -v pandoc >/dev/null 2>&1 && echo "  ✓ pandoc (Word 출력)" || echo "  – pandoc 없음 (Word 출력용, 선택: brew install pandoc)"
   echo "[선택 도구]"
   command -v obsidian >/dev/null 2>&1 || [[ -d /Applications/Obsidian.app ]] && echo "  ✓ Obsidian" || echo "  – Obsidian 없음 (위키 보기용, 없어도 동작)"
-  command -v aside >/dev/null 2>&1 && echo "  ✓ Aside CLI" || echo "  – Aside CLI 없음 (/edpm-collect 웹 수집용)"
-  python3 -c 'import anthropic' 2>/dev/null && echo "  ✓ anthropic 패키지" || echo "  – anthropic 패키지 없음 (/edpm-eval Claude 평가용: pip install anthropic)"
+  command -v aside >/dev/null 2>&1 && echo "  ✓ Aside CLI" || echo "  – Aside CLI 없음 (/edpm-wiki collect 웹 수집용)"
+  python3 -c 'import anthropic' 2>/dev/null && echo "  ✓ anthropic 패키지" || echo "  – anthropic 패키지 없음 (/edpm-ai eval Claude 평가용: pip install anthropic)"
   if command -v gh >/dev/null 2>&1; then
     gh auth status >/dev/null 2>&1 && echo "  ✓ GitHub CLI (로그인됨)" || echo "  – GitHub CLI 로그인 필요: gh auth login (WBS를 GitHub로 공유할 때)"
   else
@@ -110,6 +110,7 @@ if [[ "$TARGET" == "--upgrade" ]]; then
   rsync -a "$FW/workspace-template/.claude/skills/" "$WS/.claude/skills/" && echo "  스킬 $(ls -d "$WS"/.claude/skills/edpm-*/ | wc -l | tr -d ' ')종 갱신"
   rsync -a "$FW/workspace-template/automation/scripts/" "$WS/automation/scripts/" && echo "  automation/scripts 갱신"
   rsync -a "$FW/workspace-template/automation/hooks/" "$WS/automation/hooks/" && echo "  automation/hooks 갱신"
+  mkdir -p "$WS/.edpm" && rsync -a --delete "$FW/library/" "$WS/.edpm/library/" && echo "  보관함 .edpm/library 갱신 (꺼내 쓴 산출물은 그대로)"
   [[ " $* " == *" --no-sb-lowfi "* ]] || { mkdir -p "$HOME/.claude/skills"; install_sb_lowfi "$HOME/.claude/skills"; }
   rsync -a "$FW/workspace-template/automation/kg/" --exclude sources.lock.json "$WS/automation/kg/" 2>/dev/null || true
   rsync -a --ignore-existing "$FW/workspace-template/automation/sql/" "$WS/automation/sql/" && echo "  automation/sql 템플릿 추가 (기존 파일 유지)"
@@ -131,7 +132,7 @@ if [[ "$TARGET" == "--upgrade" ]]; then
       if [[ "$rel" == *"/_"*템플릿*/* || "$rel" == *.csv || "$rel" == 06.prototypes/* ]]; then
         mkdir -p "$WS/$(dirname "$rel")"; cp "$f" "$WS/$rel"; echo "  + $rel"
       else
-        new=$((new+1)); echo "  새 템플릿 (복사 안 함, 필요하면 직접 복사): $rel"
+        new=$((new+1)); echo "  새 핵심 템플릿 (복사 안 함, 필요하면 직접 복사): $rel"
       fi
     elif ! cmp -s "$f" "$WS/$rel"; then changed=$((changed+1)); fi
   done < <(find "$FW/workspace-template/03.docs" "$FW/workspace-template/06.prototypes" "$FW/workspace-template/04.ops" "$FW/workspace-template/02.wiki/decisions" -type f -print0)
@@ -152,11 +153,7 @@ if [[ -z "$TARGET" && ( -t 0 || -n "${EDPM_WIZARD:-}" ) ]]; then   # EDPM_WIZARD
   echo "4) 제품은 누가 만드나요?"
   echo "   1 개발팀이 있다 (PM은 PRD·스펙·프로토타입까지)   2 개발자 없이 직접 만든다 (바이브코딩)"
   read -r -p "   선택 [1]: " dv; if [[ "${dv:-1}" == 2 ]]; then dv=vibe; else dv=team; fi
-  echo "5) 서비스 유형 (쉼표로 여러 개, 모르면 Enter — 나중에 /edpm-blueprint detect). 목록: archetypes/README.md"
-  for f in "$FW"/archetypes/AT*_*.md; do printf "   %s\n" "$(basename "$f" .md)"; done
-  read -r -p "   유형 (예: AT07,AT10) []: " at
   set -- "$path" --mode "$m" --dev "$dv"
-  if [[ -n "$at" ]]; then set -- "$@" --archetype "$at"; fi
   TARGET="$1"
   echo; echo "실행: ./install.sh $*"; echo
 fi
@@ -196,7 +193,8 @@ echo
 # 1) 워크스페이스
 mkdir -p "$TARGET"
 cp -R "$FW/workspace-template/." "$TARGET/"
-echo "워크스페이스 생성: $TARGET"
+mkdir -p "$TARGET/.edpm" && cp -R "$FW/library" "$TARGET/.edpm/library"
+echo "워크스페이스 생성: $TARGET (핵심 경로 산출물만. 나머지 $(find "$TARGET/.edpm/library" -name '*.md' -not -path '*/_*' | wc -l | tr -d ' ')종은 보관함 .edpm/library — /edpm-doc <ID>가 필요할 때 꺼냄)"
 echo "EdPM 스킬 $(ls -d "$TARGET"/.claude/skills/edpm-*/ | wc -l | tr -d ' ')종 설치: $TARGET/.claude/skills/ (이 폴더에서 claude를 열면 /edpm-* 로 보임)"
 
 # 2) 개인 Brain
@@ -220,7 +218,7 @@ s = open(p, encoding="utf-8").read()
 s = re.sub(r"^\| 프레임워크 경로 \|.*$", f"| 프레임워크 경로 | {fw} — 가이드 원문(`guide/`)·서비스 유형(`archetypes/`) 참조용 |", s, count=1, flags=re.M)
 s = re.sub(r"^\| 개인 Brain 경로 \|.*$", f"| 개인 Brain 경로 | {brain} |", s, count=1, flags=re.M)
 if arch:
-    s = re.sub(r"^\| 서비스 유형 \|.*$", f"| 서비스 유형 | {arch} (설치 시 지정, `/edpm-blueprint apply {arch}`로 적용) |", s, count=1, flags=re.M)
+    s = re.sub(r"^\| 서비스 유형 \|.*$", f"| 서비스 유형 | {arch} (설치 시 지정, `/edpm-start blueprint apply {arch}`로 적용) |", s, count=1, flags=re.M)
 names = {"N": "N 신사업(0→1)", "F": "F 운영 개선(1→n)", "NF": "둘 다 (N 신사업 + F 운영 개선)"}
 if mode:
     s = re.sub(r"^\| 업무 모드 \|.*$", f"| 업무 모드 | {names.get(mode.upper(), mode)} (설치 시 지정) — `guide/09.업무모드.md` |", s, count=1, flags=re.M)
@@ -229,6 +227,10 @@ if dev:
     s = re.sub(r"^\| 개발 체계 \|.*$", f"| 개발 체계 | {devs.get(dev, dev)} (설치 시 지정) |", s, count=1, flags=re.M)
 open(p, "w", encoding="utf-8").write(s)
 PY
+
+# 4.0) 업무 모드에 맞는 산출물 꺼내기 (신사업 N01·N03·N04, 운영 개선 F00·백로그·과제 템플릿)
+case "$MODE" in *N*|*n*) EDPM_ROOT="$TARGET" python3 "$TARGET/automation/scripts/edpm_check.py" add N01 N03 N04 | sed 's/^/  /' ;; esac
+case "$MODE" in *F*|*f*) EDPM_ROOT="$TARGET" python3 "$TARGET/automation/scripts/edpm_check.py" add F00 | sed 's/^/  /' ;; esac
 
 # 4.1) 서비스 유형 프로필 사본 (워크스페이스 위키에서 참조)
 if [[ -n "$ARCH" ]]; then
@@ -267,7 +269,7 @@ cat <<EOF
 시작하기:
   cd "$TARGET" && claude
   세션이 열리면 상황판이 "지금 단계"와 다음 할 일을 알려줍니다. 처음이면 /edpm-start 를 입력하세요.
-  순서: /edpm-start → /edpm-init (회사·제품 인터뷰) → /edpm-prd (만들 제품 전체 정의) → 상황판이 안내하는 다음 단계
+  순서: /edpm-start → /edpm-start init (회사·제품 인터뷰) → /edpm-prd (만들 제품 전체 정의) → 상황판이 안내하는 다음 단계
   자세한 길잡이: $FW/guide/14.AtoZ사용가이드.md
 Obsidian에서 "$TARGET" 폴더를 볼트로 열면 위키와 산출물을 함께 볼 수 있습니다.
 EOF

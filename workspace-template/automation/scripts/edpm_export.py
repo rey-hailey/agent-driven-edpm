@@ -4,7 +4,7 @@
 사용:
   python3 automation/scripts/edpm_export.py PRD.md                      # → 05.outputs/PRD_YYYYMMDD_HHMM.html
   python3 automation/scripts/edpm_export.py 03.docs/M.관리/M04_중간보고서.md --to pdf
-  python3 automation/scripts/edpm_export.py 03.docs/2.정의/E06_제품요구사항서.md --to docx [--reference 회사양식.docx]
+  python3 automation/scripts/edpm_export.py 03.docs/2.정의/E06_상세요구사항서.md --to docx [--reference 회사양식.docx]
   python3 automation/scripts/edpm_export.py <md> --keep-examples       # 템플릿 예시 행을 지우지 않음
 
 - html: 외부 의존성 없음. 표지(제목·판·날짜·상태), 목차, 표, 인쇄 시 쪽 번호. 브라우저 "PDF로 저장"으로도 PDF가 된다.

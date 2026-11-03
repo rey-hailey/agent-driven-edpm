@@ -23,7 +23,7 @@ argument-hint: "<import <파일> | map | apply <ID> [--format md|docx|pptx] | li
 
 회사 양식(docx·pptx·pdf·hwp를 PDF로 바꾼 것, 사내 위키 내보내기, 붙여넣은 목차)을 읽어 `templates/회사양식/<문서명>.md`로 구조화합니다.
 - 절 제목과 순서, 표의 열, 각 절의 작성 지침(양식에 적힌 안내 문구), 필수·선택 표시, 결재·보안·문서 번호 같은 머리 항목
-- 원본 파일은 `/edpm-ingest`로 `01.자료실/회사/`에 보관합니다
+- 원본 파일은 `/edpm-wiki ingest`로 `01.자료실/회사/`에 보관합니다
 - 끝나면 `map`으로 이어갑니다
 
 ## map

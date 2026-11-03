@@ -6,7 +6,7 @@ argument-hint: "<new <제목> | premortem <ADR-ID> | review [ADR-ID] | stats | l
 
 # edpm-decide
 
-결정은 `02.wiki/decisions/ADR-NNN_제목.md`에 남깁니다 (템플릿 `_template.md`). 회사 기밀이며 `/edpm-promote` 대상이 아닙니다. 프레임워크 원칙: 결정이 틀린 것은 흠이 아니고, 틀린 줄 모르는 것이 흠입니다.
+결정은 `02.wiki/decisions/ADR-NNN_제목.md`에 남깁니다 (템플릿 `_template.md`). 회사 기밀이며 `/edpm-wiki promote` 대상이 아닙니다. 프레임워크 원칙: 결정이 틀린 것은 흠이 아니고, 틀린 줄 모르는 것이 흠입니다.
 
 ## new <제목>
 
@@ -25,7 +25,7 @@ argument-hint: "<new <제목> | premortem <ADR-ID> | review [ADR-ID] | stats | l
 1. 패널: 학습자, 교사·강사, 보호자, 학원 원장·기관 담당자, 개발 리드, 개인정보·안전 검토자, 재무. 서비스 유형(AT)에 맞는 패널만.
 2. 패널마다 "실패했다면 가장 그럴듯한 이유" 1~2개와 조기 신호(지표·사건)를 냅니다.
 3. 결과를 ADR 7절 "다시 볼 조건"의 트리거로 옮기고, 치명적 원인이 있으면 결정 전 보완책을 제안합니다.
-4. 사전 부검은 실제 사용자 검증을 대신하지 않습니다 (`/edpm-review`, `/edpm-proto`와 다름).
+4. 사전 부검은 실제 사용자 검증을 대신하지 않습니다 (`/edpm-doc review`, `/edpm-proto`와 다름).
 
 ## review [ADR-ID]
 

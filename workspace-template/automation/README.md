@@ -37,7 +37,7 @@ automation/scripts/aside-run.sh automation/aside/recipes/R03_교육정책공지�
 automation/scripts/aside-run.sh automation/aside/recipes/R03_교육정책공지모니터링.md             # 실행 → 00.inbox
 ```
 
-또는 Claude Code에서 `/edpm-collect R03`. 처음 쓰는 레시피는 `{...}`를 채운 뒤 한 번 직접 돌려 출력을 확인하고, 맞으면 frontmatter `verified_with_aside: true`로 바꿉니다.
+또는 Claude Code에서 `/edpm-wiki collect R03`. 처음 쓰는 레시피는 `{...}`를 채운 뒤 한 번 직접 돌려 출력을 확인하고, 맞으면 frontmatter `verified_with_aside: true`로 바꿉니다.
 
 ## 3. 정기 실행 방법 3가지
 
@@ -78,7 +78,7 @@ launchctl load ~/Library/LaunchAgents/com.edpm.r03.plist
 매주 금요일 17:00에 주간보고 초안을 만듭니다. launchd의 `ProgramArguments`를 아래 명령으로 바꿉니다.
 
 ```bash
-cd ~/Work/회사-edpm && claude -p "/edpm-weekly" \
+cd ~/Work/회사-edpm && claude -p "/edpm-brief weekly" \
   --allowedTools "Read,Write,Edit,Glob,Grep,Bash(git log:*),Bash(grep:*)"
 ```
 

@@ -34,7 +34,7 @@ argument-hint: "<new <이름> | plan | build | test | decide | handoff | list> [
    | 흐름을 이해하는가 | P0 |
    | 화면을 쓸 수 있는가, 가치 제안에 반응하는가 | P1 |
    | 진짜 결과를 받으면 행동이 바뀌는가 (AI·자동화 전) | P2 |
-   | AI 답 품질이 쓸 만한가 | P3 (`/edpm-ai-design nocode`, 골든셋 10개) |
+   | AI 답 품질이 쓸 만한가 | P3 (`/edpm-ai nocode`, 골든셋 10개) |
    | 실제 사용·재방문·학습 신호 | P4 |
 
 4. 범위(진짜·가짜·안 만듦), 성공·중단 기준, 참여자·과제 시나리오, timebox, 데이터·안전, (P3·P4면) 빌드 환경을 채웁니다. 수치 기준이 없으면 `[가정]`으로 두고 사람이 정하게 합니다.
@@ -50,7 +50,7 @@ argument-hint: "<new <이름> | plan | build | test | decide | handoff | list> [
 | P0 | E10 또는 V01 범위로 화면 흐름 ASCII 배치를 쓰고 `sb-lowfi-pptx`로 와이어프레임 PPTX·HTML 생성 |
 | P1 | `06.prototypes/_starter/click-prototype.html`을 복사해 화면(`<section class="screen" id="SCR-xxx">`)을 채움. 측정할 행동에 `data-event`를 붙임. 개발 전달용이면 `sb-lowfi-pptx`(low-fi 와이어프레임 HTML·편집 가능한 PPTX), Figma가 필요하면 `sb-lowfi-figma` 또는 Figma 연결 도구 |
 | P2 | P1 화면 + `ops/운영스크립트.md`(뒤에서 처리하는 사람의 절차, 응답 기준·템플릿, 응답 시간 목표, 근무표, 실수했을 때 대처). 참여자에게 사람이 처리한다는 사실을 어떻게 알릴지 V01 7절에 따라 정함 |
-| P3 | Google Forms·Sheets 흐름, n8n 워크플로(`n8n-*` 스킬), AI면 `/edpm-ai-design nocode`과 `/edpm-eval`로 골든셋 10개 확인 |
+| P3 | Google Forms·Sheets 흐름, n8n 워크플로(`n8n-*` 스킬), AI면 `/edpm-ai nocode`과 `/edpm-ai eval`로 골든셋 10개 확인 |
 | P4 | 아래 "코드 MVP" 절차 |
 
 ### 코드 MVP (P4)
@@ -60,7 +60,7 @@ argument-hint: "<new <이름> | plan | build | test | decide | handoff | list> [
 3. **순서**: 핵심 흐름 하나를 끝까지 동작시키기 → 가상 데이터 시드 → V01 신호를 재는 최소 이벤트 로그(테이블 하나: 시각, 참여자 ID, 이벤트, 값) → 접근 제한 배포 → 리허설. 기능을 넓히기 전에 핵심 흐름부터.
 4. **커밋**: 작은 단위로 커밋하고, 세션마다 진행을 V02 1·2절에 적습니다.
 5. **지킬 것**: 비밀값은 `.env.local`(커밋 금지), 실결제 금지(테스트 모드), 공개 URL 접근 제한·검색 차단, 실제 학습자 데이터 금지, 외부 API로 학생 원문을 보내지 않음(가명·가상 데이터).
-6. **점검**: 테스트 전에 `webapp-testing`(Playwright)으로 핵심 시나리오 스모크를 돌립니다. 챗봇·튜터의 답 품질은 `/edpm-eval`(골든셋·시나리오셋)로 따로 봅니다.
+6. **점검**: 테스트 전에 `webapp-testing`(Playwright)으로 핵심 시나리오 스모크를 돌립니다. 챗봇·튜터의 답 품질은 `/edpm-ai eval`(골든셋·시나리오셋)로 따로 봅니다.
 
 빌드가 끝나면 V02를 채웁니다. 특히 5절 "알려진 한계"(운영에서 다시 만들어야 할 것)를 빠뜨리지 않습니다.
 
@@ -68,7 +68,7 @@ argument-hint: "<new <이름> | plan | build | test | decide | handoff | list> [
 
 1. `06.prototypes/{PT}/ops/`에 진행 자료를 만듭니다: 진행자 스크립트(소개 → 사전 질문 → 과제 2~4개 → 사후 질문, 정답 경로를 알려주지 않음), 관찰 기록지(과제별 성공·막힌 지점·인용), 사후 설문(V01 신호에 맞춘 문항).
 2. 미성년이면 동의서 회수, 보호자 동석, 세션 시간 상한(예: 20~30분)을 확인합니다.
-3. 세션 후 관찰 기록·이벤트 로그(클릭 프로토타입은 "기록 → CSV 내보내기")를 `00.inbox/`에 넣고 `/edpm-ingest`로 가명 처리해 `01.자료실/현장/`·`데이터/`에 보관합니다.
+3. 세션 후 관찰 기록·이벤트 로그(클릭 프로토타입은 "기록 → CSV 내보내기")를 `00.inbox/`에 넣고 `/edpm-wiki ingest`로 가명 처리해 `01.자료실/현장/`·`데이터/`에 보관합니다.
 4. 세션마다 짧게 중간 정리합니다 (치명적 문제가 반복되면 남은 세션 전에 고칠지 묻되, 고치면 V03에 기록).
 
 ## decide → V03

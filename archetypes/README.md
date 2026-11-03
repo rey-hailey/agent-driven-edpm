@@ -61,7 +61,7 @@ graph TD
     Q4 -->|자체 콘텐츠 구독 앱| AT07[AT07 소비자 학습앱]
 ```
 
-판정이 애매하면 `/edpm-blueprint detect`가 질문 10개로 1~2개를 제안합니다. 판정 근거는 E00 "서비스 유형" 절에 남깁니다.
+판정이 애매하면 `/edpm-start blueprint detect`가 질문 10개로 1~2개를 제안합니다. 판정 근거는 E00 "서비스 유형" 절에 남깁니다.
 
 ## 3. 조합 가이드
 
@@ -94,7 +94,7 @@ graph TD
 | 성인 직무 VOD 마켓플레이스 | AT01 (+ AT02) | 강사정산모델, 환불정책, 부정수강방지 | L01~L03, P01~P03, S07 |
 | 기업 법정의무교육·환급 과정 | AT02 | 학습진도관리, 기업관리자LMSIA, 부정수강방지 | L03, L05, L06, P03 |
 
-같은 형태라도 업무 모드에 따라 쓰는 문서가 다릅니다: 새로 만드는 중이면 N 트랙(`/edpm-venture`), 운영 중인 서비스의 개선이면 F 트랙(`/edpm-feature`). 예시는 `guide/09.업무모드.md` 3절.
+같은 형태라도 업무 모드에 따라 쓰는 문서가 다릅니다: 새로 만드는 중이면 N 트랙(`/edpm-doc venture`), 운영 중인 서비스의 개선이면 F 트랙(`/edpm-doc feature`). 예시는 `guide/09.업무모드.md` 3절.
 
 ## 4. 마스터 매트릭스
 
@@ -124,25 +124,25 @@ graph TD
 
 ```mermaid
 graph LR
-    INIT["/edpm-init<br/>E00 인터뷰"] --> DET["/edpm-blueprint detect<br/>유형 1~2개 판정"]
-    DET --> APP["/edpm-blueprint apply AT0x"]
+    INIT["/edpm-start init<br/>E00 인터뷰"] --> DET["/edpm-start blueprint detect<br/>유형 1~2개 판정"]
+    DET --> APP["/edpm-start blueprint apply AT0x"]
     APP --> NA[산출물 status: n/a 설정<br/>사유: 아키타입 AT0x 기준]
     APP --> SEED[02.wiki/domain 시드<br/>프로필이 링크한 도메인 페이지]
     APP --> GATE[E00에 게이트 조건 기록<br/>G-CAL 종류·G-POLICY·G-CURRIC·G-SAFE]
     APP --> WBS["시작 순서 → /edpm-wbs 입력"]
-    APP --> CHK["/edpm-blueprint check<br/>영역별 빈칸 점검"]
+    APP --> CHK["/edpm-start blueprint check<br/>영역별 빈칸 점검"]
 ```
 
 | 스킬 | 이 폴더에서 읽는 것 | 하는 일 |
 |------|---------------------|---------|
-| `/edpm-init` | 사업 유형 인터뷰 결과 → 해당 프로필 2절(이해관계자) | E00 작성 시 사용자·구매자·결제자·의사결정자 질문을 유형에 맞춤. 끝나면 `/edpm-blueprint`를 안내 |
-| `/edpm-blueprint detect` | 1절 정의, 2절 구매 구조, 이 README 2절 결정 트리 | 유형 1~2개 제안, E00 "서비스 유형" 절에 근거 기록 |
-| `/edpm-blueprint apply` | 5절 트랙 표 | 해당없음 산출물을 `status: n/a`로 (이미 draft 이상인 것은 보고만), 조합이면 더 강한 요구 채택, AGENTS.md 2절 "활성 모듈" 변경안 제안 |
+| `/edpm-start init` | 사업 유형 인터뷰 결과 → 해당 프로필 2절(이해관계자) | E00 작성 시 사용자·구매자·결제자·의사결정자 질문을 유형에 맞춤. 끝나면 `/edpm-start blueprint`를 안내 |
+| `/edpm-start blueprint detect` | 1절 정의, 2절 구매 구조, 이 README 2절 결정 트리 | 유형 1~2개 제안, E00 "서비스 유형" 절에 근거 기록 |
+| `/edpm-start blueprint apply` | 5절 트랙 표 | 해당없음 산출물을 `status: n/a`로 (이미 draft 이상인 것은 보고만), 조합이면 더 강한 요구 채택, AGENTS.md 2절 "활성 모듈" 변경안 제안 |
 | | 3·4·7절의 `[[domain/...]]` 링크 | 위키에 없는 도메인 페이지를 개인 Brain 또는 `brain-seed/domain/`에서 복사 |
 | | 6절 지표, 8절 시즌 캘린더 | E07 초안의 북극성·지표 대역 후보, G-CAL 캘린더 종류를 E00에 기록 |
 | | 10절 시작 순서 | `/edpm-wbs create`의 초기 작업 패키지 순서 |
-| `/edpm-blueprint check` | 3·4절 영역 | 비즈니스 로직·IA·화면·정책·AI 영역별 빈칸과 다음 행동 |
-| `/edpm-blueprint map` | 전 절 요약 | 한 장 청사진 (신규 PM·경영진 공유용) |
+| `/edpm-start blueprint check` | 3·4절 영역 | 비즈니스 로직·IA·화면·정책·AI 영역별 빈칸과 다음 행동 |
+| `/edpm-start blueprint map` | 전 절 요약 | 한 장 청사진 (신규 PM·경영진 공유용) |
 
 프로필은 프레임워크 파일이라 워크스페이스에 복사하지 않습니다. 스킬은 `AGENTS.md` 2절 "프레임워크 경로"로 이 폴더를 찾습니다. 회사 고유의 변형(예: 우리 회사만의 정산 규칙)은 프로필이 아니라 `02.wiki/company/`와 해당 산출물에 적습니다.
 

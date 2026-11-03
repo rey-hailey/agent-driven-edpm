@@ -1,6 +1,6 @@
 # 함께 쓰는 스킬 (extras)
 
-EdPM은 스킬 33종과 워크스페이스 스크립트로 동작합니다. 화면설계 스킬 sb-lowfi(EdPM 작성자가 만든 스킬)는 워크스페이스 설치 때 함께 설치되고, 나머지 공식 스킬은 필요할 때 선택해서 설치합니다. 어느 것이 없어도 마크다운 산출물은 그대로 나옵니다.
+EdPM은 워크스페이스의 스킬과 스크립트로 동작합니다. 화면설계 스킬 sb-lowfi(EdPM 작성자가 만든 스킬)는 워크스페이스 설치 때 함께 설치되고, 나머지 공식 스킬은 필요할 때 선택해서 설치합니다. 어느 것이 없어도 마크다운 산출물은 그대로 나옵니다.
 
 ## 1. 스킬 없이 되는 것 — 워크스페이스에 포함
 
@@ -10,7 +10,7 @@ EdPM은 스킬 33종과 워크스페이스 스크립트로 동작합니다. 화�
 | 산출물 → PDF | `edpm_export.py <md> --to pdf` | Chrome 또는 Chromium (없으면 HTML을 브라우저에서 "PDF로 저장") |
 | 산출물 → Word | `edpm_export.py <md> --to docx [--reference 회사양식.docx]` | [pandoc](https://pandoc.org) (`brew install pandoc`) |
 | 클릭 프로토타입 | `06.prototypes/_starter/click-prototype.html` | 브라우저 |
-| AI 모델·프롬프트 평가 | `/edpm-eval` (`automation/scripts/ai_eval.py`, 골든셋·시나리오셋) | Claude API 키 또는 로컬 모델 |
+| AI 모델·프롬프트 평가 | `/edpm-ai eval` (`automation/scripts/ai_eval.py`, 골든셋·시나리오셋) | Claude API 키 또는 로컬 모델 |
 
 회사 문서 양식에 맞춘 출력은 `/edpm-template apply <ID>` → `edpm_export.py`로 냅니다.
 
@@ -35,7 +35,7 @@ EdPM은 스킬 33종과 워크스페이스 스크립트로 동작합니다. 화�
 | 스킬 | 받는 곳 | 쓰는 곳 |
 |------|---------|---------|
 | `docx`, `pptx`, `xlsx`, `pdf` | Claude Code에서 `/plugin marketplace add anthropics/skills` → `/plugin install document-skills@anthropic-agent-skills` | 발표 자료(pptx), 표 계산 결과(xlsx), 세밀한 Word 편집 |
-| `webapp-testing` | 같은 마켓플레이스의 `example-skills@anthropic-agent-skills` | `/edpm-qa run --auto` 화면 E2E (Playwright) |
+| `webapp-testing` | 같은 마켓플레이스의 `example-skills@anthropic-agent-skills` | `/edpm-spec qa run --auto` 화면 E2E (Playwright) |
 | `n8n-*` | [czlonkowski/n8n-skills](https://github.com/czlonkowski/n8n-skills) | 회사가 n8n을 쓸 때만 ([guide/04](../guide/04.자동화레이어선택.md)) |
 
 이 저장소에는 제3자 스킬을 넣지 않습니다. 위 링크에서 각자 받습니다.

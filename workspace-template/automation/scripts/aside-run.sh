@@ -65,4 +65,4 @@ if [[ ! -s "$OUT" ]]; then
 fi
 echo
 echo "저장: $OUT"
-echo "다음: /edpm-ingest $OUT"
+echo "다음: /edpm-wiki ingest $OUT"

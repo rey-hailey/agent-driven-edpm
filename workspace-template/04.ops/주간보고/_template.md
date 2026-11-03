@@ -10,7 +10,7 @@ updated: YYYY-MM-DD
 
 > **작성 가이드**
 > - **파일명 규칙**: `주간보고_YYYY-MM-DD.md` — 날짜는 보고일(D). 보고 기간은 D-6 ~ D (7일). 예: `주간보고_2027-03-19.md` → 2027-03-13 ~ 03-19.
-> - **자동 생성**: `/edpm-weekly`가 아래 자료로 초안을 만들고 사람이 판단·요청 사항을 채웁니다.
+> - **자동 생성**: `/edpm-brief weekly`가 아래 자료로 초안을 만들고 사람이 판단·요청 사항을 채웁니다.
 >   - `grep "^## \[" 02.wiki/log.md` 중 보고 기간 항목
 >   - `03.docs/` frontmatter `status`·`updated` 변화 (`git log --since` 기준)
 >   - `02.wiki/decisions/` 신규 ADR, `04.ops/회의록/` 기간 내 회의록
