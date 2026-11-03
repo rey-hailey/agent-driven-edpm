@@ -455,6 +455,22 @@ class ClarityAndLoopTests(WorkspaceCase):
         self.assertIn("고정 해제한 인수조건 테스트 1건", self.check("brief").stdout)
 
 
+class DashboardTests(WorkspaceCase):
+    def test_dashboard_builds_from_checker(self):
+        r = run([self.ws / "automation/scripts/edpm_dashboard.py", "--quiet"], self.ws, self.env)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout, "")
+        html = (self.ws / ".edpm" / "dashboard.html").read_text(encoding="utf-8")
+        m = re.search(r"const D = (\{.*?\});\nconst \$", html, re.S)
+        data = json.loads(m.group(1))
+        self.assertEqual(data["phase"]["step"], json.loads(self.check("json").stdout)["phase"]["step"])
+        self.assertGreater(len(data["graph"]["nodes"]), 50)            # 도메인 지식 + 산출물
+        self.assertIn("산출물", {n["group"] for n in data["graph"]["nodes"]})
+        self.assertTrue(all(n["url"].startswith("antigravity://file/") for n in data["graph"]["nodes"][:5]))
+        self.assertEqual(len(data["skills"]), len(list((self.ws / ".claude/skills").glob("*/SKILL.md"))))
+        self.assertNotIn("</script><", m.group(1))
+
+
 class ExportTests(WorkspaceCase):
     def test_export_html_strips_guides_and_examples(self):
         out = self.tmp / "out"

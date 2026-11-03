@@ -8,6 +8,11 @@ Agent Driven EdPM 변경 이력입니다. 형식은 [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Added — 대시보드
+- `automation/scripts/edpm_dashboard.py` + `dashboard_template.html`: 워크스페이스 상태를 `.edpm/dashboard.html` 한 장으로. 왼쪽(지금 단계·흐름 막대·다음 명령 복사, PRD 명확도, 진행 요약, WBS 달력, 최근 파일), 가운데(위키·산출물 지식 그래프: 도메인 지식은 AI·규제·표준·IA·화면·학습과학·평가·비즈니스·운영 군집, 회사·학습자·리서치·시장·결정·교육과정, 가운데 산출물은 상태별 색, 링크·전제조건 연결), 오른쪽(주의, 경로 문서, 스킬 검색·명령 복사, 프로토타입·결정, 위키 log). 점을 누르면 Antigravity에서 파일이 열림(`EDPM_EDITOR_URL`로 변경). 외부 라이브러리·네트워크 없음, 보기 전용, 판정은 점검기와 같음
+- SessionStart·PostToolUse(저장 후) 훅이 다시 만들고, 열어 둔 화면은 조용할 때 다시 읽음. `/edpm-brief dashboard`, 설치 직후 생성, `.gitignore`에 생성물 제외
+- 회귀 테스트 1건 — 총 34건
+
 ### Added — 엉뚱한 것을 만들지 않게: 명확도·개념·숨긴 평가·아직 모르는 것
 개념 참고: [Q00/ouroboros](https://github.com/Q00/ouroboros)(MIT)의 모호도 게이트·존재론 질문·숨긴 채점 기준·Wonder 루프. 코드는 가져오지 않고 EdPM 방식으로 구현.
 - **G-CLEAR 명확도 게이트**: `edpm_check.py clarity` — PRD(목표·근거·대상·성공 기준·핵심 개념·제약)와 F01(문제·근거·성공 기준·기존 서비스 맥락)의 표 채움으로 모호도를 계산, 0.3을 넘으면 PRD review 전환(훅)과 F01 done을 막음. 단계 1이 모호도를 보여주고, `/edpm-prd review`가 같은 차원을 루브릭으로 읽고 채울 질문을 제안

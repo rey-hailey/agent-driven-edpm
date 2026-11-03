@@ -31,3 +31,6 @@ __pycache__/
 
 # 교육과정 지식그래프 원천 저장소와 빌드 결과 (automation/kg/kg_sync.sh, kg_build.py가 다시 만듦)
 data/curriculum-kg/
+
+# 대시보드 (훅이 다시 만듦)
+.edpm/dashboard.html

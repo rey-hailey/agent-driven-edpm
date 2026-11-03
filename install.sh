@@ -265,6 +265,9 @@ if [[ $GIT -eq 1 ]] && command -v git >/dev/null 2>&1; then
   git -C "$TARGET" init -q && echo "git 저장소 초기화 (00.inbox, data/curriculum-kg, 비밀 파일은 .gitignore로 제외)"
 fi
 
+# 5.1) 대시보드 첫 생성 (이후 세션 시작·문서 저장 때 훅이 다시 만듦)
+EDPM_ROOT="$TARGET" python3 "$TARGET/automation/scripts/edpm_dashboard.py" --quiet || true
+
 # 6) 교육과정 지식그래프 (선택)
 if [[ $WITH_KG -eq 1 ]]; then
   ( cd "$TARGET" && automation/kg/kg_sync.sh && python3 automation/kg/kg_build.py )
@@ -276,6 +279,7 @@ cat <<EOF
   1. Antigravity에서 File > Open Folder → $TARGET
   2. 권장 확장 설치 알림이 뜨면 설치 (Claude Code, Mermaid 미리보기, CSV)
   3. Claude Code 패널을 열고 /edpm-start 입력 — 산출물은 왼쪽 탐색기에서 바로 열어 봅니다 (미리보기 Cmd+Shift+V)
+  대시보드: $TARGET/.edpm/dashboard.html 를 브라우저로 열어 두기 (/edpm-brief dashboard). 문서를 저장할 때마다 갱신
   터미널만 쓸 때: cd "$TARGET" && claude
   순서: /edpm-start → /edpm-start init (회사·제품 인터뷰) → /edpm-prd (만들 제품 전체) → 상황판이 안내하는 다음 단계
   자세한 길잡이: $FW/guide/14.AtoZ사용가이드.md

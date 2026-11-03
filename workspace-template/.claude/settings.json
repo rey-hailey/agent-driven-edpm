@@ -6,6 +6,10 @@
           {
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/automation/scripts/edpm_check.py\" brief"
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/automation/scripts/edpm_dashboard.py\" --quiet"
           }
         ]
       }
@@ -29,11 +33,23 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/automation/scripts/edpm_dashboard.py\" --quiet"
+          }
+        ]
+      }
     ]
   },
   "permissions": {
     "allow": [
       "Bash(python3 automation/scripts/edpm_check.py:*)",
+      "Bash(python3 automation/scripts/edpm_dashboard.py:*)",
       "Bash(python3 automation/scripts/wbs_sync.py status:*)",
       "Bash(python3 automation/scripts/wbs_sync.py export:*)",
       "Bash(python3 automation/scripts/wbs_sync.py pull:*)",
