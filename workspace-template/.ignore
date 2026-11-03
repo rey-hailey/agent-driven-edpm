@@ -1,0 +1,3 @@
+# 검색 도구(ripgrep 등)가 건너뛸 파일. git 추적과는 무관합니다.
+# holdout 평가셋: 프롬프트를 고치는 쪽이 보지 않는 세트 (ai_eval.py --holdout으로 점수만)
+**/*holdout*

@@ -115,6 +115,7 @@ if [[ "$TARGET" == "--upgrade" ]]; then
   rsync -a "$FW/workspace-template/automation/hooks/" "$WS/automation/hooks/" && echo "  automation/hooks 갱신"
   mkdir -p "$WS/.edpm" && rsync -a --delete "$FW/library/" "$WS/.edpm/library/" && echo "  보관함 .edpm/library 갱신 (꺼내 쓴 산출물은 그대로)"
   [[ -d "$WS/.vscode" ]] || { cp -R "$FW/workspace-template/.vscode" "$WS/.vscode" && echo "  + .vscode/ (Antigravity·VS Code 계열 설정, 권장 확장)"; }
+  [[ -e "$WS/.ignore" ]] || { cp "$FW/workspace-template/.ignore" "$WS/.ignore" && echo "  + .ignore (검색 도구가 holdout 평가셋을 건너뜀)"; }
   [[ " $* " == *" --no-sb-lowfi "* ]] || { mkdir -p "$HOME/.claude/skills"; install_sb_lowfi "$HOME/.claude/skills"; }
   rsync -a "$FW/workspace-template/automation/kg/" --exclude sources.lock.json "$WS/automation/kg/" 2>/dev/null || true
   rsync -a --ignore-existing "$FW/workspace-template/automation/sql/" "$WS/automation/sql/" && echo "  automation/sql 템플릿 추가 (기존 파일 유지)"

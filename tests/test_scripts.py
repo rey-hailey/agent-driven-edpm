@@ -384,6 +384,77 @@ class CorePathTests(WorkspaceCase):
         self.assertIn(".edpm/library", json.loads((inst / ".vscode/settings.json").read_text(encoding="utf-8"))["search.exclude"])
 
 
+class ClarityAndLoopTests(WorkspaceCase):
+    """Ouroboros에서 가져온 장치: 명확도 게이트, 핵심 개념, 아직 모르는 것, holdout, 테스트 고정."""
+
+    def _hook_status(self, rel_path, old, new):
+        return self.hook("Edit", self.ws / rel_path, old_string=old, new_string=new)
+
+    def test_prd_review_blocked_until_clear(self):
+        prd = self.ws / "PRD.md"
+        self.assertEqual(self.check("clarity").returncode, 1)
+        r = self._hook_status("PRD.md", "status: draft", "status: review")
+        self.assertEqual(r.returncode, 2, r.stderr)
+        self.assertIn("G-CLEAR", r.stderr)
+        s = re.sub(r"\{[^{}]*\}", "값", prd.read_text(encoding="utf-8"))
+        prd.write_text(s, encoding="utf-8")
+        c = json.loads(self.check("clarity", "--json").stdout)
+        self.assertTrue(c["pass"], c)
+        self.assertEqual(self._hook_status("PRD.md", "status: draft", "status: review").returncode, 0)
+
+    def test_f01_done_needs_context(self):
+        task = self.doc("F.개선/FI-001_과제")
+        shutil.copytree(self.doc("F.개선/_과제템플릿"), task)
+        out = self.check("gate", str(task / "F01_문제정의서.md")).stdout
+        self.assertIn("G-CLEAR", out)
+        self.assertIn("맥락", out)
+
+    def test_unknowns_pending_shown_until_handed_over(self):
+        pt = self.doc("V.프로토타입/PT-01_시험")
+        shutil.copytree(self.doc("V.프로토타입/_프로토타입템플릿"), pt)
+        v03 = pt / "V03_검증결과결정서.md"
+        s = v03.read_text(encoding="utf-8").replace(
+            "| U1 | {} | {} | {프로토타입 / 파일럿 / 데이터 / 인터뷰} | {PRD 12절 Q-n / 다음 HY / 백로그 FI-n / ADR} |",
+            "| U1 | 보호자가 리포트를 매주 여는가 | 구독 유지 | 파일럿 로그 |  |")
+        v03.write_text(s, encoding="utf-8")
+        self.assertIn("아직 모르는 것", self.check("brief").stdout)
+        v03.write_text(s.replace("| 파일럿 로그 |  |", "| 파일럿 로그 | PRD 12절 Q5 |"), encoding="utf-8")
+        self.assertNotIn("아직 모르는 것", self.check("brief").stdout)
+
+    def test_holdout_hidden(self):
+        hold = self.doc("A.AI/골든셋_holdout.csv")
+        rows = self.doc("A.AI/골든셋.csv").read_text(encoding="utf-8").splitlines()
+        hold.write_text(rows[0] + "\n" + rows[1].replace("예시 행", "실제") + "\n", encoding="utf-8")
+        self.assertEqual(self.hook("Read", hold).returncode, 2)
+        bash = lambda c: run([self.ws / "automation/hooks/pre_write.py"], self.ws, self.env,  # noqa: E731
+                             json.dumps({"tool_name": "Bash", "tool_input": {"command": c}}))
+        self.assertEqual(bash(f"cat {hold}").returncode, 2)
+        self.assertEqual(bash("python3 automation/scripts/ai_eval.py --set x_holdout.csv --system p.md --holdout").returncode, 0)
+        self.assertEqual(bash("ls 03.docs").returncode, 0)
+        self.assertEqual(self.hook("Edit", hold, old_string="a", new_string="b").returncode, 2)
+        sysf = self.ws / "p.md"; sysf.write_text("시스템", encoding="utf-8")
+        r = run([self.ws / "automation/scripts/ai_eval.py", "--set", str(hold), "--system", str(sysf), "--dry-run"], self.ws, self.env)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("이항", r.stdout)                 # 문항이 출력되지 않음
+        self.assertIn("holdout", r.stdout)
+
+    def test_committed_acceptance_tests_locked(self):
+        g = lambda *a: subprocess.run(["git", "-C", str(self.ws), "-c", "user.email=t@example.com", "-c", "user.name=t", *a],  # noqa: E731
+                                      capture_output=True, text=True)
+        g("init", "-q")
+        t = self.ws / "tests" / "test_hint.py"
+        t.parent.mkdir(exist_ok=True)
+        t.write_text("def test_ac1():\n    assert True\n", encoding="utf-8")
+        self.assertEqual(self.hook("Edit", t, old_string="True", new_string="False").returncode, 0)  # 커밋 전은 자유
+        g("add", "tests/test_hint.py"); g("commit", "-qm", "AC 테스트")
+        r = self.hook("Edit", t, old_string="True", new_string="False")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("테스트 고정", r.stderr)
+        (self.ws / ".edpm" / "test-unlock").write_text("tests/test_hint.py | AC-1 변경 (E09 v2) | 2026-11-03\n", encoding="utf-8")
+        self.assertEqual(self.hook("Edit", t, old_string="True", new_string="False").returncode, 0)
+        self.assertIn("고정 해제한 인수조건 테스트 1건", self.check("brief").stdout)
+
+
 class ExportTests(WorkspaceCase):
     def test_export_html_strips_guides_and_examples(self):
         out = self.tmp / "out"

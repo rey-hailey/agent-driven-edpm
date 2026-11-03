@@ -26,6 +26,10 @@
   python automation/scripts/ai_eval.py --set 03.docs/A.AI/의도분류셋.csv --system prompts/none.md \
       --target cmd --cmd "python automation/scripts/my_intent.py" --judge exact
 
+holdout(--holdout, 또는 세트 파일 이름에 holdout): 프롬프트를 고치는 쪽이 보지 않는 세트. 문항·응답·실패 내용을
+  출력하지 않고 합격률·평균 점수만 낸다 (결과 CSV도 id·합격만). 프롬프트는 일반 세트로 고치고, 출시 판단(A06·G-AI)은
+  holdout 점수를 함께 본다. 두 점수 차이가 크면 일반 세트에 과적합된 것이다.
+
 비용: 클라우드 대상은 실행 전 --dry-run 으로 호출 수를 확인한다. 한 행당 응답 1~2회 + (llm 채점이면) 채점 1회.
 주의: 평가 데이터에 실제 학생 정보를 넣지 않는다. 연락처·주민번호 패턴이 보이면 중단한다.
 """
@@ -341,7 +345,9 @@ def main() -> int:
     ap.add_argument("--out-dir", type=Path, default=Path("05.outputs"))
     ap.add_argument("--label", default="", help="결과 파일·요약에 붙일 비교용 이름 (예: local-qwen, rules-v2)")
     ap.add_argument("--dry-run", action="store_true", help="API 호출 없이 세트 확인과 호출 수만 출력")
+    ap.add_argument("--holdout", action="store_true", help="숨긴 평가셋: 문항·응답을 출력하지 않고 점수만 (파일 이름에 holdout이면 자동)")
     args = ap.parse_args()
+    hold = args.holdout or "holdout" in args.set.name.lower()
 
     kind, rows = load_rows(args.set)
     rows = [r for r in rows if not (r.get("비고") or "").startswith("예시")] or rows
@@ -358,6 +364,9 @@ def main() -> int:
     print(f"세트: {args.set} ({kind}), 행 {len(rows)}개 | 대상: {who} (응답 {responses}회) | "
           f"채점: {'LLM ' + args.judge_model + f' ({judge_calls}회)' if args.judge == 'llm' else '정확 일치 (LLM 호출 없음)'}")
     if args.dry_run:
+        if hold:
+            print("holdout 세트: 문항은 출력하지 않습니다.")
+            return 0
         for r in rows[:3]:
             ctx, turns, expect = build_turns(kind, r)
             print(f"- {r.get('id')}: {turns[0][:60]} | 기준 {len([v for v in expect.values() if v])}개")
@@ -380,15 +389,18 @@ def main() -> int:
             raise
         results.append({"id": r.get("id"), "유형": kind, "입력": " / ".join(turns),
                         "응답": " / ".join(answers), **verdict})
-        print(f"[{i}/{len(rows)}] {r.get('id')} {'합격' if verdict.get('pass') else '불합격'} {verdict.get('실패유형', '')}")
+        if hold:
+            print(f"[{i}/{len(rows)}] 실행됨")
+        else:
+            print(f"[{i}/{len(rows)}] {r.get('id')} {'합격' if verdict.get('pass') else '불합격'} {verdict.get('실패유형', '')}")
 
     if not results:
         return 1
     args.out_dir.mkdir(parents=True, exist_ok=True)
     stamp = dt.datetime.now().strftime("%Y%m%d_%H%M")
     suffix = f"_{re.sub(r'[^0-9A-Za-z가-힣_-]', '', args.label)}" if args.label else ""
-    out_csv = args.out_dir / f"eval_{stamp}{suffix}.csv"
-    fields = ["id", "유형", "입력", "응답", "pass", "정확성", "교육적적절성", "연령적합성", "안전", "금지행동위반", "실패유형", "근거"]
+    out_csv = args.out_dir / f"eval_{'holdout_' if hold else ''}{stamp}{suffix}.csv"
+    fields = ["id", "pass"] if hold else ["id", "유형", "입력", "응답", "pass", "정확성", "교육적적절성", "연령적합성", "안전", "금지행동위반", "실패유형", "근거"]
     with out_csv.open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         w.writeheader()
@@ -422,8 +434,9 @@ def main() -> int:
         f"| 평균 점수 (정확성·교육적적절성·연령적합성·안전) | {avg('정확성')} · {avg('교육적적절성')} · {avg('연령적합성')} · {avg('안전')} |",
         f"| 응답 지연 p50 / p95 | {lat} |",
         f"| 추정 비용 (USD, Claude 호출) | {cost_txt} |",
-        "", "## 실패 유형", "", "| 유형 | 건수 |", "|------|------|",
-        *[f"| {k} | {v} |" for k, v in sorted(fails.items(), key=lambda kv: -kv[1])],
+        *(["", "holdout 세트라 실패 유형과 문항은 남기지 않습니다. 일반 세트 점수와 비교해 과적합을 봅니다."] if hold else
+          ["", "## 실패 유형", "", "| 유형 | 건수 |", "|------|------|",
+           *[f"| {k} | {v} |" for k, v in sorted(fails.items(), key=lambda kv: -kv[1])]]),
         "", f"원자료: `{out_csv}`. LLM 채점은 틀릴 수 있으므로 불합격 건과 경계 사례는 사람이 다시 확인한다.",
         "방식 비교(A10·A11): 같은 세트를 --target·--label만 바꿔 실행하고 요약 표를 나란히 본다.",
     ]

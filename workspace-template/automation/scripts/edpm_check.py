@@ -12,6 +12,7 @@
   python3 automation/scripts/edpm_check.py progress [--all]   # 진행표 한 장: 문서·상태·완료일·전제·착수 가능 여부
   python3 automation/scripts/edpm_check.py start <문서 경로>  # 이 문서를 지금 써도 되는가 — 전제조건 (0 가능 / 1 불가, 생성 게이트)
   python3 automation/scripts/edpm_check.py code-gate <경로>   # 제품 코드(src/)를 써도 되는가 (G-SPEC, 개발 체계) (0 가능 / 1 불가)
+  python3 automation/scripts/edpm_check.py clarity [PRD.md | F01 경로]  # 명확도: 차원별 점수·모호도·빈 곳 (G-CLEAR, 모호도 0.3 이하여야 통과)
   python3 automation/scripts/edpm_check.py library [검색어]     # 보관함에 있고 아직 꺼내지 않은 산출물 (트랙별, 언제 쓰나)
   python3 automation/scripts/edpm_check.py add <ID> [<ID>...]  # 보관함에서 워크스페이스로 꺼내기 (딸린 CSV·템플릿 폴더 포함)
   python3 automation/scripts/edpm_check.py portfolio [--ids PRD,E09,V01] [--adr ADR-003,ADR-007]
@@ -224,6 +225,11 @@ def gate_check(doc: dict, docs: list[dict], content: bool = True) -> list[str]:
                 reasons.append(f"{gate}: {req} 없음 — /edpm-doc {req} 로 꺼내 작성")
             elif r["status"] not in DONE:
                 reasons.append(f"{gate}: {req} status={r['status']}")
+    if content and doc["id"] in {"PRD", "F01"}:
+        c = clarity(doc["id"], read(doc["path"]), docs)
+        if c and not c["pass"]:
+            weak = ", ".join(d["dim"] for d in c["dims"] if d["score"] < 0.7)
+            reasons.append(f"G-CLEAR: 모호도 {c['ambiguity']} > {c['max']} — 흐린 곳: {weak} (edpm_check.py clarity)")
     if content:
         if doc["id"] == "F02" and not gmeasure_ok(read(doc["path"])):
             reasons.append("G-MEASURE: 목표 지표에 기준선·목표·SQL이 채워진 실제 행이 없음")
@@ -405,6 +411,114 @@ def next_docs(docs: list[dict]) -> list[dict]:
     return out
 
 
+# ---------- 명확도 (G-CLEAR) ----------
+# 무엇을 왜 만드는지가 흐린 채 스펙·코드로 가면 엉뚱한 것을 만든다. 표가 얼마나 채워졌는지로 결정적으로 잰다.
+# 모호도 = 1 - Σ(차원 명확도 × 가중치). PRD는 review로 올릴 때, F01은 done으로 올릴 때 CLEAR_MAX 이하여야 한다.
+CLEAR_MAX = 0.3
+
+
+def _filled(cell: str) -> bool:
+    c = (cell or "").strip()
+    return bool(c) and "{" not in c and c not in {"-", "…", "..."}
+
+
+def _rows(text: str, head: str) -> list[list[str]]:
+    """예시 행을 뺀 표 행 (빈 칸 포함)."""
+    return [r for r in _table_rows(text, head)
+            if r and not r[0].startswith("예시") and "(예시)" not in " ".join(r)]
+
+
+def _section_lines(text: str, head: str) -> list[str]:
+    out, on = [], False
+    for ln in text.splitlines():
+        if ln.lstrip().startswith("#"):
+            if on:
+                break
+            on = head in ln
+            continue
+        s = ln.strip()
+        if on and s and not s.startswith((">", "|")) and "{" not in s and not s.startswith("예시"):
+            out.append(s)
+    return out
+
+
+def _frac(rows: list[list[str]], cols: list[int]) -> float:
+    if not rows:
+        return 0.0
+    ok = sum(1 for r in rows if all(len(r) > c and _filled(r[c]) for c in cols))
+    return ok / len(rows)
+
+
+def clarity(doc_id: str, text: str, docs: list[dict] | None = None) -> dict:
+    dims = []  # (차원, 가중치, 점수, 빈 곳 설명)
+    if doc_id == "PRD":
+        r1 = _rows(text, "1. 제품 개요")
+        g = _frac(r1, [1])
+        if any("[가정]" in " ".join(r) for r in r1):
+            g *= 0.7
+        dims.append(("목표", 0.25, g, "1절 제품 개요의 빈 칸 또는 [가정]"))
+        r2 = _rows(text, "2. 배경과 근거")
+        ev = [1.0 if _filled(r[1]) and _filled(r[2]) and "[가정]" not in r[2] else 0.5 if _filled(r[1]) else 0.0
+              for r in r2 if len(r) > 2]
+        dims.append(("근거", 0.15, sum(ev) / len(ev) if ev else 0.0, "2절에 출처가 있는 답 ([가정]은 절반)"))
+        u = _frac(_rows(text, "3. 사용자와 이해관계자"), [1])
+        if re.search(r"미성년 포함 여부:\s*\{", text):
+            u *= 0.8
+        dims.append(("대상", 0.15, u, "3절 사용자·구매자·결제자·의사결정자, 미성년 여부"))
+        r4 = _rows(text, "4. 목표와 성공 지표")
+        s4 = _frac(r4, [1, 3, 4])
+        north = [r for r in r4 if r and r[0].startswith("북극성")]
+        if north and not all(len(north[0]) > c and _filled(north[0][c]) for c in (1, 3, 4)):
+            s4 = min(s4, 0.5)
+        dims.append(("성공 기준", 0.2, s4, "4절 지표·목표·측정 방법 (북극성 필수)"))
+        n5 = sum(1 for r in _rows(text, "5.1 핵심 개념") if len(r) > 1 and _filled(r[0]) and _filled(r[1]))
+        dims.append(("핵심 개념", 0.15, min(n5 / 3, 1.0), "5.1절 계산 가능한 개념 정의 3개 이상"))
+        dims.append(("제약", 0.1, _frac(_rows(text, "7. 비기능 요구"), [1]), "7절 비기능 요구"))
+    elif doc_id == "F01":
+        dims.append(("문제", 0.25, 1.0 if _section_lines(text, "2. 다시 쓴 문제") else 0.0, "2절 다시 쓴 문제"))
+        r4 = [r for r in _rows(text, "4. 근거") if len(r) > 3 and _filled(r[1]) and _filled(r[3])]
+        ev = 1.0 if any(_filled(r[2]) and "[가정]" not in r[2] for r in r4) else 0.6 if r4 else 0.0
+        dims.append(("근거", 0.25, ev, "4절 근거 (수치·출처, [가정]만이면 일부)"))
+        dims.append(("성공 기준", 0.2, 1.0 if any(len(r) > 2 and _filled(r[1]) and _filled(r[2]) for r in _rows(text, "7. 성공의 정의")) else 0.0,
+                     "7절 성공의 정의와 측정 지표"))
+        f00 = find(docs or [], "F00")
+        ctx = (0.5 if f00 is not None and f00["status"] == "done" else 0.0) \
+            + (0.25 if any(len(r) > 1 and _filled(r[0]) and _filled(r[1]) for r in _rows(text, "6.1 지금의 규칙과 개념")) else 0.0) \
+            + (0.25 if any(len(r) > 1 and _filled(r[0]) and _filled(r[1]) for r in _rows(text, "6. 현재 우회 방법")) else 0.0)
+        dims.append(("맥락 (기존 서비스)", 0.3, ctx, "F00 현황 진단 done, 6.1절 지금의 규칙, 6절 현재 우회 방법"))
+    else:
+        return {}
+    amb = round(1 - sum(w * sc for _, w, sc, _ in dims), 2)
+    return {"doc": doc_id, "ambiguity": amb, "pass": amb <= CLEAR_MAX, "max": CLEAR_MAX,
+            "dims": [{"dim": d, "weight": w, "score": round(sc, 2), "gap": gap} for d, w, sc, gap in dims],
+            "confirm_open": len(CONFIRM.findall("\n".join(_real_lines(text))))}
+
+
+def fmt_clarity(c: dict) -> str:
+    L = [f"{c['doc']} 모호도 {c['ambiguity']} (통과 기준 {c['max']} 이하) — {'통과' if c['pass'] else '미달 (G-CLEAR)'}", "",
+         "| 차원 | 가중치 | 명확도 | 채울 곳 |", "|------|--------|--------|---------|"]
+    L += [f"| {d['dim']} | {d['weight']} | {d['score']} | {'' if d['score'] >= 1 else d['gap']} |" for d in c["dims"]]
+    if c["confirm_open"]:
+        L.append(f"\n남은 [확인 필요] {c['confirm_open']}건 (점수에는 넣지 않음, 검토 때 확인)")
+    L.append("\n결정적 점수는 표가 채워졌는지만 봅니다. 내용이 구체적인지는 /edpm-prd review의 루브릭이 봅니다.")
+    return "\n".join(L)
+
+
+# ---------- 아직 모르는 것 (다음 사이클로) ----------
+
+def unknowns_pending(docs: list[dict]) -> list[str]:
+    out = []
+    for d in docs:
+        if d["id"] not in {"V03", "F04", "E20"} or d["status"] == "n/a":
+            continue
+        for r in _table_rows(read(d["path"]), "아직 모르는 것"):
+            if len(r) < 5 or r[0].startswith("예시") or not _filled(r[1]):
+                continue
+            if not _filled(r[4]):
+                out.append(f"{d['id']} {r[0]}: {r[1][:40]} ({d['rel']})")
+    return out
+
+
 # ---------- 단계 (지금 어디인가, 다음 할 일) ----------
 
 def dev_system() -> str:
@@ -469,6 +583,11 @@ def phase(docs: list[dict]) -> dict:
         if "F" in mode and open_("F00"):
             do.insert(0, "/edpm-doc feature baseline — F00 서비스 현황 진단 (PRD 근거, PRD보다 먼저 써도 됨)")
         do.append("/edpm-wiki ingest — 인터뷰·시장·경쟁 자료를 위키로 (리서치 문서 E03·E04는 /edpm-doc으로 꺼내 PRD 전에 써도 됨)")
+        prd = find(docs, "PRD")
+        if prd is not None:
+            c = clarity("PRD", read(prd["path"]), docs)
+            why += f" (모호도 {c['ambiguity']}, review로 올리려면 {c['max']} 이하 — G-CLEAR)"
+            do.append("python3 automation/scripts/edpm_check.py clarity — 흐린 곳 확인")
         return {"step": "1 PRD", "why": why + ". 리서치는 PRD의 근거가 되고, 그 뒤 모든 산출물·프로토타입·코드는 PRD에서 출발합니다",
                 "do": do}
     prd = find(docs, "PRD")
@@ -780,7 +899,14 @@ def collect() -> dict:
         "pii": pii_scan()[:20],
         "wbs": wbs_status(), "proto": proto_status(), "decisions_due": decisions_due(),
         "meetings_pending": meetings_pending(),
+        "unknowns_pending": unknowns_pending(docs),
+        "test_unlocks": test_unlocks(),
     }
+
+
+def test_unlocks() -> list[str]:
+    p = ROOT / ".edpm" / "test-unlock"
+    return [ln.strip() for ln in read(p).splitlines() if ln.strip() and not ln.startswith("#")] if p.exists() else []
 
 
 def fmt_brief(r: dict) -> str:
@@ -820,6 +946,11 @@ def fmt_brief(r: dict) -> str:
         attention.append(f"재검토일 지난 결정 {len(r['decisions_due'])}건: " + ", ".join(x['id'] for x in r["decisions_due"][:3]) + " → /edpm-decide review")
     if r["meetings_pending"]:
         attention.append(f"위키 반영 안 된 회의록 {len(r['meetings_pending'])}건 → /edpm-brief meeting ingest")
+    if r.get("unknowns_pending"):
+        attention.append(f"다음 사이클로 넘기지 않은 '아직 모르는 것' {len(r['unknowns_pending'])}건 → PRD 12절·다음 가설·백로그로: "
+                         + r["unknowns_pending"][0])
+    if r.get("test_unlocks"):
+        attention.append(f"고정 해제한 인수조건 테스트 {len(r['test_unlocks'])}건 (.edpm/test-unlock) — 스펙 변경과 맞는지 확인")
     if r["pii"]:
         attention.append(f"식별 정보 의심 {len(r['pii'])}곳 (G-PII) → /edpm-wiki lint pii")
     if r["wiki"]["stale"]:
@@ -898,6 +1029,15 @@ def main() -> int:
         ok, msg = code_gate(Path(sys.argv[2]), load_docs())
         print(msg)
         return 0 if ok else 1
+    if cmd == "clarity":
+        pos = [x for x in sys.argv[2:] if not x.startswith("--")]
+        target = Path(pos[0]).resolve() if pos else ROOT / "PRD.md"
+        fm = parse_frontmatter(read(target))
+        c = clarity(fm.get("doc_id", ""), read(target), load_docs())
+        if not c:
+            print("명확도는 PRD와 F01에만 적용합니다."); return 0
+        print(json.dumps(c, ensure_ascii=False, indent=2) if "--json" in sys.argv else fmt_clarity(c))
+        return 0 if c["pass"] else 1
     if cmd == "library":
         print(fmt_library(sys.argv[2] if len(sys.argv) > 2 else "")); return 0
     if cmd == "add":
