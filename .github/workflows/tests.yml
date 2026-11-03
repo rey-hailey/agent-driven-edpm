@@ -1,0 +1,38 @@
+# 프레임워크 회귀 테스트: PR과 main push마다 tests/를 돌린다.
+# (워크스페이스용 CI는 workspace-template/.github/workflows/edpm-ci.yml — 설치된 워크스페이스에서 돈다)
+name: 회귀 테스트
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unittest:
+    name: unittest (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: git 사용자 (테스트가 임시 저장소에 커밋함)
+        run: |
+          git config --global user.email "ci@example.com"
+          git config --global user.name "edpm-ci"
+          git config --global init.defaultBranch main
+      - name: 회귀 테스트
+        run: python -m unittest discover -s tests -v
