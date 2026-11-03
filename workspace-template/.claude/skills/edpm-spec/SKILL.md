@@ -1,7 +1,7 @@
 ---
 name: edpm-spec
 description: 스펙 주도 개발을 진행한다. PRD → E06 상세 요구사항을 E09 기능명세(= 스펙)로 만들고(기능, 인수조건, 입출력·데이터 계약, 작업 분해, 테스트 추적), 끊긴 추적을 점검하고, 작업을 WBS·GitHub 이슈로 내보낸다. 개발팀이 있으면 스펙을 넘기고, 개발자 없이 직접 만드는 바이브코딩 프로젝트면 작업 단위로 테스트와 함께 구현한다. "스펙 써줘", "기능명세", "개발 작업 쪼개줘", "이제 구현하자", "T-03 구현해줘", "스펙대로 만들어" 요청에 사용. 테스트 시나리오·실행·결함·테스트 결과 보고(B06·B07)는 qa — "테스트 시나리오", "QA", "검수", "테스트 결과 보고서", "출시해도 돼?"
-argument-hint: "<write | check | tasks | build <T-ID> | status | qa <plan | run | defects | report>>"
+argument-hint: "<write | check | tasks | build <T-ID> | status | qa <plan | run | smoke <URL> | defects | report>>"
 ---
 
 # edpm-spec

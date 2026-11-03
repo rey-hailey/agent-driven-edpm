@@ -8,6 +8,13 @@ Agent Driven EdPM 변경 이력입니다. 형식은 [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Added — 리서치, 팀 알림, CI와 배포 후 점검
+- `/edpm-wiki research <질문>`: 하위 질문 → 웹 검색·원문 읽기 → 출처 등급(1차·2차·3차) → 자료실에 원본 요약(URL·접근일·등급) → 위키 종합(상충 근거, verified) → N01·E04·PRD 2절로. 수치는 1차 출처가 있을 때만 사실로
+- `automation/scripts/edpm_notify.py` + `/edpm-brief notify`: 상황판·주간보고·사건을 Slack·Teams 웹훅으로 (기본 미리보기, `--send`로 전송, 보낼 내용의 식별 정보 검사, 전송은 권한 확인). `.github/workflows/edpm-brief.yml`: 평일 아침 상황판 자동 발송 (Claude 없이, 웹훅 비밀값이 있을 때만)
+- `edpm_check.py ci [--base]` + `.github/workflows/edpm-ci.yml`: 훅을 거치지 않은 변경도 게이트 미충족 done·식별 정보·frontmatter 오류·고정 테스트 수정을 막고, 제품 코드가 있으면 테스트 실행
+- `/edpm-spec qa smoke <URL>`: 배포 후 핵심 흐름·에듀테크 점검(동의 전 잠금, 결제 테스트 모드, 학습자 화면 광고·외부 링크, 식별 정보 노출, AI 거절·대체)·기본 품질
+- 회귀 테스트 2건 — 총 37건
+
 ### Changed — 화면 지도와 실무형 화면설계서(sb-lowfi) 역할 분담, README를 "PM 엔진 + 에듀테크 팩"으로
 - 자동 HTML은 **화면 지도**(점검용)로: 전체 목록·상태·끊긴 이동. 보여주는 화면설계서는 sb-lowfi가 그림
 - `edpm_screens.py --sb-md [경로]`: E10에서 sb-lowfi-pptx 입력 md(화면 목록 + 화면별 메타 표·레이아웃·번호 붙은 UI 컴포넌트·상태별 화면·처리 규칙) 생성 (기본 `05.outputs/화면설계서.md`). `05.outputs/`에 sb-lowfi 결과 HTML이 있으면 화면 지도가 화면마다 링크

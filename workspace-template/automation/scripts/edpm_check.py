@@ -13,6 +13,7 @@
   python3 automation/scripts/edpm_check.py start <문서 경로>  # 이 문서를 지금 써도 되는가 — 전제조건 (0 가능 / 1 불가, 생성 게이트)
   python3 automation/scripts/edpm_check.py code-gate <경로>   # 제품 코드(src/)를 써도 되는가 (G-SPEC, 개발 체계) (0 가능 / 1 불가)
   python3 automation/scripts/edpm_check.py clarity [PRD.md | F01 경로]  # 명확도: 차원별 점수·모호도·빈 곳 (G-CLEAR, 모호도 0.3 이하여야 통과)
+  python3 automation/scripts/edpm_check.py ci [--base origin/main]  # CI용: 개인정보·게이트 미충족 done·frontmatter 오류·고정 테스트 수정이면 1
   python3 automation/scripts/edpm_check.py library [검색어]     # 보관함에 있고 아직 꺼내지 않은 산출물 (트랙별, 언제 쓰나)
   python3 automation/scripts/edpm_check.py add <ID> [<ID>...]  # 보관함에서 워크스페이스로 꺼내기 (딸린 CSV·템플릿 폴더 포함)
   python3 automation/scripts/edpm_check.py portfolio [--ids PRD,E09,V01] [--adr ADR-003,ADR-007]
@@ -904,6 +905,30 @@ def collect() -> dict:
     }
 
 
+def ci_problems(base: str = "") -> list[str]:
+    """훅은 Claude Code 안에서만 돈다. 사람이 직접 고친 변경도 같은 규칙으로 막기 위한 CI 점검."""
+    import subprocess
+    docs = load_docs()
+    out = []
+    for d in docs:
+        if d["status"] in DONE and d["status"] != "n/a" and not (d["fm"].get("gate_skip") or "").strip():
+            r = gate_check(d, docs)
+            if r:
+                out.append(f"게이트 미충족인데 done: {d['rel']} — {'; '.join(r)}")
+        if d["status"] not in {"draft", "review", "done", "n/a"}:
+            out.append(f"frontmatter status 값 오류: {d['rel']} ({d['status']})")
+    for rel, name, val in pii_scan():
+        out.append(f"식별 정보 의심 (G-PII): {rel} {name}")
+    if base:
+        r = subprocess.run(["git", "-C", str(ROOT), "diff", "--name-only", "--diff-filter=MD", f"{base}...HEAD", "--", "tests/"],
+                           capture_output=True, text=True)
+        unlocked = {ln.split("|")[0].strip() for ln in test_unlocks()}
+        for f in [x for x in r.stdout.splitlines() if x.strip()]:
+            if f not in unlocked:
+                out.append(f"고정된 인수조건 테스트를 고침: {f} — 스펙(AC)을 먼저 고치고 .edpm/test-unlock에 경로·사유")
+    return out
+
+
 def test_unlocks() -> list[str]:
     p = ROOT / ".edpm" / "test-unlock"
     return [ln.strip() for ln in read(p).splitlines() if ln.strip() and not ln.startswith("#")] if p.exists() else []
@@ -1029,6 +1054,12 @@ def main() -> int:
         ok, msg = code_gate(Path(sys.argv[2]), load_docs())
         print(msg)
         return 0 if ok else 1
+    if cmd == "ci":
+        base = sys.argv[sys.argv.index("--base") + 1] if "--base" in sys.argv else ""
+        problems = ci_problems(base)
+        if problems:
+            print("EdPM 점검 실패:\n- " + "\n- ".join(problems)); return 1
+        print("EdPM 점검 통과 (개인정보·게이트·frontmatter·고정 테스트)"); return 0
     if cmd == "clarity":
         pos = [x for x in sys.argv[2:] if not x.startswith("--")]
         target = Path(pos[0]).resolve() if pos else ROOT / "PRD.md"

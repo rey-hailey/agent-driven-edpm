@@ -1,0 +1,24 @@
+# 평일 아침 상황판을 Slack·Teams로 (Claude 없이 점검기만 실행, 비용 없음).
+# 저장소 Settings > Secrets and variables > Actions에 EDPM_SLACK_WEBHOOK 또는 EDPM_TEAMS_WEBHOOK을 넣으면 동작한다.
+# 끄려면 이 파일을 지우거나 Actions에서 비활성화.
+name: EdPM 아침 상황판
+on:
+  schedule:
+    - cron: "0 0 * * 1-5"   # 평일 09:00 KST (UTC 00:00)
+  workflow_dispatch:
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 상황판 보내기
+        env:
+          EDPM_SLACK_WEBHOOK: ${{ secrets.EDPM_SLACK_WEBHOOK }}
+          EDPM_TEAMS_WEBHOOK: ${{ secrets.EDPM_TEAMS_WEBHOOK }}
+        run: |
+          if [ -z "$EDPM_SLACK_WEBHOOK$EDPM_TEAMS_WEBHOOK" ]; then echo "웹훅 비밀값이 없어 건너뜁니다"; exit 0; fi
+          python3 automation/scripts/edpm_notify.py brief --send

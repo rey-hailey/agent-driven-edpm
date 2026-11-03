@@ -1,7 +1,7 @@
 ---
 name: edpm-brief
 description: 지금 상황과 할 일, 그리고 보고를 맡는다. 상황판(점검기 결과 → 오늘 할 일), 진행표, 주간보고(weekly), 관리 보고서 M01 착수·M03 위험·M04 중간·M05 완료·경영진 요약(report), 회의 준비·회의록 → 결정·액션·위키 반영(meeting). "오늘 뭐 해야 해", "상황판", "지금 어디까지 왔어", "다음에 뭐 써", "진행표", "주간보고", "착수보고서", "중간보고", "경영진 보고", "회의 준비", "회의록 정리", "액션 아이템" 요청에 사용. 세션 시작 때는 훅이 상황판 요약을 자동으로 보여준다.
-argument-hint: "[week | next | progress | gates | dashboard] | weekly [YYYY-MM-DD] | report <M01 | M03 | M04 | M05 | exec> [--format md|docx|pdf|pptx] | meeting <prep | notes | ingest | actions>"
+argument-hint: "[week | next | progress | gates | dashboard | notify <brief|weekly|event>] | weekly [YYYY-MM-DD] | report <M01 | M03 | M04 | M05 | exec> [--format md|docx|pdf|pptx] | meeting <prep | notes | ingest | actions>"
 ---
 
 # edpm-brief
@@ -24,7 +24,8 @@ argument-hint: "[week | next | progress | gates | dashboard] | weekly [YYYY-MM-D
 |------|-----------|---------|
 | (없음)·`week`·`next`·`progress`·`gates` | 이 파일 | 상황판, 이번 주, 다음 할 일, 진행표, 게이트 |
 | `dashboard` | 이 파일 | 대시보드 화면 열기: `python3 automation/scripts/edpm_dashboard.py --open` → `.edpm/dashboard.html` (여정 보드·스펙 추적·지식 그래프 탭, 지금 단계·PRD 명확도·일정·주의·스킬). "끊긴 스펙"을 보려면 `.edpm/dashboard.html#trace`. 세션 시작과 문서 저장 때 훅이 다시 만들고, 열어 둔 화면은 조용할 때 스스로 새로 읽음. 보기 전용 — 상태는 문서 frontmatter가 기준 |
-| `weekly` | `weekly.md` | 주간보고 |
+| `notify` | 이 파일 | 팀 채널로 보내기: `python3 automation/scripts/edpm_notify.py brief|weekly <파일>|event "<내용>"` — 먼저 미리보기를 보여주고, 사용자가 확인하면 `--send`. 웹훅은 환경변수(`EDPM_SLACK_WEBHOOK`, `EDPM_TEAMS_WEBHOOK`)로만. 회사 기밀 수치·학생 정보는 보내지 않음. 평일 아침 자동 발송은 `.github/workflows/edpm-brief.yml` |
+| `weekly` | `weekly.md` | 주간보고 (작성 후 `notify weekly`를 제안) |
 | `report` | `report.md` | 관리 보고서·경영진 요약 (M 문서가 없으면 보관함에서 꺼냄) |
 | `meeting` | `meeting.md` | 회의 준비 한 장, 회의록 → ADR·WBS·백로그·ingest |
 

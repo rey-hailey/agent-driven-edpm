@@ -120,14 +120,14 @@ tags: []
 | `/edpm-start` | (없음) · `init` · `blueprint <detect\|apply\|check\|map>` | 처음 안내와 지금 단계, 회사·제품 인터뷰 → E00·2절 컨텍스트, 서비스 유형 판정·빈칸 |
 | `/edpm-prd` | `write` · `import` · `path` · `update` · `review` · `version` | 원점 PRD, 이 제품에 필요한 산출물 꺼내기(path), 판 관리 |
 | `/edpm-doc` | `<ID>` · `list` · `review` · `venture` · `feature` · `policy` · `proposal` · `content` | 모든 산출물 작성(없으면 보관함에서 꺼냄, 게이트 확인). 신사업 N, 운영 개선 F·백로그, 정책 P, RFP·제안·견적, 세일즈·마케팅·안내문, 이해관계자 패널 비평 |
-| `/edpm-spec` | `write` · `check` · `tasks` · `build <T-ID>` · `status` · `qa` | E09 스펙(유저스토리·인수조건·상태 흐름·입출력 계약·작업·테스트), 추적 점검, 작업 내보내기, 바이브코딩 구현(테스트 먼저), B06·B07 QA |
+| `/edpm-spec` | `write` · `check` · `tasks` · `build <T-ID>` · `status` · `qa` (`smoke <URL>` 배포 후 점검) | E09 스펙(유저스토리·인수조건·상태 흐름·입출력 계약·작업·테스트), 추적 점검, 작업 내보내기, 바이브코딩 구현(테스트 먼저), B06·B07 QA |
 | `/edpm-proto` | `new` · `plan` · `build` · `test` · `decide` · `handoff` · `list` | V01 계획(검증 질문·충실도 P0~P4·성공·중단 기준) → 빌드·V02 → 테스트 → V03 결정 → 이관 |
 | `/edpm-ai` | 설계 하위 명령 · `eval` | AI 기회 맵·방식 선택(A10)·라우팅·비용·운영·가드레일·역할·구성 요소·A01~A09·골든셋·노코드 점검, `ai_eval.py` 평가·비교·A06·G-AI |
 | `/edpm-metrics` | `define` · `sql` · `run` · `effect` · `connect` … | E07 지표 → SQL → `metrics.py` 계산·효과크기·기준선. 수치는 스크립트만 |
 | `/edpm-decide` | `new` · `premortem` · `review` · `stats` · `list` | ADR(선택지·근거·예측·재검토일), 사전 부검, 채점 |
 | `/edpm-handoff` | `dev` · `design` · `sales` · `exec` · `cs` · `content` · `legal` · `feedback` | 같은 근거를 받는 사람의 언어로, 피드백은 백로그·WBS·ADR로 |
-| `/edpm-brief` | (없음) · `week` · `next` · `progress` · `gates` · `weekly` · `report` · `meeting` | 상황판, 진행표, 주간보고, M01~M05·경영진 요약, 회의 준비·회의록 |
-| `/edpm-wiki` | `ingest` · `query` · `lint` · `library` · `collect` · `promote` | 자료 → 비식별화 → 자료실 → 위키, 근거 답, 점검, 자료실 관리, Aside 수집, 개인 Brain 승격 |
+| `/edpm-brief` | (없음) · `week` · `next` · `progress` · `gates` · `dashboard` · `notify` · `weekly` · `report` · `meeting` | 상황판, 진행표, 대시보드, 팀 채널 알림(미리보기 후 확인), 주간보고, M01~M05·경영진 요약, 회의 준비·회의록 |
+| `/edpm-wiki` | `research` · `ingest` · `query` · `lint` · `library` · `collect` · `promote` | 질문 하나로 웹 리서치(출처 등급·자료실·위키, PRD 근거), 자료 → 비식별화 → 자료실 → 위키, 근거 답, 점검, 자료실 관리, Aside 수집, 개인 Brain 승격 |
 | `/edpm-wbs` | `create` · `push` · `pull` · `status` · `update` · `impact` · `export` | M02 WBS·일정, GitHub 동기화, 다른 도구로 내보내기 |
 | `/edpm-template` | `import` · `map` · `apply` · `list` | 회사 문서 양식 연결 (방식 A 회사 양식 구조로 작성 / 방식 B 회사 양식 출력본). EdPM 필수 항목 보존 |
 | `/edpm-curriculum` | `setup` · `search` · `standard` · `path` · `map` · `coverage` … | 교육과정 지식그래프 |
@@ -201,6 +201,7 @@ tags: []
 | SessionStart 훅 | `edpm_check.py brief` — 처음이면 시작 안내, 그다음 **지금 단계와 다음 할 일**(PRD 다음은 경로 정하기, 스펙과 나란히 프로토타입), 상황판(게이트·검토 대기·지연·프로토타입·결정·회의록·개인정보)을 세션 시작 때 표시 |
 | PreToolUse 훅 (Write·Edit) | ① `01.자료실/` 기존 파일 수정 차단 ② `03.docs/`·`PRD.md`를 `status: done`으로 바꿀 때 전제조건·게이트(G-PRD 포함) 미충족이면 차단 (`gate_skip: [사유]`가 있으면 통과) ③ `01.자료실/`·`02.wiki/`에 휴대전화·주민등록번호·이메일 패턴 저장 차단 ④ `src/` 제품 코드: PRD review 이상·E09 done일 때만, 개발 체계가 개발팀이면 차단 (G-SPEC) ⑤ 생성 게이트: 전제조건(+G-PRD)이 끝나기 전 산출물 본문 쓰기 차단 — frontmatter만 수정, n/a 처리, `gate_skip`·`early_draft` 사유는 통과 |
 | 화면 지도·화면설계서 | `edpm_screens.py` — E10 2·3·5·8절에서 화면 지도(`.edpm/screens.html`: 모든 화면, 상태 탭, 화면 이동, 구성·상태 빠짐과 끊긴 이동 표시, 대시보드와 함께 갱신)와 `--sb-md`로 sb-lowfi 입력(`05.outputs/화면설계서.md`). 보여주는 화면설계서는 `sb-lowfi-pptx`(HTML·PPTX, 화면이 많으면 에이전트를 나눠 그림)·`sb-lowfi-figma`. 화면마다 프로토타입을 만들지 않음 — 프로토타입은 PRD 9절 정수에만 |
+| CI (GitHub Actions) | `.github/workflows/edpm-ci.yml` — 훅은 Claude Code 안에서만 돌므로, 사람이 직접 고친 PR도 `edpm_check.py ci`(게이트 미충족 done·식별 정보·frontmatter·고정 테스트 수정)로 막고, 제품 코드가 있으면 테스트 실행. `edpm-brief.yml` — 평일 아침 상황판을 팀 채널로(웹훅 비밀값이 있을 때만) |
 | 대시보드 | `edpm_dashboard.py` — `.edpm/dashboard.html` 한 장(가운데 탭: 여정 보드·스펙 추적·화면·지식 그래프, 왼쪽: 지금 단계·PRD 명확도·진행 요약·WBS 달력·최근 파일, 오른쪽: 주의·스킬·위키 log). SessionStart와 저장 후(PostToolUse) 훅이 다시 만듦. 보기 전용, 판정은 점검기와 같음 |
 | 권한 | 점검·조회 스크립트와 `git log`는 묻지 않음. GitHub 쓰기(push·setup·gh issue), 클라우드 AI 평가, Aside 실행, `git push`는 사용자 확인 |
 | 결정적 점검 | `/edpm-wiki lint`·`/edpm-brief`·`/edpm-brief weekly`는 `edpm_check.py` 결과를 먼저 쓰고 LLM은 보완만. `library`·`add`로 보관함 조회·꺼내기, `portfolio`로 포트폴리오 사실 |

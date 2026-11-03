@@ -1,7 +1,7 @@
 ---
 name: edpm-wiki
-description: 근거 자료와 지식을 관리한다. ingest: 00.inbox·파일·URL을 비식별화해 01.자료실에 넣고 위키를 갱신. query: 위키 근거로 답. lint: 위키·산출물 점검(모순·오래된 정보·끊긴 링크·출처 없는 주장·개인정보·게이트 스킵). library: 자료실 목록·검색·공유 번들·NotebookLM 동기화. collect: Aside 레시피로 웹 수집. promote: 일반 지식을 기밀 제거 후 개인 Brain으로. "자료 넣어줘", "인박스 처리", "이 인터뷰 정리해서 위키에", "위키에서 찾아줘", "우리가 아는 게 뭐야", "점검", "헬스체크", "자료 찾아줘", "수집해줘", "리뷰 모아줘", "브레인으로 승격" 요청에 사용.
-argument-hint: "ingest [파일|URL] | query <질문> | lint [wiki|docs|pii|all] | library <catalog|find|stale|bundle|nlm-sync> | collect <R01~R08> | promote [--dry-run]"
+description: 근거 자료와 지식을 관리한다. research: 질문 하나로 웹 리서치(출처 등급·자료실 저장·위키 종합, PRD·N01·E04의 근거). ingest: 00.inbox·파일·URL을 비식별화해 01.자료실에 넣고 위키를 갱신. query: 위키 근거로 답. lint: 위키·산출물 점검(모순·오래된 정보·끊긴 링크·출처 없는 주장·개인정보·게이트 스킵). library: 자료실 목록·검색·공유 번들·NotebookLM 동기화. collect: Aside 레시피로 웹 수집. promote: 일반 지식을 기밀 제거 후 개인 Brain으로. "자료 넣어줘", "인박스 처리", "이 인터뷰 정리해서 위키에", "위키에서 찾아줘", "우리가 아는 게 뭐야", "점검", "헬스체크", "자료 찾아줘", "수집해줘", "리뷰 모아줘", "브레인으로 승격", "조사해줘", "리서치", "시장 조사", "경쟁사 찾아봐" 요청에 사용.
+argument-hint: "research <질문> | ingest [파일|URL] | query <질문> | lint [wiki|docs|pii|all] | library <catalog|find|stale|bundle|nlm-sync> | collect <R01~R08> | promote [--dry-run]"
 ---
 
 # edpm-wiki
@@ -12,6 +12,7 @@ argument-hint: "ingest [파일|URL] | query <질문> | lint [wiki|docs|pii|all] 
 
 | 명령 | 읽을 파일 | 하는 일 |
 |------|-----------|---------|
+| `research` | `research.md` | 질문 → 하위 질문 → 웹 검색·원문 읽기 → 출처 등급(1·2·3차) → 자료실에 원본 요약 → 위키 종합(상충 근거 포함) → N01·E04·PRD 2절로 넘김 |
 | `ingest` | `ingest.md` | 자료 → 개인정보 확인·가명화 → 자료실 → 위키 갱신 → index·log |
 | `query` | `query.md` | 위키 근거로 답, 재사용할 답은 05.outputs와 위키로 |
 | `lint` | `lint.md` | 위키·산출물 점검 (결정적 항목은 `edpm_check.py report`) |

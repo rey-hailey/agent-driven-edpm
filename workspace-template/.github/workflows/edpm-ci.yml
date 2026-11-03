@@ -1,0 +1,41 @@
+# EdPM CI: Claude Code 밖에서 고친 변경도 같은 규칙으로 점검하고, 제품 코드가 있으면 테스트를 돌린다.
+# 훅(PreToolUse)은 Claude Code 안에서만 동작하므로, 팀원이 직접 문서·테스트를 고친 PR은 여기서 걸린다.
+name: EdPM CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  edpm:
+    name: 게이트·개인정보·고정 테스트
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: EdPM 점검
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          if [ -n "$BASE" ]; then python3 automation/scripts/edpm_check.py ci --base "$BASE"; else python3 automation/scripts/edpm_check.py ci; fi
+
+  tests:
+    name: 인수조건 테스트
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: 테스트 실행 (제품 코드·테스트가 없으면 건너뜀)
+        run: |
+          if [ ! -f package.json ] && ! ls tests/*.py >/dev/null 2>&1; then echo "제품 코드 테스트 없음 — 건너뜀"; exit 0; fi
+          if [ -f package.json ]; then npm ci && npm test --if-present; fi
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if ls tests/*.py >/dev/null 2>&1; then pip install pytest && pytest -q tests; fi

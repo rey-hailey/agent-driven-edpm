@@ -70,7 +70,8 @@
       "Bash(gh project:*)",
       "Bash(python3 automation/scripts/ai_eval.py:*)",
       "Bash(automation/scripts/aside-run.sh:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(python3 automation/scripts/edpm_notify.py:*)"
     ]
   }
 }

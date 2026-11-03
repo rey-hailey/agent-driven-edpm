@@ -530,6 +530,31 @@ class ScreensTests(WorkspaceCase):
         self.assertRegex(md, r"\| SCR-009 \| 설정 \|.*\| P2 \|")      # 우선순위 표 (sb-lowfi가 읽음)
 
 
+class TeamTests(WorkspaceCase):
+    def test_notify_preview_by_default_and_pii_guard(self):
+        env = {k: v for k, v in self.env.items()}
+        r = run([self.ws / "automation/scripts/edpm_notify.py", "brief"], self.ws, {**env, "EDPM_SLACK_WEBHOOK": ""})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("미리보기", r.stdout)
+        self.assertIn("지금 단계", r.stdout)
+        r = run([self.ws / "automation/scripts/edpm_notify.py", "event", "학부모 연락처 010-1234-5678"], self.ws, env)
+        self.assertEqual(r.returncode, 2)                                  # 식별 정보는 보내지 않음
+        r = run([self.ws / "automation/scripts/edpm_notify.py", "brief", "--send"], self.ws, {**env, "EDPM_SLACK_WEBHOOK": "", "EDPM_TEAMS_WEBHOOK": ""})
+        self.assertEqual(r.returncode, 1)                                  # 받는 곳 없으면 보내지 않음
+
+    def test_ci_catches_hookless_changes(self):
+        self.assertEqual(self.check("ci").returncode, 0)
+        p = self.ws / "02.wiki" / "research" / "메모.md"
+        p.write_text("보호자 010-1234-5678\n", encoding="utf-8")         # 훅 없이 직접 쓴 변경
+        r = self.check("ci")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("G-PII", r.stdout)
+        p.unlink()
+        self.set_status("3.설계/E09_기능명세서.md", "done")               # 게이트 미충족인데 done
+        self.assertIn("게이트 미충족인데 done", self.check("ci").stdout)
+        self.assertTrue((self.ws / ".github/workflows/edpm-ci.yml").exists())
+
+
 class ExportTests(WorkspaceCase):
     def test_export_html_strips_guides_and_examples(self):
         out = self.tmp / "out"
