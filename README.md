@@ -9,10 +9,9 @@ AI 시대의 기획은 슬라이드 기획서를 오래 다듬는 일이 아니�
 ```bash
 git clone https://github.com/rey-hailey/agent-driven-edpm.git && cd agent-driven-edpm
 ./install.sh                          # 회사·제품 이름, 신사업/운영 개선, 개발팀/직접 구현을 묻고 워크스페이스를 만듭니다
-cd ~/Work/우리회사-edpm && claude      # 세션이 열리면 상황판이 "지금 단계"와 다음 할 일을 보여줍니다
 ```
 
-워크스페이스에서 **`/edpm-start`** 를 입력하세요. 필요한 것은 [Claude Code](https://claude.com/claude-code), git, python3 3.9 이상입니다 (`./install.sh --check`로 점검). 설치 옵션과 문제 해결은 [guide/00.시작하기.md](guide/00.시작하기.md), 실제 순서를 가상 회사로 따라가려면 [guide/14.AtoZ사용가이드.md](guide/14.AtoZ사용가이드.md).
+**Antigravity에서 워크스페이스 폴더를 열고, Claude Code 확장 패널에서 `/edpm-start`** 를 입력하세요. 산출물은 왼쪽 탐색기에서 바로 열어 봅니다 (마크다운·Mermaid 미리보기). 터미널만 쓴다면 `cd ~/Work/우리회사-edpm && claude`. 스킬과 훅은 Claude Code 기능이라, 에디터 내장 에이전트가 아니라 Claude Code 패널에서 작업합니다. 필요한 것은 [Claude Code](https://claude.com/claude-code), git, python3 3.9 이상, 권장 작업 환경은 [Antigravity](https://antigravity.google) + Claude Code 확장입니다 (`./install.sh --check`로 점검). 설치 옵션과 문제 해결은 [guide/00.시작하기.md](guide/00.시작하기.md), 실제 순서를 가상 회사로 따라가려면 [guide/14.AtoZ사용가이드.md](guide/14.AtoZ사용가이드.md).
 
 ## 2. 한 사이클
 

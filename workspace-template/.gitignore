@@ -8,7 +8,6 @@
 *.key
 *.pem
 secrets/
-.AP-key.md
 
 # Obsidian 개인 설정 (공유할 설정만 골라 추적하려면 이 줄을 조정)
 .obsidian/workspace*.json

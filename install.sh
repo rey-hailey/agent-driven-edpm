@@ -84,7 +84,10 @@ preflight() {
   echo "  Word·PDF는 스킬 없이 edpm_export.py가 만듭니다(PDF: Chrome, Word: pandoc). sb-lowfi: 워크스페이스 설치 때 자동(없으면 ./install.sh --extras), 공식 docx·pptx·xlsx·pdf·webapp-testing(선택): guide/00.시작하기.md 3.2절"
   command -v pandoc >/dev/null 2>&1 && echo "  ✓ pandoc (Word 출력)" || echo "  – pandoc 없음 (Word 출력용, 선택: brew install pandoc)"
   echo "[선택 도구]"
-  command -v obsidian >/dev/null 2>&1 || [[ -d /Applications/Obsidian.app ]] && echo "  ✓ Obsidian" || echo "  – Obsidian 없음 (위키 보기용, 없어도 동작)"
+  if command -v antigravity >/dev/null 2>&1 || [[ -d /Applications/Antigravity.app ]]; then echo "  ✓ Antigravity (권장 작업 환경)"
+  elif command -v cursor >/dev/null 2>&1 || command -v code >/dev/null 2>&1 || [[ -d /Applications/Cursor.app || -d "/Applications/Visual Studio Code.app" ]]; then echo "  ✓ VS Code 계열 에디터 (Antigravity 권장, 같은 설정 사용)"
+  else echo "  – Antigravity 없음 (권장 작업 환경: https://antigravity.google, Claude Code 확장 설치. 터미널만으로도 동작)"; fi
+  command -v obsidian >/dev/null 2>&1 || [[ -d /Applications/Obsidian.app ]] && echo "  ✓ Obsidian" || echo "  – Obsidian 없음 (위키 링크·그래프 보기용, 없어도 동작)"
   command -v aside >/dev/null 2>&1 && echo "  ✓ Aside CLI" || echo "  – Aside CLI 없음 (/edpm-wiki collect 웹 수집용)"
   python3 -c 'import anthropic' 2>/dev/null && echo "  ✓ anthropic 패키지" || echo "  – anthropic 패키지 없음 (/edpm-ai eval Claude 평가용: pip install anthropic)"
   if command -v gh >/dev/null 2>&1; then
@@ -111,6 +114,7 @@ if [[ "$TARGET" == "--upgrade" ]]; then
   rsync -a "$FW/workspace-template/automation/scripts/" "$WS/automation/scripts/" && echo "  automation/scripts 갱신"
   rsync -a "$FW/workspace-template/automation/hooks/" "$WS/automation/hooks/" && echo "  automation/hooks 갱신"
   mkdir -p "$WS/.edpm" && rsync -a --delete "$FW/library/" "$WS/.edpm/library/" && echo "  보관함 .edpm/library 갱신 (꺼내 쓴 산출물은 그대로)"
+  [[ -d "$WS/.vscode" ]] || { cp -R "$FW/workspace-template/.vscode" "$WS/.vscode" && echo "  + .vscode/ (Antigravity·VS Code 계열 설정, 권장 확장)"; }
   [[ " $* " == *" --no-sb-lowfi "* ]] || { mkdir -p "$HOME/.claude/skills"; install_sb_lowfi "$HOME/.claude/skills"; }
   rsync -a "$FW/workspace-template/automation/kg/" --exclude sources.lock.json "$WS/automation/kg/" 2>/dev/null || true
   rsync -a --ignore-existing "$FW/workspace-template/automation/sql/" "$WS/automation/sql/" && echo "  automation/sql 템플릿 추가 (기존 파일 유지)"
@@ -142,6 +146,7 @@ if [[ "$TARGET" == "--upgrade" ]]; then
 fi
 # 대화형 설치: 인자 없이 터미널에서 실행하면 몇 가지를 묻는다
 if [[ -z "$TARGET" && ( -t 0 || -n "${EDPM_WIZARD:-}" ) ]]; then   # EDPM_WIZARD=1: 시험용 강제
+  WIZ=1
   echo "EdPM 워크스페이스를 만듭니다. 모르면 Enter (기본값)."
   echo
   read -r -p "1) 회사·제품 이름 (폴더 이름에 씀) [우리회사]: " name; name="${name:-우리회사}"
@@ -266,10 +271,17 @@ fi
 
 cat <<EOF
 
-시작하기:
-  cd "$TARGET" && claude
-  세션이 열리면 상황판이 "지금 단계"와 다음 할 일을 알려줍니다. 처음이면 /edpm-start 를 입력하세요.
-  순서: /edpm-start → /edpm-start init (회사·제품 인터뷰) → /edpm-prd (만들 제품 전체 정의) → 상황판이 안내하는 다음 단계
+시작하기 (권장: Antigravity + Claude Code 확장):
+  1. Antigravity에서 File > Open Folder → $TARGET
+  2. 권장 확장 설치 알림이 뜨면 설치 (Claude Code, Mermaid 미리보기, CSV)
+  3. Claude Code 패널을 열고 /edpm-start 입력 — 산출물은 왼쪽 탐색기에서 바로 열어 봅니다 (미리보기 Cmd+Shift+V)
+  터미널만 쓸 때: cd "$TARGET" && claude
+  순서: /edpm-start → /edpm-start init (회사·제품 인터뷰) → /edpm-prd (만들 제품 전체) → 상황판이 안내하는 다음 단계
   자세한 길잡이: $FW/guide/14.AtoZ사용가이드.md
-Obsidian에서 "$TARGET" 폴더를 볼트로 열면 위키와 산출물을 함께 볼 수 있습니다.
 EOF
+
+# 대화형 설치였고 Antigravity가 있으면 바로 열기
+if [[ -n "${WIZ:-}" && -d /Applications/Antigravity.app && -t 0 ]]; then
+  read -r -p "지금 Antigravity로 워크스페이스를 열까요? (Y/n): " op
+  if [[ "${op:-Y}" =~ ^[Yy]$ ]]; then open -a Antigravity "$TARGET"; fi
+fi

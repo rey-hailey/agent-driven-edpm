@@ -373,6 +373,9 @@ class CorePathTests(WorkspaceCase):
         self.assertTrue((inst / "03.docs/F.개선/개선백로그.csv").exists())
         self.assertTrue((inst / "03.docs/F.개선/_과제템플릿/F02_기능기획서.md").exists())
         self.assertFalse((inst / "03.docs/N.신사업").exists())
+        rec = json.loads((inst / ".vscode/extensions.json").read_text(encoding="utf-8"))["recommendations"]
+        self.assertIn("anthropic.claude-code", rec)        # Antigravity·VS Code 계열 권장 확장
+        self.assertIn(".edpm/library", json.loads((inst / ".vscode/settings.json").read_text(encoding="utf-8"))["search.exclude"])
 
 
 class ExportTests(WorkspaceCase):

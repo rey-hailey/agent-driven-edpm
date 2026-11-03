@@ -8,6 +8,13 @@ Agent Driven EdPM 변경 이력입니다. 형식은 [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Added — 작업 환경: Antigravity + Claude Code 확장
+- 권장 작업 환경을 **Antigravity(에디터) + Claude Code 확장(에이전트)** 으로: 산출물을 탐색기에서 바로 열고 마크다운·Mermaid 미리보기로 확인하면서 작업. 스킬·훅은 Claude Code 기능이므로 에디터 내장 에이전트가 아니라 Claude Code 패널에서 작업하도록 안내
+- 워크스페이스 `.vscode/` 기본 포함(Antigravity·Cursor·VS Code 공통): 권장 확장(Claude Code, Markdown Mermaid, Rainbow CSV), 마크다운 줄바꿈, 검색에서 보관함·지식그래프 제외. `--upgrade`가 없으면 추가
+- `install.sh`: 끝 안내를 "Antigravity에서 폴더 열기 → Claude Code 패널에서 /edpm-start"로, 대화형 설치 끝에 Antigravity로 바로 열지 물음(macOS), `--check`가 Antigravity·VS Code 계열 에디터 확인
+- guide 00 2절 "작업 환경" 신설(설정 순서, 일하는 모습, 다른 환경), README·CLAUDE.md·guide 14 시작 안내 반영. 워크스페이스 `.gitignore`의 강의 자료 유래 항목 제거
+- 회귀 테스트: 설치 시 `.vscode` 권장 확장·검색 제외 확인
+
 ### Changed — 단순화: 핵심 경로 + 보관함, 스킬 15종, 기준 문서 한 곳
 목표는 한 사이클(PRD → 스펙·프로토타입 → 결정 → 출시 → 효과 리뷰)을 더 빨리 돌리는 것. 같은 기능을 덜 보이게 하고, 같은 내용을 한 곳에만 둔다.
 - **워크스페이스는 핵심 경로만**: 설치 시 E00·PRD·E05·E06·E09·V(프로토타입)·WBS CSV + 업무 모드 문서(N01·N03·N04 또는 F00·백로그·과제 템플릿)만 `03.docs/`에. 나머지 산출물은 프레임워크 `library/` → 워크스페이스 `.edpm/library/` 보관함. `edpm_check.py library [검색어]`(꺼내지 않은 산출물·언제 쓰나), `add <ID>`(딸린 CSV·템플릿 폴더와 함께 꺼냄), `/edpm-doc <ID>`가 없으면 자동으로 꺼냄
