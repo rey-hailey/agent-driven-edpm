@@ -110,9 +110,19 @@ E00 회사·제품 → 리서치 (사업기회·현황 진단·현장·시장) �
 | [brain-seed/](brain-seed/) | 개인 EdTech Brain 초기 지식 (학습과학·규제·비즈니스 로직·IA·AI 등) |
 | [tests/](tests/) | 회귀 테스트 `python3 -m unittest discover -s tests` |
 
-## 8. 주의와 라이선스
+## 8. 주의, 라이선스와 출처
 
 - 법령·세금·조달 내용은 정리 시점 기준이며 법률 자문이 아닙니다. `[확인 필요]`를 확인하고 법무 검토를 받으세요.
 - 교육과정 지식그래프는 공개 데이터(MIT)이며 교육부·국가교육위원회·NCIC의 공식 자료가 아닙니다.
 
-[MIT License](LICENSE). 외부 자료는 각자의 라이선스를 따르며 이 저장소에 포함하지 않습니다: 교육과정 지식그래프 원천(MIT, `install.sh --with-kg`), [sb-lowfi](https://github.com/rey-hailey/sb-lowfi)(설치 때 받음), Anthropic 공식 문서 스킬·n8n 스킬(직접 설치, [extras/](extras/)).
+**라이선스와 출처.** 이 저장소는 [MIT License](LICENSE)입니다. 이 프레임워크는 Agent PM 과정(AP-Framework)에서 영감을 받았습니다.
+
+| 구분 | 내용 |
+|------|------|
+| 영감을 받은 것 | AP-Framework의 **문서 체인**(산출물 의존 순서)과 **게이트 체크**(산출물마다 전제조건 확인) 방식 |
+| 새로 만든 것 | 에듀테크 산출물 체인과 게이트(G-LEARN·G-SAFE·G-EVIDENCE·G-CURRIC 등), 스킬, 템플릿, 점검기·훅·스크립트, 서비스 유형·도메인 지식 |
+| 포함하지 않는 것 | 과정의 템플릿·프롬프트·교안 원문 |
+
+AP-Framework나 해당 과정의 공식 배포판이 아닌 개인 프로젝트이며, MIT 라이선스는 이 저장소의 내용에만 적용됩니다.
+
+외부 자료는 각자의 라이선스를 따르며 이 저장소에 포함하지 않습니다: 교육과정 지식그래프 원천(MIT, `install.sh --with-kg`), [sb-lowfi](https://github.com/rey-hailey/sb-lowfi)(설치 때 받음), Anthropic 공식 문서 스킬·n8n 스킬(직접 설치, [extras/](extras/)).
