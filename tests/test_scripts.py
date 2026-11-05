@@ -685,6 +685,34 @@ class MetricsTests(WorkspaceCase):
         self.assertIn("| 예 |", r.stdout)
 
 
+class AttributionTests(unittest.TestCase):
+    """과정 저작권자 동의 조건: 과정 템플릿·프롬프트 번호·교안 원문을 넣지 않고, 과정 이름은 출처 표기에만 (CLAUDE.md 출처 규칙)."""
+    ALLOWED = {"README.md", "CLAUDE.md", "CHANGELOG.md"}   # 출처 줄·규칙·변경 이력
+    COURSE = re.compile(r"AP-Framework|Agent PM 과정")
+    BANNED = re.compile(r"\bP-[1-6]\d{2}\b|AP-key")         # 과정 프롬프트 번호, 과정 전용 키 파일
+
+    def tracked_text_files(self):
+        r = subprocess.run(["git", "-C", str(FW), "ls-files"], capture_output=True, text=True)
+        names = r.stdout.splitlines() if r.returncode == 0 else [str(p.relative_to(FW)) for p in FW.rglob("*") if p.is_file()]
+        for n in names:
+            p = FW / n
+            if n.startswith(("tests/", ".git/")) or p.suffix not in {".md", ".py", ".sh", ".json", ".csv", ".yml", ".html", ".txt", ""}:
+                continue
+            if p.is_file():
+                yield n, p.read_text(encoding="utf-8", errors="ignore")
+
+    def test_no_course_materials_and_names_only_in_attribution(self):
+        banned, named = [], []
+        for n, text in self.tracked_text_files():
+            if self.BANNED.search(text):
+                banned.append(n)
+            if self.COURSE.search(text) and n not in self.ALLOWED:
+                named.append(n)
+        self.assertEqual(banned, [], "과정 프롬프트 번호·키 파일 흔적")
+        self.assertEqual(named, [], "과정 이름은 README 출처 줄·CLAUDE.md·CHANGELOG에만")
+        self.assertIn("공식 배포판이 아닌 개인 프로젝트", (FW / "README.md").read_text(encoding="utf-8"))
+
+
 class RippleTests(WorkspaceCase):
     E06, E09, E10 = "2.정의/E06_상세요구사항서.md", "3.설계/E09_기능명세서.md", "3.설계/E10_화면정보구조설계서.md"
 
