@@ -123,6 +123,6 @@ E00 회사·제품 → 리서치 (사업기회·현황 진단·현장·시장) �
 | 새로 만든 것 | 에듀테크 산출물 체인과 게이트(G-LEARN·G-SAFE·G-EVIDENCE·G-CURRIC 등), 스킬, 템플릿, 점검기·훅·스크립트, 서비스 유형·도메인 지식 |
 | 포함하지 않는 것 | 과정의 템플릿·프롬프트·교안 원문 |
 
-AP-Framework나 해당 과정의 공식 배포판이 아닌 개인 프로젝트이며, MIT 라이선스는 이 저장소의 내용에만 적용됩니다.
+AP-Framework나 해당 과정의 공식 배포판이 아닌 개인 프로젝트이며, MIT 라이선스는 이 저장소의 내용에만 적용됩니다. 출처 전문은 [NOTICE](NOTICE).
 
 외부 자료는 각자의 라이선스를 따르며 이 저장소에 포함하지 않습니다: 교육과정 지식그래프 원천(MIT, `install.sh --with-kg`), [sb-lowfi](https://github.com/rey-hailey/sb-lowfi)(설치 때 받음), Anthropic 공식 문서 스킬·n8n 스킬(직접 설치, [extras/](extras/)).

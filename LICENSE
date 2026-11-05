@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 rey-hailey
+Copyright (c) 2026 rey-hailey (inspired by the document-chaining and gate-check approach of AP-Framework, Agent PM course; not an official distribution - see NOTICE)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,21 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Attribution
-
-This project started from the document-chaining (deliverable dependency order) and
-gate-check (prerequisite verification before each deliverable) approach of
-AP-Framework, taught in the "Agent PM" course, and extends it for EdTech.
-It is an independent personal project, not an official distribution of AP-Framework
-or the course. It does not include the course's templates, prompts, or lecture
-materials. The MIT License above applies only to the contents of this repository.
-
-출처
-
-이 프레임워크는 Agent PM 과정(AP-Framework)의 문서 체인(산출물 의존 순서)·게이트 체크
-(산출물마다 전제조건 확인) 방식에서 출발해 에듀테크용으로 확장했습니다. AP-Framework나
-해당 과정의 공식 배포판이 아닌 개인 프로젝트이며, 과정의 템플릿·프롬프트·교안 원문은
-포함하지 않습니다. 위 MIT 라이선스는 이 저장소의 내용에만 적용됩니다.
