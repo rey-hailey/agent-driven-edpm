@@ -45,3 +45,5 @@ E00 → PRD(만들 제품 전체, 원점) → 경로 정하기 → E05 학습 �
 | `tests/` | 회귀 테스트: `python3 -m unittest discover -s tests -v` |
 
 규칙: 스크립트·훅을 고치면 테스트를 돌리고, 바뀐 점을 `CHANGELOG.md`의 Unreleased에 적습니다. 같은 목록·숫자를 여러 문서에 복사하지 않습니다 — 사람용 기준은 README, 에이전트용 기준은 `workspace-template/AGENTS.md`, 체인·게이트는 guide 02, 설치는 guide 00. 새 산출물은 핵심 경로가 아니면 `library/`에 넣습니다. 한국어, 이모지 없음.
+
+출처 규칙: 이 프레임워크는 Agent PM 과정(AP-Framework)에서 출발했고, 공개는 과정 저작권자의 동의와 조건 아래 합니다. AP-Framework의 템플릿, 번호 붙은 과정 프롬프트, 강의 교안 원문을 넣지 않습니다. AP·과정 이름은 README 출처 줄에만 쓰고, 공식 제품처럼 보이게 쓰지 않습니다 (회귀 테스트가 확인).
