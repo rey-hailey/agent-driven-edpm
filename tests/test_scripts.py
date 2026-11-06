@@ -687,7 +687,7 @@ class MetricsTests(WorkspaceCase):
 
 class AttributionTests(unittest.TestCase):
     """과정 저작권자 동의 조건: 과정 템플릿·프롬프트 번호·교안 원문을 넣지 않고, 과정 이름은 출처 표기에만 (CLAUDE.md 출처 규칙)."""
-    ALLOWED = {"README.md", "CLAUDE.md", "CHANGELOG.md"}   # 출처 줄·규칙·변경 이력
+    ALLOWED = {"README.md", "CLAUDE.md", "CHANGELOG.md", "LICENSE", "NOTICE"}   # 출처 줄·규칙·변경 이력·라이선스 출처
     COURSE = re.compile(r"AP-Framework|Agent PM 과정")
     BANNED = re.compile(r"\bP-[1-6]\d{2}\b|AP-key")         # 과정 프롬프트 번호, 과정 전용 키 파일
 

@@ -9,6 +9,7 @@ Agent Driven EdPM 변경 이력입니다. 형식은 [Keep a Changelog](https://k
 ## [Unreleased]
 
 ### Changed — 출처 표기 (과정 저작권자 동의 조건)
+- LICENSE 저작권 줄(MIT 본문은 그대로 — GitHub가 MIT로 인식), NOTICE, README 8절(주의, 라이선스와 출처)에 출처: 영감을 받은 것(문서 체인·게이트 체크 방식), 새로 만든 것, 포함하지 않는 것, MIT는 이 저장소 내용에만 적용
 - README에 출처 한 줄: Agent PM 과정(AP-Framework)의 문서 체인·게이트 체크 방식에서 출발해 에듀테크용으로 확장, 공식 배포판이 아닌 개인 프로젝트
 - `.gitignore`에서 EdPM이 쓰지 않는 과정 전용 키 파일 줄 제거
 - CLAUDE.md 출처 규칙과 회귀 테스트: 과정 템플릿·프롬프트 번호·교안 원문을 넣지 않고, AP·과정 이름은 README 출처 줄에만
